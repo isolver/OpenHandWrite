@@ -1,8 +1,3 @@
-a
-b
-c
-d
-e
 strikethrough
-t crossing
-i dot
+t_crossing
+i_dot

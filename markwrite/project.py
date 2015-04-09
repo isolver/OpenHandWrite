@@ -19,13 +19,18 @@ from __future__ import division
 from weakref import proxy
 import time
 import os
+import glob
 import numpy as np
+import codecs
 
 from pyqtgraph import OrderedDict
 from pyqtgraph.Qt import QtGui
 from file_io import EyePenDataImporter, XmlDataImporter
 
 class MarkWriteProject(object):
+    project_file_extension = u'mwp'
+    input_file_loaders=dict(xml=XmlDataImporter,
+                            txyp=EyePenDataImporter)
     def __init__(self, name=u"New", file_path=None):
         """
         The MarkWriteProject class represents a MarkWrite project created using
@@ -49,22 +54,40 @@ class MarkWriteProject(object):
         self._selectedpendata=[0,0]
         self._segments=[]
         self._segment_ids=[]
-
+        self.autodetected_segment_tags=[]
         self._name = u"Unknown"
 
         if file_path and os.path.exists(file_path) and os.path.isfile(file_path):
             dir_path, file_name = os.path.split(file_path)
             # Load raw data from file for use in project
-            if file_name[-3:].lower() == u'xml':
-                self.createNewProject(file_name,XmlDataImporter.asarray(file_path))
-            elif file_name[-3:].lower() == u'txt':
-                self.createNewProject(file_name, EyePenDataImporter.asarray(file_path))
-            elif file_name[-4:].lower() == u'wmpd':
+            fname, fext=file_name.rsplit(u'.',1)
+            fimporter = self.input_file_loaders.get(fext)
+            if fimporter:
+                self.createNewProject(fname, fimporter.asarray(file_path))
+                self.autodetected_segment_tags=self.detectAutoAssociatedSegmentTags(dir_path,fname,fext)
+            elif file_name.lower().endswith(self.project_file_extension):
                 self.openExistingProject(file_path)
             else:
                 print "Unsupported file type:",file_path
         else:
             raise IOError("Invalid File Path: %s"%(file_path))
+
+    def detectAutoAssociatedSegmentTags(self,dir_path,fname,fext):
+        tag_list=[]
+        same_named_files = glob.glob(os.path.join(dir_path,fname+u'.*'))
+        if len(same_named_files)<2:
+            return tag_list
+
+        same_named_files=[f for f in same_named_files if not f.endswith(fext)]
+        if len(same_named_files)<1:
+            return tag_list
+
+        with codecs.open(same_named_files[0], "r", "utf-8") as f:
+            for seg_line in f:
+                seg_line=seg_line.splitlines()[-1].strip()
+                if seg_line:
+                    tag_list.append(seg_line)
+        return tag_list
 
     def createNewProject(self, file_name, pen_data):
             # TODO : Define MarkWrite project setting and implement GUI for editing

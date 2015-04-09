@@ -119,6 +119,12 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self._activesegment = s
         self.removeSegmentAction.setEnabled(s is not None)
 
+    @property
+    def predefinedtags(self):
+        if self.project:
+            return self.project.autodetected_segment_tags+self._predefinedtags
+        return self._predefinedtags
+
     def createGuiActions(self):
         #
         # File Menu / Toolbar Related Actions
@@ -316,8 +322,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                     self.sigProjectChanged.emit(wmproj)
                     self.sigResetProjectData.emit(wmproj)
                 except:
-                    #import traceback
-                    #traceback.print_exc()
+                    import traceback
+                    traceback.print_exc()
                     ErrorDialog.info_text=u"An error occurred while opening:\n%s\nMarkWrite will now close."%(file_path)
                     ErrorDialog().display()
                     self.closeEvent(u'FORCE_EXIT')
@@ -331,7 +337,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
     def createSegment(self):
         if self.project and len(self.project.selectedpendata) > 0:
-            tag, ok = showSegmentNameDialog(self._predefinedtags)
+            tag, ok = showSegmentNameDialog(self.predefinedtags)
             if len(tag)>0 and ok:
                 new_segment = PenDataSegment(name=tag, pendata=self.project.selectedpendata)
                 self.project.addSegment(new_segment)
@@ -642,7 +648,7 @@ class ProjectInfoDockArea(DockArea):
             wmobj = item._pydat
             if isinstance(wmobj, PenDataSegment):
                 print "PenDataSegment DoubleClickedEvent",wmobj
-                tag, ok = showSegmentNameDialog(WRITEMARK_APP_INSTANCE._predefinedtags, default=wmobj.name)
+                tag, ok = showSegmentNameDialog(WRITEMARK_APP_INSTANCE.predefinedtags, default=wmobj.name)
                 if len(tag)>0 and ok:
                     wmobj.name = tag
                     item.setText(0,wmobj.name)
