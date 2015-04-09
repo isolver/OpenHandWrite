@@ -20,6 +20,7 @@ import os, inspect
 
 # time
 from timeit import default_timer
+import sys
 
 def getTime():
     return default_timer()
@@ -34,21 +35,23 @@ def module_directory(local_function):
     moduleDirectory,mname=os.path.split(mp)
     return moduleDirectory
 
+def get_resource_folder_path():
+    if getattr(sys, 'frozen', False):
+        # The application is frozen
+        datadir = os.path.join(os.path.dirname(sys.executable),u'resources')
+    else:
+        # The application is not frozen
+        # Change this bit to match where you store your data files:
+        datadir = os.path.join(module_directory(getTime),u'resources')
+
+    return datadir
 # dir location
 
-software_directory=module_directory(getTime)
-resource_dir_path=os.path.abspath(os.path.join(software_directory,'./resources'))
-icon_dir_path=os.path.abspath(os.path.join(resource_dir_path,'icons'))
-tag_files_dir_path=os.path.abspath(os.path.join(resource_dir_path,'tags'))
-
 def getIconFilePath(icon_file_name):
-    return os.path.join(icon_dir_path,icon_file_name)
-
-def getResourceFilePath(resource_file_name):
-    return os.path.join(resource_dir_path,resource_file_name)
+    return os.path.join(get_resource_folder_path(),'icons',icon_file_name)
 
 def getIconFile(iname,size=32,itype='png'):
-    return os.path.join(getResourceFilePath(),u"%s_icon&%d.%s"%(iname,size,itype))
+    return getIconFilePath(u"%s_icon&%d.%s"%(iname,size,itype))
 
 def getSegmentTagsFilePath(tags_file_name=u'default.tag'):
-    return os.path.join(tag_files_dir_path,tags_file_name)
+    return os.path.join(get_resource_folder_path(),'tags',tags_file_name)

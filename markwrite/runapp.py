@@ -32,18 +32,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import division
 
-if __name__ == '__main__':
-    import sys
-    if sys.platform == 'win32':
-        # Work around so that MarkWrite app icon is also used as task bar icon.
-        # http://stackoverflow.com/questions/1551605/how-to-set-applications-taskbar-icon-in-windows-7/1552105#1552105
-        import ctypes
-        myappid = u'isolver.markwrite.editor.version' # arbitrary string
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+import sys
+if sys.platform == 'win32':
+    # Work around so that MarkWrite app icon is also used as task bar icon.
+    # http://stackoverflow.com/questions/1551605/how-to-set-applications-taskbar-icon-in-windows-7/1552105#1552105
+    import ctypes
+    myappid = u'isolver.markwrite.editor.version' # arbitrary string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
-    from pyqtgraph.Qt import QtGui
-    import gui
-    app = QtGui.QApplication([])
-    wmwin = gui.MarkWriteMainWindow(app)
-    wmwin.show()
-    sys.exit(app.exec_())
+from pyqtgraph.Qt import QtGui
+import markwrite.gui as gui
+app = QtGui.QApplication(sys.argv)
+wmwin = gui.MarkWriteMainWindow(app)
+wmwin.show()
+status = app.exec_()
+sys.exit(status)
