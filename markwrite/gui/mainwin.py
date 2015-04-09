@@ -32,8 +32,8 @@ from markwrite.project import MarkWriteProject
 DEFAULT_WIN_SIZE = (1200,800)
 
 DEFAULT_DOCK_PLACEMENT={
-            u"Project Details":('left',(.2,1.0)),
-            u"Timeline":(['right',u"Project Details"],(.8,.35)),
+            u"Markup Tree":('left',(.2,1.0)),
+            u"Timeline":(['right',u"Markup Tree"],(.8,.35)),
             u"Spatial View":(['bottom',u"Timeline"],(.60,.65)),
             u"Selected Data":(['right',u"Spatial View"],(.2,.65)),
             }
@@ -255,7 +255,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             if inner_widget:
                 self._dockarea.docks[name].addWidget(inner_widget)
 
-        addDock(u"Project Details", ProjectInfoDockArea())
+        addDock(u"Markup Tree", ProjectInfoDockArea())
         self._penDataTemporalPlotWidget=PenDataTemporalPlotWidget()
         addDock(u"Timeline", self._penDataTemporalPlotWidget)
         addDock(u"Spatial View", PenDataSpatialPlotWidget())
