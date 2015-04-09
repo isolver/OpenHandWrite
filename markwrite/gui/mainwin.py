@@ -33,9 +33,9 @@ DEFAULT_WIN_SIZE = (1200,800)
 
 DEFAULT_DOCK_PLACEMENT={
             u"Project Details":('left',(.2,1.0)),
-            u"Temporal View":(['right',u"Project Details"],(.8,.35)),
-            u"Spatial Overview":(['bottom',u"Temporal View"],(.60,.65)),
-            u"Current Selection":(['right',u"Spatial Overview"],(.2,.65)),
+            u"Timeline":(['right',u"Project Details"],(.8,.35)),
+            u"Spatial View":(['bottom',u"Timeline"],(.60,.65)),
+            u"Selected Data":(['right',u"Spatial View"],(.2,.65)),
             }
 
 ABOUT_DIALOG_TEXT = """
@@ -257,9 +257,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         addDock(u"Project Details", ProjectInfoDockArea())
         self._penDataTemporalPlotWidget=PenDataTemporalPlotWidget()
-        addDock(u"Temporal View", self._penDataTemporalPlotWidget)
-        addDock(u"Spatial Overview", PenDataSpatialPlotWidget())
-        addDock(u"Current Selection", SelectedPointsPlotWidget())
+        addDock(u"Timeline", self._penDataTemporalPlotWidget)
+        addDock(u"Spatial View", PenDataSpatialPlotWidget())
+        addDock(u"Selected Data", SelectedPointsPlotWidget())
 
         #
         ## Do Misc. GUI setup.
