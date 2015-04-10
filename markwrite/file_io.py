@@ -19,12 +19,11 @@ import numpy as np
 from util import getSegmentTagsFilePath
 import codecs
 
-numpy_pendata_format = [('time', np.int64),
+numpy_pendata_format = [('time', np.float64),
                     ('x', np.int32),
                     ('y', np.int32),
-                    ('pressure', np.int32),
+                    ('pressure', np.int16),
                     # Following are set by MarkWrite
-                    ('selected', np.uint8),
                     ('segmented', np.uint8)]
 
 
@@ -121,11 +120,10 @@ class EyePenDataImporter(DataImporter):
                     line_tokens = tab_line.split(u'\t')
 
                     list_result.append(
-                        (long(line_tokens[cls.TIME_COLUMN_IX].strip()),
+                        (float(line_tokens[cls.TIME_COLUMN_IX].strip()),
                          int(line_tokens[cls.X_COLUMN_IX].strip()),
                          int(line_tokens[cls.Y_COLUMN_IX].strip()),
                          int(line_tokens[cls.PRESS_COLUMN_IX].strip()),
-                         0,
                          0)
                     )
 
@@ -159,11 +157,10 @@ class XmlDataImporter(DataImporter):
         for stroke_set in xml_root.iter(u'strokes'):
             pressure = 0
             for stroke in stroke_set.iter(u'stroke'):
-                list_result.append((stroke.get("Time"),
+                list_result.append((float(stroke.get("Time")),
                                     stroke.get("X"),
                                     stroke.get("Y"),
                                     1, # pressure
-                                    0,
                                     0))
             last_point = list(list_result[-1])
             last_point[-2] = 0  # Set pressure to 0 for last point
@@ -199,10 +196,12 @@ class PenSampleReportExporter(ReportExporter):
             import pyqtgraph
             with codecs.open(file_path, "w", "utf-8") as f:
                 pendata = project.pendata
+                header_row = unicode("index\ttime\tx\ty\tpressure\n")
+                f.write(header_row)
                 with pyqtgraph.ProgressDialog("Saving Pen Samples Level Report ..", 0, pendata.shape[0]) as dlg:
                     for i in xrange(pendata.shape[0]):
                         dp=pendata[i]
-                        point_line = unicode("{time}\t{x}\t{y}\t{pressure}\n".format(time=dp['time'],x=dp['x'],y=dp['y'],pressure=dp['pressure']))
+                        point_line = unicode("{sindex}\t{time}\t{x}\t{y}\t{pressure}\n".format(sindex=i,time=dp['time'],x=dp['x'],y=dp['y'],pressure=dp['pressure']))
                         f.write(point_line)
                         if i%10==0:
                             dlg.setValue(i)

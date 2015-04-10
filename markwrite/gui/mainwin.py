@@ -467,7 +467,7 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         # Create Pen Position Time Series Plot for All Data
 
         self.getPlotItem().setLabel('left', "Pen Position", units='pix')
-        self.getPlotItem().setLabel('bottom', "Time", units='msec')
+        self.getPlotItem().setLabel('bottom', "Time", units='sec')
 
         self.xPenPosTrace = None
         self.yPenPosTrace = None
@@ -492,7 +492,7 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
             self.yPenPosTrace = self.getPlotItem().plot(x=numpy_data['time'], y=numpy_data['y'], pen=None, symbol='+', symbolSize=1, symbolPen=(0,0,255), name="Y Position")
 
             # Add a Selection Region that is used to create segments by user
-            self.currentSelection = pg.LinearRegionItem(values=[numpy_data['time'][0],numpy_data['time'][0]+1000],movable=True)
+            self.currentSelection = pg.LinearRegionItem(values=[numpy_data['time'][0],numpy_data['time'][0]+1.0],movable=True)
             self.currentSelection.setBounds(bounds=(numpy_data['time'][0], numpy_data['time'][-1]))
             self.addItem(self.currentSelection)
             self.sigRegionChangedProxy=pg.SignalProxy(self.currentSelection.sigRegionChanged, rateLimit=60, slot=self.handlePenDataSelectionChanged)
@@ -501,7 +501,7 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
             # Update DataItem objects
             self.xPenPosTrace.setData(x=numpy_data['time'], y=numpy_data['x'])
             self.yPenPosTrace.setData(x=numpy_data['time'], y=numpy_data['y'])
-            self.currentSelection.setRegion([numpy_data['time'][0],numpy_data['time'][0]+1000])
+            self.currentSelection.setRegion([numpy_data['time'][0],numpy_data['time'][0]+1.0])
             self.currentSelection.setBounds(bounds=(numpy_data['time'][0], numpy_data['time'][-1]))
 
         self.handlePenDataSelectionChanged()

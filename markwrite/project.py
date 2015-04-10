@@ -56,6 +56,7 @@ class MarkWriteProject(object):
         self._segment_ids=[]
         self.autodetected_segment_tags=[]
         self._name = u"Unknown"
+        self._original_timebase_offset=0
 
         if file_path and os.path.exists(file_path) and os.path.isfile(file_path):
             dir_path, file_name = os.path.split(file_path)
@@ -93,6 +94,12 @@ class MarkWriteProject(object):
             # TODO : Define MarkWrite project setting and implement GUI for editing
             self._project_settings = OrderedDict()
             self._name = file_name
+
+            # Normalize pen sample times so first sample starts at 0.0 sec.
+            self._original_timebase_offset=pen_data[0]['time']
+            pen_data['time']-=self._original_timebase_offset
+            pen_data['time']=pen_data['time']/1000.0
+
             self._pendata = pen_data
             self._selectedtimeperiod=[0,0]
             self._selectedpendata=None
