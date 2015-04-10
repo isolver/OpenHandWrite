@@ -21,11 +21,31 @@ from collections import OrderedDict
 class PenDataSegment(object):
     _nextid=1
     def __init__(self, name=None, pendata=None):
-        self._name=name
+        """
+
+        :param name:
+        :param pendata:
+        :return:
+        """
         self._id = self.nextid
+
+        self._name=name
         if self._name is None:
             self._name="Segment %d"%(self._id)
+
         self._pendata=pendata
+
+        # weakref.proxy to this segment's parent segment.
+        # If segment is child of project node in gui tree, then parentsegment
+        # should be None.
+        # Get / Set using parentsegment property.
+        #
+        # TODO: If this segment has a parent segment, then this segments pendata
+        # must be a subset of the parent segments pendata.
+        #
+        # CONSIDER: Should this be the parent segment's id property
+        # instead of a ref to parent segment object?
+        self._parentsegment = None
 
     @property
     def nextid(self):
@@ -43,10 +63,21 @@ class PenDataSegment(object):
 
     @property
     def id(self):
+        """
+
+        :return:
+        """
         return self._id
 
     @id.setter
     def id(self, n):
+        """
+        TODO: Ensure id being set is not already in use by another segment in
+              the project.
+
+        :param n:
+        :return:
+        """
         self._id = n
 
     @property
@@ -64,6 +95,14 @@ class PenDataSegment(object):
     @property
     def endtime(self):
         return self._pendata['time'][-1]
+
+    @property
+    def parentsegment(self):
+        return self._parentsegment
+
+    @parentsegment.setter
+    def parentsegment(self, s):
+        self._parentsegment = s
 
     @property
     def pointcount(self):

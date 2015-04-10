@@ -24,9 +24,9 @@ from pyqtgraph.dockarea import DockArea,Dock
 from pyqtgraph import TreeWidget, TableWidget
 
 from markwrite.util import getIconFilePath
-from markwrite.file_io import loadPredefinedSegmentTagList
+from markwrite.file_io import loadPredefinedSegmentTagList,PenSampleReportExporter
 from markwrite.segment import PenDataSegment
-from dialogs import ExitApplication, fileOpenDlg, ErrorDialog, warnDlg
+from dialogs import ExitApplication, fileOpenDlg, ErrorDialog, warnDlg, fileSaveDlg
 from markwrite.project import MarkWriteProject
 
 DEFAULT_WIN_SIZE = (1200,800)
@@ -151,6 +151,17 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.saveProjectAction.setStatusTip(atext)
         self.saveProjectAction.triggered.connect(self.saveProject)
 
+        atext='Export Pen Sample Report File.'
+        aicon='page&32.png'
+        self.exportSampleReportAction = ContextualStateAction(
+                                    QtGui.QIcon(getIconFilePath(aicon)),
+                                    'Export Pen Sample Report',
+                                    self)
+        #self.exportSampleReportAction.setShortcut('Ctrl+S')
+        self.exportSampleReportAction.setEnabled(False)
+        self.exportSampleReportAction.setStatusTip(atext)
+        self.exportSampleReportAction.triggered.connect(self.createPenSampleLevelReportFile)
+
 
         atext='Exit Application'
         aicon='shut_down&32.png'
@@ -216,6 +227,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         fileMenu.addAction(self.openFileAction)
         fileMenu.addAction(self.saveProjectAction)
         fileMenu.addSeparator()
+        exportMenu = fileMenu.addMenu("&Export")
+        exportMenu.addAction(self.exportSampleReportAction)
+        fileMenu.addSeparator()
         fileMenu.addAction(self.exitAction)
 
         segmentMenu = menubar.addMenu('&Segment')
@@ -230,7 +244,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.toolbarFile.addAction(self.openFileAction)
         self.toolbarFile.addAction(self.saveProjectAction)
 
-        self.toolbarsegment = self.addToolBar('&Segment')
+        self.toolbarExport = self.addToolBar('Export')
+        self.toolbarExport.addAction(self.exportSampleReportAction)
+
+        self.toolbarsegment = self.addToolBar('Segment')
         self.toolbarsegment.addAction(self.createSegmentAction)
         self.toolbarsegment.addAction(self.removeSegmentAction)
 
@@ -335,7 +352,26 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.saveProjectAction.setEnabled(self._current_project and self._current_project.modified)
         warnDlg(prompt=u"Project Saving is not Implemented Yet. Sorry.")
 
+    def createPenSampleLevelReportFile(self):
+        default_file_name = u"pen_samples_{0}.txt".format(self.project.name)
+        file_path = fileSaveDlg(initFileName=default_file_name,prompt="Export Pen Sample Report")
+        if file_path:
+            PenSampleReportExporter().export(file_path,  self.project)
+
     def createSegment(self):
+        """
+        Displays the Create Segment dialog. If dialog is not cancelled and
+        segment name length >0, then create a new segment and add to the
+        projects segment list.
+
+        TODO: 1.'Autotrim' segment time period and update View Widgets when
+                the Create Segment dialog is first displayed. If no segment is
+                actually created, reset selection region to previous state.
+              2. If the selected / active node in the project tree gui widget
+                is a Segment, then add the newly create segment as a child of
+                currently selected segment, otherwise use current logic.
+        :return:
+        """
         if self.project and len(self.project.selectedpendata) > 0:
             tag, ok = showSegmentNameDialog(self.predefinedtags)
             if len(tag)>0 and ok:
@@ -378,6 +414,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self._current_project = project
         self.updateAppTitle()
         self.saveProjectAction.setEnabled(project.modified)
+        self.exportSampleReportAction.setEnabled(True)
 
     def handleSelectedPenDataUpdate(self, pendata):
         self.createSegmentAction.setEnabled(self.project and len(pendata)>0)

@@ -27,8 +27,6 @@ def fileSaveDlg(initFilePath="", initFileName="",
                 prompt=u"Select file to save",
                 allowed=None):
     """A simple dialogue allowing write access to the file system.
-    (Useful in case you collect an hour of data and then try to
-    save to a non-existent directory!!)
 
     :parameters:
         initFilePath: string
@@ -51,9 +49,7 @@ def fileSaveDlg(initFilePath="", initFileName="",
     """
     if allowed is None:
         allowed = "All files (*.*);;" \
-                  "txt (*.txt);;" \
-                  "pickled files (*.pickle *.pkl);;" \
-                  "shelved files (*.shelf)"
+                  "Text files (*.txt)"
 
     r = QtGui.QFileDialog.getSaveFileName(parent=None,
                                           caption=prompt,

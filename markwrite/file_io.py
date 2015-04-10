@@ -173,6 +173,51 @@ class XmlDataImporter(DataImporter):
 
 ################################################################################
 
+class ReportExporter(object):
+    '''
+    Parent class for all report export formats. Each subclass must implement
+    the .export() method.
+    '''
+    def __init__(self):
+        pass
+
+    @classmethod
+    def export(cls, file_path):
+        '''.
+        :param file_path: path to file for writing exported report.
+        :return: bool
+        '''
+        return True
+
+class PenSampleReportExporter(ReportExporter):
+    def __init__(self):
+        ReportExporter.__init__(self)
+
+    @classmethod
+    def export(cls, file_path, project):
+        try:
+            import pyqtgraph
+            with codecs.open(file_path, "w", "utf-8") as f:
+                pendata = project.pendata
+                with pyqtgraph.ProgressDialog("Saving Pen Samples Level Report ..", 0, pendata.shape[0]) as dlg:
+                    for i in xrange(pendata.shape[0]):
+                        dp=pendata[i]
+                        point_line = unicode("{time}\t{x}\t{y}\t{pressure}\n".format(time=dp['time'],x=dp['x'],y=dp['y'],pressure=dp['pressure']))
+                        f.write(point_line)
+                        if i%10==0:
+                            dlg.setValue(i)
+                        if dlg.wasCanceled():
+                            # TODO: Should the incomplete report file be deleted
+                            #       if dialog is cancelled?
+                            break
+            return True
+        except:
+            import traceback
+            traceback.print_exc()
+        return False
+
+################################################################################
+
 def loadPredefinedSegmentTagList(file_name=u'default.tag'):
     tag_file_path = getSegmentTagsFilePath(file_name)
     with codecs.open(tag_file_path, "r", "utf-8") as f:
