@@ -17,49 +17,47 @@
 from __future__ import division
 
 from collections import OrderedDict
+from operator import attrgetter
+from weakref import proxy, ProxyType
 
-class PenDataSegment(object):
+
+class PenDataSegmentSet(object):
     _nextid=1
-    def __init__(self, name=None, pendata=None):
-        """
-
-        :param name:
-        :param pendata:
-        :return:
-        """
+    def __init__(self, parent=None):
         self._id = self.nextid
 
-        self._name=name
-        if self._name is None:
-            self._name="Segment %d"%(self._id)
-
-        self._pendata=pendata
-
         # weakref.proxy to this segment's parent segment.
-        # If segment is child of project node in gui tree, then parentsegment
+        # If segment is child of project node in gui tree, then parent
         # should be None.
-        # Get / Set using parentsegment property.
+        # Get / Set using parent property.
         #
         # TODO: If this segment has a parent segment, then this segments pendata
         # must be a subset of the parent segments pendata.
         #
         # CONSIDER: Should this be the parent segment's id property
         # instead of a ref to parent segment object?
-        self._parentsegment = None
+        self._parent = None
+        if parent:
+            if isinstance(parent,ProxyType):
+                self._parent = parent
+            else:
+                self._parent = proxy(parent)
+        # List of 0 - N child (sub) segments associated with this segment.
+        # If segment has no children, then _childsegments should be [].
+        # Get / Set using childsegments property.
+        #
+        # TODO: Children of a segment can only contain pen points that are also
+        #       contained in the segment's pendata.
+        #
+        self._childsegments = []
+
+        self._childsegment_ids=[]
 
     @property
     def nextid(self):
-        nid = PenDataSegment._nextid
-        PenDataSegment._nextid+=1
+        nid = PenDataSegmentSet._nextid
+        PenDataSegmentSet._nextid+=1
         return nid
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, n):
-        self._name = n
 
     @property
     def id(self):
@@ -81,6 +79,55 @@ class PenDataSegment(object):
         self._id = n
 
     @property
+    def children(self):
+        return self._childsegments
+
+    def getChildIndex(self, segment):
+        return self._childsegment_ids.index(segment.id)
+
+    def addChild(self, s):
+        self._childsegments.append(s)
+        self._childsegments = sorted(self._childsegments, key=attrgetter('starttime'))
+        self._childsegment_ids.insert(self._childsegments.index(s),s.id)
+
+    def removeChild(self, s):
+        seg_index = self._childsegment_ids.index(s.id)
+        self._childsegment_ids.remove(s.id)
+        self._childsegments.pop(seg_index)
+
+    @property
+    def parent(self):
+        return self._parent
+
+    @parent.setter
+    def parent(self, s):
+        self._parent = s
+
+class PenDataSegment(PenDataSegmentSet):
+    def __init__(self, name=None, pendata=None, parent=None):
+        """
+
+        :param name:
+        :param pendata:
+        :return:
+        """
+        PenDataSegmentSet.__init__(self,parent)
+
+        self._name=name
+        if self._name is None:
+            self._name="Segment %d"%(self._id)
+
+        self._pendata=pendata
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, n):
+        self._name = n
+
+    @property
     def pendata(self):
         return self._pendata
 
@@ -95,14 +142,6 @@ class PenDataSegment(object):
     @property
     def endtime(self):
         return self._pendata['time'][-1]
-
-    @property
-    def parentsegment(self):
-        return self._parentsegment
-
-    @parentsegment.setter
-    def parentsegment(self, s):
-        self._parentsegment = s
 
     @property
     def pointcount(self):

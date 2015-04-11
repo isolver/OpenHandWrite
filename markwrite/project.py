@@ -26,6 +26,7 @@ import codecs
 from pyqtgraph import OrderedDict
 from pyqtgraph.Qt import QtGui
 from file_io import EyePenDataImporter, XmlDataImporter
+from segment import PenDataSegmentSet
 
 class MarkWriteProject(object):
     project_file_extension = u'mwp'
@@ -52,8 +53,7 @@ class MarkWriteProject(object):
         self._pendata = None
         self._selectedtimeperiod=[0,0]
         self._selectedpendata=[0,0]
-        self._segments=[]
-        self._segment_ids=[]
+        self._segmentset=None
         self.autodetected_segment_tags=[]
         self._name = u"Unknown"
         self._original_timebase_offset=0
@@ -103,8 +103,7 @@ class MarkWriteProject(object):
             self._pendata = pen_data
             self._selectedtimeperiod=[0,0]
             self._selectedpendata=None
-            self._segments=[]
-            self._segment_ids=[]
+            self._segmentset=PenDataSegmentSet()
             self._project_file_path = u''
             self._modified = True
             self._created_date = time.strftime("%c")
@@ -120,8 +119,7 @@ class MarkWriteProject(object):
         self._pendata = None #TODO: Load from proj file.
         self._selectedtimeperiod=None #TODO: Load from proj file.
         self._selectedpendata=None #TODO: Load from proj file.
-        self._segments=None #TODO: Load from proj file.
-        self._segment_ids=None #TODO: Load from proj file.
+        self._segmentset=None #TODO: Load from proj file.
         self._project_settings = OrderedDict() #TODO: Load from proj file.
         self._project_file_path = file_path
         self._modified = False
@@ -199,22 +197,8 @@ class MarkWriteProject(object):
         self._selectedpendata = n
 
     @property
-    def segments(self):
-        return self._segments
-
-    def getSegmentIndex(self, segment):
-        return self._segment_ids.index(segment.id)
-
-    def addSegment(self, s):
-        from operator import attrgetter
-        self._segments.append(s)
-        self._segments = sorted(self._segments, key=attrgetter('starttime'))
-        self._segment_ids.insert(self._segments.index(s),s.id)
-
-    def removeSegment(self, s):
-        seg_index = self._segment_ids.index(s.id)
-        self._segment_ids.remove(s.id)
-        self._segments.pop(seg_index)
+    def segmentset(self):
+        return self._segmentset
 
     def save(self):
         """

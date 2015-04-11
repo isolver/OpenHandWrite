@@ -16,16 +16,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import division
 
-from weakref import proxy
+
+from weakref import proxy,WeakValueDictionary
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.dockarea import DockArea,Dock
-from pyqtgraph import TreeWidget, TableWidget
+from pyqtgraph import TableWidget
 
 from markwrite.util import getIconFilePath
 from markwrite.file_io import loadPredefinedSegmentTagList,PenSampleReportExporter
 from markwrite.segment import PenDataSegment
+from markwrite.gui.segmenttree import SegmentTreeWidget
 from dialogs import ExitApplication, fileOpenDlg, ErrorDialog, warnDlg, fileSaveDlg
 from markwrite.project import MarkWriteProject
 
@@ -117,7 +119,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     @activesegment.setter
     def activesegment(self, s):
         self._activesegment = s
-        self.removeSegmentAction.setEnabled(s is not None)
+        self.removeSegmentAction.setEnabled(s is not None and isinstance(s,PenDataSegment))
 
     @property
     def predefinedtags(self):
@@ -375,8 +377,11 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         if self.project and len(self.project.selectedpendata) > 0:
             tag, ok = showSegmentNameDialog(self.predefinedtags)
             if len(tag)>0 and ok:
-                new_segment = PenDataSegment(name=tag, pendata=self.project.selectedpendata)
-                self.project.addSegment(new_segment)
+                sparent = self.project.segmentset
+                if self.activesegment:
+                    sparent = self.activesegment
+                new_segment = PenDataSegment(name=tag, pendata=self.project.selectedpendata, parent=sparent)
+                sparent.addChild(new_segment)
 
                 # Increment the pendata array 'segmented' field for elements within
                 # the segment so that # of segments created that contain each
@@ -393,7 +398,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     def removeSegment(self):
         segment = self.activesegment
         if segment:
-            seg_ix = self.project.getSegmentIndex(segment)
+            seg_ix = segment.parent.getChildIndex(segment)
             print 'removeSegment:', segment, seg_ix
 
             # Decrement the pendata array 'segmented' field for elements within
@@ -402,11 +407,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             allpendata = self.project.pendata
             segment_filter = (allpendata['time']>=segment.starttime) & (allpendata['time']<=segment.endtime)
             allpendata['segmented'][segment_filter]-=1
-
-            self.project.removeSegment(segment)
-            self.activesegment=None
-
             self.sigSegmentRemoved.emit(segment, seg_ix)
+            segment.parent.removeChild(segment)
+
 
     def handleProjectChange(self, project):
         if self._current_project:
@@ -577,13 +580,14 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
 
 
 class ProjectInfoDockArea(DockArea):
+    segid2treenode=WeakValueDictionary()
     def __init__(self):
         DockArea.__init__(self)
 
         self.project_tree_dock = Dock(u"Project Tree", hideTitle=True)
         self.addDock(self.project_tree_dock, 'top')#'above', self.flowcharts_dock)
 
-        self.project_tree = TreeWidget()
+        self.project_tree = SegmentTreeWidget()
         self.project_tree.setColumnCount(1)
         self.project_tree.setHeaderHidden(True)
         self.project_tree.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
@@ -626,15 +630,16 @@ class ProjectInfoDockArea(DockArea):
 
     def handleProjectChange(self, project):
         self.project_tree.clear()
-
+        self.segid2treenode.clear()
         # Create Project Tree Node
         projecttreeitem=QtGui.QTreeWidgetItem([project.name])
         projecttreeitem._pydat=proxy(project)
+        self.segid2treenode[project.segmentset.id]=projecttreeitem
         self.project_tree.addTopLevelItem(projecttreeitem)
         projecttreeitem.setSelected(True)
         self.project_tree.setCurrentItem(projecttreeitem)
 
-        for pds in project.segments:
+        for pds in project.segmentset.children:
             segtreeitem=QtGui.QTreeWidgetItem([pds.name])
             segtreeitem._pydat=proxy(pds)
             projecttreeitem.addChild(segtreeitem)
@@ -642,11 +647,13 @@ class ProjectInfoDockArea(DockArea):
         self.updatePropertiesTableData(project.propertiesTableData())
 
     def handleSegmentCreated(self, segment):
-        segindex = WRITEMARK_APP_INSTANCE.project.getSegmentIndex(segment)
-        project_tree_node = self.project_tree.topLevelItem(0)
+        segindex = segment.parent.getChildIndex(segment)
+        parent_tree_node = self.segid2treenode[segment.parent.id]
+        #parent_tree_node = self.project_tree.topLevelItem(0)
         segtreeitem=QtGui.QTreeWidgetItem([segment.name])
+        self.segid2treenode[segment.id]=segtreeitem
         segtreeitem._pydat=proxy(segment)
-        project_tree_node.insertChild(segindex,segtreeitem)
+        parent_tree_node.insertChild(segindex,segtreeitem)
         for i in self.project_tree.selectedItems():
             i.setSelected(False)
         segtreeitem.setSelected(True)
@@ -655,9 +662,14 @@ class ProjectInfoDockArea(DockArea):
         WRITEMARK_APP_INSTANCE.activesegment=segment
 
     def handleSegmentRemoved(self, segment, segment_index):
-        project_tree_node = self.project_tree.topLevelItem(0)
-        segmenttreeitem = project_tree_node.child(segment_index)
-        project_tree_node.removeChild(segmenttreeitem)
+        parent_tree_node = self.segid2treenode[segment.parent.id]#self.project_tree.topLevelItem(0)
+        segmenttreeitem = parent_tree_node.child(segment_index)
+        parent_tree_node.removeChild(segmenttreeitem)
+        for i in self.project_tree.selectedItems():
+            i.setSelected(False)
+        parent_tree_node.setSelected(True)
+        self.project_tree.setCurrentItem(parent_tree_node)
+        WRITEMARK_APP_INSTANCE.activesegment=segment.parent
 
     def currentTreeItemChangedEvent(self,*args,**kwarg):
         new_tree_widget, old_tree_widget=args
