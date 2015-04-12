@@ -11,7 +11,7 @@ class SegmentTreeWidget(TreeWidget):
         self.setHeaderHidden(True)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
-        self.setWindowTitle('MarkWrite Project')
+#        self.setWindowTitle('MarkWrite Project')
 
 #        self.itemActivated.connect(self.handleItemActivatedEvent)
 #        self.itemChanged.connect(self.handleItemChangedEvent)
@@ -20,7 +20,7 @@ class SegmentTreeWidget(TreeWidget):
 #        self.itemExpanded.connect(self.handleItemExpandedEvent)
 #        self.itemPressed.connect(self.handleItemPressedEvent)
 #        self.itemSelectionChanged.connect(self.handleItemSelectionChangedEvent)
-#        self.itemClicked.connect(self.handleItemSelectionChangedEvent)
+#        self.itemClicked.connect(self.handleItemClickedEvent)
 
     def itemMoving(self, item, parent, index):
         """Called when item has been dropped elsewhere in the tree.
@@ -28,25 +28,25 @@ class SegmentTreeWidget(TreeWidget):
         return False
 
     def handleItemActivatedEvent(self, *args, **kwargs):
-        print "handleItemActivatedEvent:", args, kwargs
+        print "itemActivated:", args, kwargs
 
     def handleItemChangedEvent(self, *args, **kwargs):
-        print "handleItemChangedEvent:", args, kwargs
+        print "itemChanged:", args, kwargs
 
     def handleItemCollapsedEvent(self, *args, **kwargs):
-        print "handleItemCollapsedEvent:", args, kwargs
+        print "itemCollapsed:", args, kwargs
 
     def handleItemEnteredEvent(self, *args, **kwargs):
-        print "handleItemEnteredEvent:", args, kwargs
+        print "itemEntered:", args, kwargs
 
     def handleItemClickedEvent(self, *args, **kwargs):
-        print "handleItemClickedEvent:", args, kwargs
+        print "itemClicked:", args, kwargs
 
     def handleItemExpandedEvent(self, *args, **kwargs):
-        print "handleItemExpandedEvent:", args, kwargs
+        print "itemExpanded:", args, kwargs
 
     def handleItemPressedEvent(self, *args, **kwargs):
-        print "handleItemPressedEvent:", args, kwargs
+        print "itemPressed:", args, kwargs
 
-    def handleItemSelectionChangedEvent(self, *args, **kwargs):
-        print "handleItemSelectionChangedEvent:", args, kwargs
+#    def handleItemSelectionChangedEvent(self, *args, **kwargs):
+#        print "itemSelectionChanged:", args, kwargs,self.selectedItems()

@@ -18,24 +18,26 @@ from __future__ import division
 
 from collections import OrderedDict
 from operator import attrgetter
-from weakref import proxy, ProxyType
+from weakref import proxy, ProxyType,WeakValueDictionary
 
 
 class PenDataSegmentCategory(object):
     _nextid=1
-    def __init__(self, parent=None):
-        self._id = self.nextid
+    id2obj=WeakValueDictionary()
+    _project = None
+    def __init__(self, name=None, parent=None, clear_lookup=True, project = None):
+        self._name=name
+        if name is None:
+            self._name = u"Default Segment Category"
 
+        self._id = self.nextid
+        if clear_lookup:
+            self.id2obj.clear()
+        self.id2obj[self._id]=self
         # weakref.proxy to this segment's parent segment.
         # If segment is child of project node in gui tree, then parent
         # should be None.
-        # Get / Set using parent property.
-        #
-        # TODO: If this segment has a parent segment, then this segments pendata
-        # must be a subset of the parent segments pendata.
-        #
-        # CONSIDER: Should this be the parent segment's id property
-        # instead of a ref to parent segment object?
+        # Get using parent property.
         self._parent = None
         if parent:
             if isinstance(parent,ProxyType):
@@ -44,14 +46,15 @@ class PenDataSegmentCategory(object):
                 self._parent = proxy(parent)
         # List of 0 - N child (sub) segments associated with this segment.
         # If segment has no children, then _childsegments should be [].
-        # Get / Set using childsegments property.
-        #
-        # TODO: Children of a segment can only contain pen points that are also
-        #       contained in the segment's pendata.
-        #
+        # Get childsegments property.
         self._childsegments = []
-
         self._childsegment_ids=[]
+
+        if project:
+            if isinstance(project,ProxyType):
+                PenDataSegmentCategory._project = project
+            else:
+                PenDataSegmentCategory._project = proxy(project)
 
     @property
     def nextid(self):
@@ -79,6 +82,14 @@ class PenDataSegmentCategory(object):
         self._id = n
 
     @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, n):
+        self._name = n
+
+    @property
     def children(self):
         return self._childsegments
 
@@ -99,6 +110,10 @@ class PenDataSegmentCategory(object):
     def parent(self):
         return self._parent
 
+    @property
+    def project(self):
+        return self._project
+
     @parent.setter
     def parent(self, s):
         self._parent = s
@@ -118,6 +133,44 @@ class PenDataSegmentCategory(object):
             p = p.parent
         return lvl
 
+    @property
+    def pendata(self):
+        return self._project._pendata
+
+    @property
+    def starttime(self):
+        return self._project._pendata['time'][0]
+
+    @property
+    def endtime(self):
+        return self._project._pendata['time'][-1]
+
+    @property
+    def timerange(self):
+        return self._project._pendata['time'][0],self._project._pendata['time'][-1]
+
+
+    @property
+    def pointcount(self):
+        return self._project._pendata.shape[0]
+
+    def propertiesTableData(self):
+        """
+        Return a dict of segment properties to display in the Selected Project
+        Tree Node Object Properties Table.
+
+        :return: dict of segmentcategory properties to display
+        """
+
+        project_properties = OrderedDict()
+        project_properties['Name'] = dict(val=self.name)
+        project_properties['ID'] = dict(val=self.id)
+        project_properties['Start Time'] = dict(val=self.starttime)
+        project_properties['End Time'] = dict(val=self.endtime)
+        project_properties['Point Count'] = dict(val=self.pointcount)
+        project_properties['level'] = dict(val=self.level)
+        return project_properties
+
 class PenDataSegment(PenDataSegmentCategory):
     def __init__(self, name=None, pendata=None, parent=None):
         """
@@ -126,21 +179,14 @@ class PenDataSegment(PenDataSegmentCategory):
         :param pendata:
         :return:
         """
-        PenDataSegmentCategory.__init__(self,parent)
+        PenDataSegmentCategory.__init__(self,name, parent, False)
 
-        self._name=name
+
         if self._name is None:
             self._name="Segment %d"%(self._id)
 
         self._pendata=pendata
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, n):
-        self._name = n
+        parent.addChild(self)
 
     @property
     def pendata(self):
@@ -157,6 +203,11 @@ class PenDataSegment(PenDataSegmentCategory):
     @property
     def endtime(self):
         return self._pendata['time'][-1]
+
+    @property
+    def timerange(self):
+        return self._pendata['time'][0],self._pendata['time'][-1]
+
 
     @property
     def pointcount(self):

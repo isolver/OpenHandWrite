@@ -26,7 +26,7 @@ import codecs
 from pyqtgraph import OrderedDict
 from pyqtgraph.Qt import QtGui
 from file_io import EyePenDataImporter, XmlDataImporter
-from segment import PenDataSegmentCategory
+from segment import PenDataSegment, PenDataSegmentCategory
 
 class MarkWriteProject(object):
     project_file_extension = u'mwp'
@@ -50,9 +50,9 @@ class MarkWriteProject(object):
         :param kwargs: dict
         :return: MarkWriteProject instance
         """
-        self._pendata = None
+        self._pendata = []
         self._selectedtimeperiod=[0,0]
-        self._selectedpendata=[0,0]
+        self._selectedpendata=[]
         self._segmentset=None
         self.autodetected_segment_tags=[]
         self._name = u"Unknown"
@@ -65,7 +65,7 @@ class MarkWriteProject(object):
             fimporter = self.input_file_loaders.get(fext)
             if fimporter:
                 self.createNewProject(fname, fimporter.asarray(file_path))
-                self.autodetected_segment_tags=self.detectAutoAssociatedSegmentTags(dir_path,fname,fext)
+                self.autodetected_segment_tags=self.detectAssociatedSegmentTagsFile(dir_path,fname,fext)
             elif file_name.lower().endswith(self.project_file_extension):
                 self.openExistingProject(file_path)
             else:
@@ -73,7 +73,7 @@ class MarkWriteProject(object):
         else:
             raise IOError("Invalid File Path: %s"%(file_path))
 
-    def detectAutoAssociatedSegmentTags(self,dir_path,fname,fext):
+    def detectAssociatedSegmentTagsFile(self,dir_path,fname,fext):
         tag_list=[]
         same_named_files = glob.glob(os.path.join(dir_path,fname+u'.*'))
         if len(same_named_files)<2:
@@ -102,8 +102,9 @@ class MarkWriteProject(object):
 
             self._pendata = pen_data
             self._selectedtimeperiod=[0,0]
-            self._selectedpendata=None
-            self._segmentset=PenDataSegmentCategory()
+            self._selectedpendata=[]
+            self._segmentset=PenDataSegmentCategory(name=self.name,project=self)
+            self._pendata['segmented']=self._segmentset.id
             self._project_file_path = u''
             self._modified = True
             self._created_date = time.strftime("%c")
@@ -116,15 +117,46 @@ class MarkWriteProject(object):
         print "Reloading a saved MarkWrite Project is not implemented."
         dir_path, file_name = os.path.split(file_path)
         self._name = file_name
-        self._pendata = None #TODO: Load from proj file.
-        self._selectedtimeperiod=None #TODO: Load from proj file.
-        self._selectedpendata=None #TODO: Load from proj file.
+        self._pendata = [] #TODO: Load from proj file.
+        self._selectedtimeperiod=[0,0] #TODO: Load from proj file.
+        self._selectedpendata=[] #TODO: Load from proj file.
         self._segmentset=None #TODO: Load from proj file.
         self._project_settings = OrderedDict() #TODO: Load from proj file.
         self._project_file_path = file_path
         self._modified = False
         self._created_date = u"READ FROM PROJ FILE"
         self._modified_date = u"READ FROM PROJ FILE"
+
+    def updateSelectedData(self,minT,maxT):
+        self._selectedtimeperiod=minT, maxT
+        self._selectedpendata = self._pendata[(self._pendata['time'] >= minT) & (self._pendata['time'] <= maxT)]
+        return self._selectedpendata
+
+    def getSelectedDataSegmentIDs(self):
+        if len(self._selectedpendata)>0:
+            return np.unique(self._selectedpendata['segmented'])
+            #print "getSelectedDataSegmentIDs:",v
+            #return v
+        return []
+
+    def createPenDataSegment(self, tag, parent_id):
+        """
+        Only called if the currently selected pen data can make a valid segment.
+        i.e. getSelectedDataSegmentIDs() returned a list of exactly 1 segment id
+        :param tag:
+        :param parent_id:
+        :return:
+        """
+        sparent = self._segmentset.id2obj[parent_id]
+        new_segment = PenDataSegment(name=tag, pendata=self._selectedpendata, parent=sparent)
+        #print "Created segment:",sparent, sparent.id, new_segment,new_segment.id
+        # Increment the pendata array 'segmented' field for elements within
+        # the segment so that # of segments created that contain each
+        # pen point can be tracked
+        allpendata = self.pendata
+        segment_filter = (allpendata['time']>=new_segment.starttime) & (allpendata['time']<=new_segment.endtime)
+        allpendata['segmented'][segment_filter]=new_segment.id
+        return new_segment
 
     @property
     def name(self):
@@ -184,17 +216,9 @@ class MarkWriteProject(object):
     def selectedtimeperiod(self):
         return self._selectedtimeperiod
 
-    @selectedtimeperiod.setter
-    def selectedtimeperiod(self, n):
-        self._selectedtimeperiod = n
-
     @property
     def selectedpendata(self):
         return self._selectedpendata
-
-    @selectedpendata.setter
-    def selectedpendata(self, n):
-        self._selectedpendata = n
 
     @property
     def segmentset(self):

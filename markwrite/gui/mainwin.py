@@ -119,7 +119,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     @activesegment.setter
     def activesegment(self, s):
         self._activesegment = s
-        self.removeSegmentAction.setEnabled(s is not None and isinstance(s,PenDataSegment))
+        self.removeSegmentAction.setEnabled(s is not None and s.parent is not None)
 
     @property
     def predefinedtags(self):
@@ -375,42 +375,38 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 currently selected segment, otherwise use current logic.
         :return:
         """
-        if self.project and len(self.project.selectedpendata) > 0:
-            tag, ok = showSegmentNameDialog(self.predefinedtags)
-            tag = unicode(tag).strip().replace('\t',"#")
-            if len(tag)>0 and ok:
-                sparent = self.project.segmentset
-                if self.activesegment:
-                    sparent = self.activesegment
-                new_segment = PenDataSegment(name=tag, pendata=self.project.selectedpendata, parent=sparent)
-                sparent.addChild(new_segment)
-
-                # Increment the pendata array 'segmented' field for elements within
-                # the segment so that # of segments created that contain each
-                # pen point can be tracked
-                allpendata = self.project.pendata
-                segment_filter = (allpendata['time']>=new_segment.starttime) & (allpendata['time']<=new_segment.endtime)
-                allpendata['segmented'][segment_filter]+=1
-
-                self.sigSegmentCreated.emit(new_segment)
+        if self.project:
+            psids = self.project.getSelectedDataSegmentIDs()
+            if len(psids)==1:
+                #print 'App.Determined Parent Segment ID:', psids[0]
+                tag, ok = showSegmentNameDialog(self.predefinedtags)
+                tag = unicode(tag).strip().replace('\t',"#")
+                if len(tag)>0 and ok:
+                    new_segment = self.project.createPenDataSegment(tag,psids[0])
+                    self.sigSegmentCreated.emit(new_segment)
+            else:
+                print "ERROR: Could not create segment. detected parent ids:",psids
         else:
             ErrorDialog.info_text=u"Segment Creation Failed.\nNo selected pen data."
             ErrorDialog().display()
 
     def removeSegment(self):
+
         segment = self.activesegment
-        if segment:
+        if segment and segment.parent is not None:
             seg_ix = segment.parent.getChildIndex(segment)
-            #print 'removeSegment:', segment, seg_ix
 
             # Decrement the pendata array 'segmented' field for elements within
             # the segment being removed so that # of segments that contain each
             # pen point can be tracked
             allpendata = self.project.pendata
             segment_filter = (allpendata['time']>=segment.starttime) & (allpendata['time']<=segment.endtime)
-            allpendata['segmented'][segment_filter]-=1
+            #print '>> App.removeSegment:', segment.id, allpendata['segmented'][segment_filter], self.project.getSelectedDataSegmentIDs()
+            allpendata['segmented'][segment_filter]=segment.parent.id
+            sid=segment.id
             self.sigSegmentRemoved.emit(segment, seg_ix)
             segment.parent.removeChild(segment)
+            #print '<< App.removeSegment:', sid, allpendata['segmented'][segment_filter], self.project.getSelectedDataSegmentIDs()
 
 
     def handleProjectChange(self, project):
@@ -422,7 +418,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.exportSampleReportAction.setEnabled(True)
 
     def handleSelectedPenDataUpdate(self, timeperiod, pendata):
-        self.createSegmentAction.setEnabled(self.project and len(pendata)>0)
+        #print '>> App.handleSelectedPenDataUpdate:',timeperiod
+        self.createSegmentAction.setEnabled(self.project and len(self.project.getSelectedDataSegmentIDs())==1)
+        #print '<< App.handleSelectedPenDataUpdate'
 
     def closeEvent(self, event):
         if event == u'FORCE_EXIT':
@@ -477,6 +475,7 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         self.xPenPosTrace = None
         self.yPenPosTrace = None
         self.currentSelection = None
+        self._lastselectedtimerange=None
         self.sigRegionChangedProxy=None
         WRITEMARK_APP_INSTANCE.sigResetProjectData.connect(self.handleResetPenData)
 
@@ -513,44 +512,42 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
     def handlePenDataSelectionChanged(self):
         self.currentSelection.setZValue(10)
         minT, maxT=self.currentSelection.getRegion()
-        #print "PenDataTemporalPlotWidget.handlePenDataSelectionChanged:",(minT, maxT)
-        WRITEMARK_APP_INSTANCE.project.selectedtimeperiod=minT, maxT
-        numpy_data = WRITEMARK_APP_INSTANCE.project.pendata
-        selectedpendata = numpy_data[(numpy_data['time'] >= minT) & (numpy_data['time'] <= maxT)]
-        WRITEMARK_APP_INSTANCE.project.selectedpendata = selectedpendata
+        #print '>> Timeline.handlePenDataSelectionChanged:',( minT, maxT)
+        selectedpendata = WRITEMARK_APP_INSTANCE.project.updateSelectedData(minT, maxT)
         WRITEMARK_APP_INSTANCE.sigSelectedPenDataUpdate.emit((minT, maxT),selectedpendata)
-        #zoomedPointsDataItem.setData(x=currentlySelectedData['x'],y=currentlySelectedData['y'])
-        self.ensureSelectionIsVisible([minT, maxT])
+        self.ensureSelectionIsVisible([minT, maxT], selectedpendata)
+        #print '<< Timeline.handlePenDataSelectionChanged'
 
     def zoomToPenData(self, pendata, lock_bounds=False):
-        penValRange = (min(pendata['x'].min()-20, pendata['y'].min()-20,0), max(pendata['x'].max()+20, pendata['y'].max()+20))
+        if len(pendata)>0:
+            penValRange = (min(pendata['x'].min()-20, pendata['y'].min()-20,0), max(pendata['x'].max()+20, pendata['y'].max()+20))
+            #if lock_bounds:
+            #    self.setLimits(xMin=pendata['time'][0], xMax=pendata['time'][-1]+0.01)
+            self.setRange(xRange=(pendata['time'][0],pendata['time'][-1]), yRange=penValRange, padding=None)
 
-        if lock_bounds:
-            self.setLimits(xMin=pendata['time'][0], xMax=pendata['time'][-1]+0.01)
+    def ensureSelectionIsVisible(self, timespan, pendata):
+        if len(pendata)>0:
+            dxmin, dxmax =timespan
+            dxlength = dxmax-dxmin
+            (vxmin,vxmax),(vymin,vymax) = self.viewRange()
+            vxlength = vxmax-vxmin
+            vxborder=(vxlength-dxlength)/2.0
+            dymin,dymax = (min(pendata['x'].min()-20, pendata['y'].min()-20,vymin), max(pendata['x'].max()+20, pendata['y'].max()+20, vymax))
 
-        self.setRange(xRange=(pendata['time'][0],pendata['time'][-1]), yRange=penValRange, padding=None)
+            if dxlength > vxlength:
+                ##print "dlength > vlength:",dlength, vlength
+                self.setRange(xRange=(dxmin,dxmax), yRange=(dymin,dymax), padding=None)
+                return
 
-    def ensureSelectionIsVisible(self, timespan):
-        dmin, dmax =timespan
-        dlength = dmax-dmin
-        vmin,vmax = self.viewRange()[0]
-        vlength = vmax-vmin
-        vborder=(vlength-dlength)/2.0
+            if dxmin < vxmin:
+                self.setRange(xRange=(dxmin,dxmin+vxlength),yRange=(dymin,dymax), padding=0)
+                ##print 'dmin < vmin:',dmin,dmin+vlength,self.viewRange()[0]
+                return
 
-        if dlength > vlength:
-            #print "dlength > vlength:",dlength, vlength
-            self.setRange(xRange=(dmin,dmax), padding=None)
-            return
-
-        if dmin < vmin:
-            self.setRange(xRange=(dmin,dmin+vlength), padding=0)
-            #print 'dmin < vmin:',dmin,dmin+vlength,self.viewRange()[0]
-            return
-
-        if dmax > vmax:
-            self.setRange(xRange=(dmax-vlength,dmax), padding=0)
-            #print 'dmax > vmax:',dmax-vlength,dmax,self.viewRange()[0]
-            return
+            if dxmax > vxmax:
+                self.setRange(xRange=(dxmax-vxlength,dxmax),yRange=(dymin,dymax), padding=0)
+                ##print 'dmax > vmax:',dmax-vlength,dmax,self.viewRange()[0]
+                return
 
 
 
@@ -563,28 +560,25 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         self.getPlotItem().invertY(True)
         self.getPlotItem().setAspectLocked(True, 1)
 
-        #self.currentSelectionROI = pg.ROI(pos=(0,0),size=(0,0),removable=True,movable=False, pen=[255,0,0])
-        #self.getPlotItem().getViewBox().addItem(self.currentSelectionROI)
-
         self.allPlotDataItem=self.getPlotItem().plot(pen=None, symbol='o', symbolSize=1)
         self.selectedPlotDataItem=self.getPlotItem().plot(pen=None, symbol='o', symbolSize=2, symbolBrush=(0,0,255), symbolPen=(0,0,255))
 
         WRITEMARK_APP_INSTANCE.sigResetProjectData.connect(self.handleResetPenData)
         WRITEMARK_APP_INSTANCE.sigSelectedPenDataUpdate.connect(self.handlePenDataSelectionChanged)
-        #(minx,maxx),(miny,maxy) = self.getPlotItem().getViewBox().viewRange()
-        #print 'allDataSpatialPlotItem:',(minx,maxx),(miny,maxy)
 
     def handleResetPenData(self, project):
-        #print "PenDataSpatialPlotWidget.handleResetPenData:",project
+        #print ">> PenDataSpatialPlotWidget.handleResetPenData:",project
         pdat = project.pendata
         self.getPlotItem().setLimits(xMin=pdat['x'].min(), yMin=pdat['y'].min(),xMax=pdat['x'].max(), yMax=pdat['y'].max())
         self.allPlotDataItem.setData(x=pdat['x'],y=pdat['y'])
         self.setRange(xRange=(pdat['x'].min(), pdat['x'].max()), yRange=(pdat['y'].min(), pdat['y'].max()), padding=None)
+        #print "<< PenDataSpatialPlotWidget.handleResetPenData"
 
     def handlePenDataSelectionChanged(self,timeperiod, selectedpendata):
-        #print "PenDataSpatialPlotWidget.handlePenDataSelectionChanged:",timeperiod
+        #print ">> PenDataSpatialPlotWidget.handlePenDataSelectionChanged:",timeperiod
         self.selectedPlotDataItem.setData(x=selectedpendata['x'],y=selectedpendata['y'])
-        self.ensureSelectionIsVisible(selectedpendata)
+        self.ensureSelectionIsVisible(timeperiod, selectedpendata)
+        #print "<< PenDataSpatialPlotWidget.handlePenDataSelectionChanged"
 
     def zoomToPenData(self, pendata, lock_bounds=False):
         xpadding = self.getPlotItem().getViewBox().suggestPadding(0)
@@ -593,7 +587,7 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             self.setLimits(yMin=max(0.0,pendata['y'].min()-ypadding), yMax=pendata['y'].max()+ypadding, xMin=max(0.0,pendata['x'].min()-xpadding), xMax=pendata['x'].max()+xpadding)
         self.setRange(xRange=(pendata['x'].min(), pendata['x'].max()), yRange=(pendata['y'].min(), pendata['y'].max()), padding=None)
 
-    def ensureSelectionIsVisible(self, selectedpendata):
+    def ensureSelectionIsVisible(self, timespan, selectedpendata):
         if len(selectedpendata)>0:
             (vxmin,vxmax),(vymin,vymax) = self.viewRange()
             dxmin,dxmax,dymin,dymax = selectedpendata['x'].min(), selectedpendata['x'].max(), selectedpendata['y'].min(), selectedpendata['y'].max()
@@ -650,7 +644,7 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
         WRITEMARK_APP_INSTANCE.sigSelectedPenDataUpdate.connect(self.handlePenDataSelectionChanged)
 
     def handlePenDataSelectionChanged(self, timeperiod, selectedpendata):
-        #print "SelectedPointsPlotWidget.handlePenDataSelectionChanged: len=",len(selectedpendata)
+        #print "SelectedPointsPlotWidget.handlePenDataSelectionChanged: ",timeperiod
         self.plotDataItem.setData(x=selectedpendata['x'],y=selectedpendata['y'])
 
 
@@ -698,12 +692,14 @@ class ProjectInfoDockArea(DockArea):
         self.segid2treenode.clear()
         # Create Project Tree Node
         projecttreeitem=QtGui.QTreeWidgetItem([project.name])
-        projecttreeitem._pydat=proxy(project)
+        projecttreeitem._pydat=proxy(project.segmentset)
         self.segid2treenode[project.segmentset.id]=projecttreeitem
         self.project_tree.addTopLevelItem(projecttreeitem)
         projecttreeitem.setSelected(True)
         self.project_tree.setCurrentItem(projecttreeitem)
-
+        self.current_pydat_obj=project.segmentset
+        #TODO: UPDATE TO SUPPORT PROJECT REOPENNING WITH SEG. HEIRARCHY.
+        # Current code assumes list on segments only
         for pds in project.segmentset.children:
             segtreeitem=QtGui.QTreeWidgetItem([pds.name])
             segtreeitem._pydat=proxy(pds)
@@ -712,6 +708,7 @@ class ProjectInfoDockArea(DockArea):
         self.updatePropertiesTableData(project.propertiesTableData())
 
     def handleSegmentCreated(self, segment):
+        #print '>>TREE.handleSegmentCreated:',segment
         segindex = segment.parent.getChildIndex(segment)
         parent_tree_node = self.segid2treenode[segment.parent.id]
         #parent_tree_node = self.project_tree.topLevelItem(0)
@@ -725,8 +722,10 @@ class ProjectInfoDockArea(DockArea):
         self.project_tree.setCurrentItem(segtreeitem)
         self.updatePropertiesTableData(segment.propertiesTableData())
         WRITEMARK_APP_INSTANCE.activesegment=segment
+        #print '<< TREE.handleSegmentCreated'
 
     def handleSegmentRemoved(self, segment, segment_index):
+        #print '>> TREE.handleSegmentRemoved:',segment,segment_index
         parent_tree_node = self.segid2treenode[segment.parent.id]#self.project_tree.topLevelItem(0)
         segmenttreeitem = parent_tree_node.child(segment_index)
         parent_tree_node.removeChild(segmenttreeitem)
@@ -735,36 +734,59 @@ class ProjectInfoDockArea(DockArea):
         parent_tree_node.setSelected(True)
         self.project_tree.setCurrentItem(parent_tree_node)
         WRITEMARK_APP_INSTANCE.activesegment=segment.parent
+        #print '<< TREE.handleSegmentRemoved'
 
     def rightClickTreeEvent(self, *args, **kwargs):
         # Show Segment name editing dialog
         segment = WRITEMARK_APP_INSTANCE.activesegment
-        #print "rightClickTreeEvent:",segment
-        if segment and isinstance(segment, PenDataSegment):
-            tag, ok = showSegmentNameDialog(WRITEMARK_APP_INSTANCE.predefinedtags, default=segment.name)
-            if len(tag)>0 and ok:
-                segment.name = tag
-                self.project_tree.selectedItems()[0].setText(0,segment.name)
-                self.updatePropertiesTableData(segment.propertiesTableData())
+        ##print "rightClickTreeEvent:",segment
+        if segment:
+            if segment.parent is not None:
+                tag, ok = showSegmentNameDialog(WRITEMARK_APP_INSTANCE.predefinedtags, default=segment.name)
+                if len(tag)>0 and ok:
+                    segment.name = tag
+                    self.project_tree.selectedItems()[0].setText(0,segment.name)
+                    self.updatePropertiesTableData(segment.propertiesTableData())
+            else:
+                print "TODO: SUPPORT RENAMING OF SEGMENT CATEGORY NODE."
+
 
     def currentTreeItemChangedEvent(self,*args,**kwargs):
-        #print 'currentTreeItemChangedEvent:',args,kwargs
         new_tree_widget, old_tree_widget=args
 
         try:
             if new_tree_widget is None or not hasattr(new_tree_widget, '_pydat'):
                 self.current_pydat_obj=None
                 self.properties_table.clear()
+                WRITEMARK_APP_INSTANCE.activesegment=None
             else:
                 self.current_pydat_obj=new_tree_widget._pydat
-                self.updatePropertiesTableData(new_tree_widget._pydat.propertiesTableData())
-                if isinstance(self.current_pydat_obj,PenDataSegment):
-                    activesegment=WRITEMARK_APP_INSTANCE.activesegment=self.current_pydat_obj
-                    WRITEMARK_APP_INSTANCE.penDataTemporalPlotWidget.currentSelection.setRegion([activesegment.starttime,activesegment.endtime])
-                else:
-                    WRITEMARK_APP_INSTANCE.activesegment=None
+                self.updatePropertiesTableData(self.current_pydat_obj.propertiesTableData())
+                activesegment=WRITEMARK_APP_INSTANCE.activesegment=self.current_pydat_obj
+                temporalPlotWidget=WRITEMARK_APP_INSTANCE._penDataTimeLineWidget
+                timelineselectionregionwidget = temporalPlotWidget.currentSelection
+                if timelineselectionregionwidget:
+                    if activesegment.parent:
+                        timelineselectionregionwidget.setRegion(activesegment.timerange)
+                        sreg=timelineselectionregionwidget.getRegion()
+                        # If region did not change since last call to
+                        # currentTreeItemChangedEvent, then calling setRegion
+                        # does not trigger the region updated handler, so we
+                        # need to force the data view widgets to check that
+                        # the region is visible in the views.
+                        if sreg == temporalPlotWidget._lastselectedtimerange:
+                            temporalPlotWidget.ensureSelectionIsVisible(activesegment.timerange,activesegment.pendata)
+                            WRITEMARK_APP_INSTANCE._penDataSpatialViewWidget.ensureSelectionIsVisible(activesegment.timerange,activesegment.pendata)
+                        temporalPlotWidget._lastselectedtimerange = sreg
+                    else:
+                        # The segment category tree node (the root) has been selected,
+                        # so zoom time and spatial views out to full data file,
+                        # but do not change the selected region widget in the timeline view.
+                        temporalPlotWidget.ensureSelectionIsVisible(activesegment.timerange,activesegment.pendata)
+                        WRITEMARK_APP_INSTANCE._penDataSpatialViewWidget.ensureSelectionIsVisible(activesegment.timerange,activesegment.pendata)
         except Exception, e:
-            print 'currentItemChangedEvent error:',e
+            import traceback
+            traceback.print_exc()
             self.properties_table.clear()
             self.current_pydat_obj=None
 
@@ -772,9 +794,5 @@ class ProjectInfoDockArea(DockArea):
         item_tree_widget = args[0]
         if item_tree_widget and hasattr(item_tree_widget, '_pydat'):
             segment = item_tree_widget._pydat
-            if segment and isinstance(segment, PenDataSegment):
-                WRITEMARK_APP_INSTANCE._penDataTimeLineWidget.zoomToPenData(segment.pendata, True)
-                WRITEMARK_APP_INSTANCE._penDataSpatialViewWidget.zoomToPenData(segment.pendata)
-            else:
-                WRITEMARK_APP_INSTANCE._penDataTimeLineWidget.zoomToPenData(WRITEMARK_APP_INSTANCE.project.pendata, True)
-                WRITEMARK_APP_INSTANCE._penDataSpatialViewWidget.zoomToPenData(WRITEMARK_APP_INSTANCE.project.pendata)
+            WRITEMARK_APP_INSTANCE._penDataTimeLineWidget.zoomToPenData(segment.pendata)
+            WRITEMARK_APP_INSTANCE._penDataSpatialViewWidget.zoomToPenData(segment.pendata)
