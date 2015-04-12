@@ -196,12 +196,15 @@ class PenSampleReportExporter(ReportExporter):
             import pyqtgraph
             with codecs.open(file_path, "w", "utf-8") as f:
                 pendata = project.pendata
-                header_row = unicode("index\ttime\tx\ty\tpressure\n")
+                header_row = unicode("file\ttrial\tindex\ttime\tx\ty\tpressure\n")
                 f.write(header_row)
+                # TODO: Implement File and Trial columns
+                sfile='N/A'
+                strial='N/A'
                 with pyqtgraph.ProgressDialog("Saving Pen Samples Level Report ..", 0, pendata.shape[0]) as dlg:
                     for i in xrange(pendata.shape[0]):
                         dp=pendata[i]
-                        point_line = unicode("{sindex}\t{time}\t{x}\t{y}\t{pressure}\n".format(sindex=i,time=dp['time'],x=dp['x'],y=dp['y'],pressure=dp['pressure']))
+                        point_line = unicode("{sfile}\t{strial}\t{sindex}\t{time}\t{x}\t{y}\t{pressure}\n".format(sfile=sfile,strial=strial,sindex=i,time=dp['time'],x=dp['x'],y=dp['y'],pressure=dp['pressure']))
                         f.write(point_line)
                         if i%10==0:
                             dlg.setValue(i)

@@ -26,7 +26,7 @@ import codecs
 from pyqtgraph import OrderedDict
 from pyqtgraph.Qt import QtGui
 from file_io import EyePenDataImporter, XmlDataImporter
-from segment import PenDataSegmentSet
+from segment import PenDataSegmentCategory
 
 class MarkWriteProject(object):
     project_file_extension = u'mwp'
@@ -103,7 +103,7 @@ class MarkWriteProject(object):
             self._pendata = pen_data
             self._selectedtimeperiod=[0,0]
             self._selectedpendata=None
-            self._segmentset=PenDataSegmentSet()
+            self._segmentset=PenDataSegmentCategory()
             self._project_file_path = u''
             self._modified = True
             self._created_date = time.strftime("%c")

@@ -21,7 +21,7 @@ from operator import attrgetter
 from weakref import proxy, ProxyType
 
 
-class PenDataSegmentSet(object):
+class PenDataSegmentCategory(object):
     _nextid=1
     def __init__(self, parent=None):
         self._id = self.nextid
@@ -55,8 +55,8 @@ class PenDataSegmentSet(object):
 
     @property
     def nextid(self):
-        nid = PenDataSegmentSet._nextid
-        PenDataSegmentSet._nextid+=1
+        nid = PenDataSegmentCategory._nextid
+        PenDataSegmentCategory._nextid+=1
         return nid
 
     @property
@@ -103,7 +103,22 @@ class PenDataSegmentSet(object):
     def parent(self, s):
         self._parent = s
 
-class PenDataSegment(PenDataSegmentSet):
+    def hasChildren(self):
+        return len(self.children)>0
+
+    def isRoot(self):
+        return self.parent is None
+
+    @property
+    def level(self):
+        lvl = 0
+        p = self.parent
+        while p is not None:
+            lvl+=1
+            p = p.parent
+        return lvl
+
+class PenDataSegment(PenDataSegmentCategory):
     def __init__(self, name=None, pendata=None, parent=None):
         """
 
@@ -111,7 +126,7 @@ class PenDataSegment(PenDataSegmentSet):
         :param pendata:
         :return:
         """
-        PenDataSegmentSet.__init__(self,parent)
+        PenDataSegmentCategory.__init__(self,parent)
 
         self._name=name
         if self._name is None:
@@ -161,4 +176,5 @@ class PenDataSegment(PenDataSegmentSet):
         project_properties['Start Time'] = dict(val=self.starttime)
         project_properties['End Time'] = dict(val=self.endtime)
         project_properties['Point Count'] = dict(val=self.pointcount)
+        project_properties['level'] = dict(val=self.level)
         return project_properties
