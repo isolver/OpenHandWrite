@@ -650,22 +650,20 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
 
 class SelectedPointsPlotWidget(pg.PlotWidget):
     def __init__(self):
-        pg.PlotWidget.__init__(self, enableMenu=False)
+        pg.PlotWidget.__init__(self, enableMenu=False, )
 
         self.getPlotItem().invertY(True)
         self.getPlotItem().setAspectLocked(True, 1)
-        self.getPlotItem().hideButtons()
+        #self.getPlotItem().hideButtons()
         self.getPlotItem().hideAxis('left')
         self.getPlotItem().hideAxis('bottom')
-
         self.plotDataItem = self.getPlotItem().plot(pen=None, symbol='o', symbolSize=1)
 
         WRITEMARK_APP_INSTANCE.sigSelectedPenDataUpdate.connect(self.handlePenDataSelectionChanged)
 
-    def handlePenDataSelectionChanged(self, timeperiod, selectedpendata):
-        #print "SelectedPointsPlotWidget.handlePenDataSelectionChanged: ",timeperiod
-        self.plotDataItem.setData(x=selectedpendata['x'],y=selectedpendata['y'])
-
+    def handlePenDataSelectionChanged(self, timeperiod, pendata):
+        self.plotDataItem.setData(x=pendata['x'],y=pendata['y'],)
+        self.getPlotItem().enableAutoRange(x=True, y=True)
 
 class ProjectInfoDockArea(DockArea):
     segid2treenode=WeakValueDictionary()
