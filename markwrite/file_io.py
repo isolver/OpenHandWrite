@@ -173,50 +173,148 @@ class XmlDataImporter(DataImporter):
 class ReportExporter(object):
     '''
     Parent class for all report export formats. Each subclass must implement
-    the .export() method.
+    the following methods:
+
+    * headerrow()
+    * datarowcount()
+    * datarows()
+
+    And optionally set the following class attribute:
+
+    * progress_dialog_title
+
+    For example, given a ReportExporter subclass called MyReportExporter,
+    the specified report can be exxported / saved to disk using:
+
+        MyReportExporter.export(path_to_output_file, markwrite_app.project)
+
     '''
+    progress_dialog_title = "Saving MarkWrite Report .."
+    project = None
     def __init__(self):
         pass
 
     @classmethod
-    def export(cls, file_path):
-        '''.
-        :param file_path: path to file for writing exported report.
-        :return: bool
-        '''
-        return True
+    def headerrow(cls):
+        return unicode("undefined header row")
 
-class PenSampleReportExporter(ReportExporter):
-    def __init__(self):
-        ReportExporter.__init__(self)
+    @classmethod
+    def datarowcount(cls):
+        return 0
+
+    @classmethod
+    def datarows(cls):
+        return []
 
     @classmethod
     def export(cls, file_path, project):
+        """
+
+        :param cls:
+        :param file_path:
+        :param project:
+        :return:
+        """
+        cls.project = project
         try:
             import pyqtgraph
             with codecs.open(file_path, "w", "utf-8") as f:
-                pendata = project.pendata
-                header_row = unicode("file\ttrial\tindex\ttime\tx\ty\tpressure\n")
-                f.write(header_row)
-                # TODO: Implement File and Trial columns
-                sfile='N/A'
-                strial='N/A'
-                with pyqtgraph.ProgressDialog("Saving Pen Samples Level Report ..", 0, pendata.shape[0]) as dlg:
-                    for i in xrange(pendata.shape[0]):
-                        dp=pendata[i]
-                        point_line = unicode("{sfile}\t{strial}\t{sindex}\t{time}\t{x}\t{y}\t{pressure}\n".format(sfile=sfile,strial=strial,sindex=i,time=dp['time'],x=dp['x'],y=dp['y'],pressure=dp['pressure']))
-                        f.write(point_line)
-                        if i%10==0:
-                            dlg.setValue(i)
+                f.write(cls.headerrow())
+                with pyqtgraph.ProgressDialog(cls.progress_dialog_title, 0,cls.datarowcount()) as dlg:
+                    ri = 0
+                    for rowstr in cls.datarows():
+                        f.write(rowstr)
+                        if ri%10==0:
+                            dlg.setValue(ri)
                         if dlg.wasCanceled():
                             # TODO: Should the incomplete report file be deleted
                             #       if dialog is cancelled?
                             break
-            return True
+                        ri+=1
+            return ri
         except:
             import traceback
             traceback.print_exc()
-        return False
+        finally:
+            cls.project = None
+        return 0
+
+
+class PenSampleReportExporter(ReportExporter):
+    progress_dialog_title = "Saving Pen Point Sample Level Report .."
+    def __init__(self):
+        ReportExporter.__init__(self)
+
+    @classmethod
+    def headerrow(cls):
+        hdr = unicode("file\ttrial\tindex\ttime\tx\ty\tpressure\tcat1")
+        cls._rowstrformatter = u'{sfile}\t{strial}\t{sindex}\t{time}\t{x}\t{y}\t{pressure}\t{cat1}'
+        ss = cls.project.segmentset
+
+        lvls = range(1,ss.getLevelCount()+1)
+
+        if lvls:
+            lvl_names = [u'cat1.L%d'%l for l in lvls]
+            lvlhdrstr = u'\t'.join(lvl_names)
+            hdr=hdr+u'\t'+lvlhdrstr+u'\n'
+        else:
+            hdr=hdr+u'\n'
+
+        if lvls:
+            lvlsfmtnames = [u'{L%d}'%l for l in lvls]
+            lvlsfmtnames = u'\t'.join(lvlsfmtnames)
+            cls._rowstrformatter=cls._rowstrformatter+u'\t'+lvlsfmtnames+u'\n'
+        else:
+            cls._rowstrformatter=cls._rowstrformatter+u'\n'
+
+        return hdr
+
+    @classmethod
+    def datarowcount(cls):
+        return cls.project.pendata.shape[0]
+
+    @classmethod
+    def datarows(cls):
+        pendata = cls.project.pendata
+
+        # TODO: Implement File and Trial columns
+        sfile='N/A'
+        strial='N/A'
+
+        # Create a dict that matches the kwargs needed for giving input to
+        # the row string formatter.
+        ss = cls.project.segmentset
+        lvls = range(1,ss.getLevelCount()+1)
+        lvls_dict = {'L%d'%l:'' for l in lvls}
+
+        segs_by_lvl=ss.getLeveledSegments()
+        catname = ss.name
+
+        for i in xrange(pendata.shape[0]):
+            dp=pendata[i]
+
+            dptime = dp['time']
+
+            # Go through segment levels finding matching seg at each level for
+            # current data point. Use '' for levels where no seg matched
+            # data point time, otherwise use segment name.
+            for l in lvls:
+                dpsegname=''
+                for seg in segs_by_lvl[l]:
+                    if seg.contains(time=dptime):
+                        dpsegname=seg.name
+                        break
+                # If no seg was found at this level, none will exist at lower
+                # levels for this point, so fill in remaining levels with ''
+                if len(dpsegname)==0:
+                    for fl in lvls[l-1:]:
+                        lvls_dict['L%d'%fl]=dpsegname
+                    break
+
+                lvls_dict['L%d'%l]=dpsegname
+            datarow = cls._rowstrformatter.format(sfile=sfile,strial=strial,sindex=i,time=dptime,x=dp['x'],y=dp['y'],pressure=dp['pressure'],cat1=catname, **lvls_dict)
+            yield datarow
+
 
 ################################################################################
 

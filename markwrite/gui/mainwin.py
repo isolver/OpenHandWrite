@@ -30,7 +30,7 @@ from markwrite.segment import PenDataSegment
 from markwrite.gui.segmenttree import SegmentTreeWidget
 from dialogs import ExitApplication, fileOpenDlg, ErrorDialog, warnDlg, fileSaveDlg
 from markwrite.project import MarkWriteProject
-
+from markwrite.gui import ProjectSettingsDialog
 DEFAULT_WIN_SIZE = (1200,800)
 
 DEFAULT_DOCK_PLACEMENT={
@@ -165,6 +165,19 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.exportSampleReportAction.triggered.connect(self.createPenSampleLevelReportFile)
 
 
+        atext='Open Application & Project Settings Dialog.'
+        aicon='settings&32.png'
+        self.showProjectSettingsDialogAction = ContextualStateAction(
+                                    QtGui.QIcon(getIconFilePath(aicon)),
+                                    'Settings',
+                                    self)
+        self.showProjectSettingsDialogAction.setShortcut('Ctrl+ALT+S')
+        self.showProjectSettingsDialogAction.setEnabled(True)
+        self.showProjectSettingsDialogAction.setStatusTip(atext)
+        self.showProjectSettingsDialogAction.triggered.connect(self.handleDisplayAppSettingsDialogEvent)
+
+
+
         atext='Exit Application'
         aicon='shut_down&32.png'
         self.exitAction = ContextualStateAction(
@@ -228,6 +241,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(self.openFileAction)
         fileMenu.addAction(self.saveProjectAction)
+        fileMenu.addAction(self.showProjectSettingsDialogAction)
         fileMenu.addSeparator()
         exportMenu = fileMenu.addMenu("&Export")
         exportMenu.addAction(self.exportSampleReportAction)
@@ -245,6 +259,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.toolbarFile = self.addToolBar('File')
         self.toolbarFile.addAction(self.openFileAction)
         self.toolbarFile.addAction(self.saveProjectAction)
+        self.toolbarFile.addAction(self.showProjectSettingsDialogAction)
 
         self.toolbarExport = self.addToolBar('Export')
         self.toolbarExport.addAction(self.exportSampleReportAction)
@@ -421,6 +436,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         #print '>> App.handleSelectedPenDataUpdate:',timeperiod
         self.createSegmentAction.setEnabled(self.project and len(self.project.getSelectedDataSegmentIDs())==1)
         #print '<< App.handleSelectedPenDataUpdate'
+
+    def handleDisplayAppSettingsDialogEvent(self):
+        projsettings, ok = ProjectSettingsDialog.getProjectSettings(self)
+        print("{} {}".format(projsettings, ok))
 
     def closeEvent(self, event):
         if event == u'FORCE_EXIT':

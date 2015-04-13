@@ -19,7 +19,7 @@ from __future__ import division
 from collections import OrderedDict
 from operator import attrgetter
 from weakref import proxy, ProxyType,WeakValueDictionary
-
+import numpy as np
 
 class PenDataSegmentCategory(object):
     _nextid=1
@@ -124,6 +124,61 @@ class PenDataSegmentCategory(object):
     def isRoot(self):
         return self.parent is None
 
+    def getRoot(self):
+        p = self
+        while p.parent is not None:
+            p=p.parent
+        return p
+
+    def _args2kwargs(self, args, kwargs={}):
+        for a in args:
+            arghandled = True
+            if isinstance(a, (float, np.float, np.float32, np.float64)):
+                kwargs.setdefault('time',a)
+            elif isinstance(a, (int, long, np.int, np.int16, np.int32, np.int64)):
+                kwargs.setdefault('pressure',a)
+            elif isinstance(a, PenDataSegment):
+                kwargs.setdefault('child',a)
+            elif isinstance(a, basestring):
+                kwargs.setdefault('tag',a)
+            elif isinstance(a, (list, tuple)):
+                if len(a)==2:
+                    i,j=a
+                    if isinstance(i, (float, np.float, np.float32, np.float64)):
+                        kwargs.setdefault('timeperiod',(i,j))
+                    elif isinstance(i, (int, long, np.int, np.int16, np.int32, np.int64)):
+                        kwargs.setdefault('position',(i,j))
+                    else:
+                        arghandled=False
+                else:
+                    arghandled=False
+            else:
+                arghandled=False
+
+            if not arghandled:
+                print "Error: Segment.contains ambigious arg: ",a
+        return kwargs
+
+    def contains(self, *args, **kwargs):
+        kwargs = self._args2kwargs(args,kwargs)
+        for k,v in kwargs.items():
+            if k == 'time':
+                return self.starttime <= v <= self.endtime
+            elif k == 'position':
+                x, y = v
+                return np.any(self.pendata['x']==x & self.pendata['y']==y)
+            elif k == 'pressure':
+                return np.any(self.pendata['pressure']==v)
+            elif k == 'timeperiod':
+                stime, etime = v
+                return stime >= self.starttime and etime <= self.endtime
+            elif k == 'tag':
+                return self.name is v
+            elif k == 'child':
+                return v.id in self._childsegment_ids
+            else:
+                print "Error: Segment.contains ambigious kwarg: ",k,':',v
+                return False
     @property
     def level(self):
         lvl = 0
@@ -132,6 +187,37 @@ class PenDataSegmentCategory(object):
             lvl+=1
             p = p.parent
         return lvl
+
+    def getLevelCount(self, curlvl=None, visitedlvls=[]):
+        if curlvl is None:
+            curlvl=self.level
+
+        if curlvl not in visitedlvls:
+            visitedlvls.append(curlvl)
+
+        for c in self.children:
+            c.getLevelCount(curlvl+1,visitedlvls)
+        return max(visitedlvls)
+
+    def getLeveledSegments(self, curlvl=None, segsbylvl=None):
+        if segsbylvl is None:
+            segsbylvl = OrderedDict()
+        if curlvl is None:
+            curlvl=self.level+1
+
+        if not segsbylvl.has_key(curlvl):
+            if self.parent:
+                lsegs=[]
+                for c in self.parent.children:
+                    lsegs+=c.children
+                segsbylvl[curlvl] = lsegs
+            else:
+                segsbylvl[curlvl]=list(self.children)
+
+        for c in self.children:
+            c.getLeveledSegments(curlvl+1,segsbylvl)
+
+        return segsbylvl
 
     @property
     def pendata(self):
