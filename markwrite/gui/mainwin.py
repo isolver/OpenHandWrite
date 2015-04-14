@@ -382,12 +382,20 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         :return:
         """
         if self.createSegmentAction.isEnabled():
-            psid = self.project.getSelectedDataSegmentIDs()[0]
+            # Shrink timeline selection region to fit start and end time
+            # of possible segment being created.
+            selectedtimeperiod = self._penDataTimeLineWidget.currentSelection.getRegion()
+            self._penDataTimeLineWidget.currentSelection.setRegion(self.project.selecteddatatimerange)
             tag, ok = showSegmentNameDialog(self.predefinedtags)
             tag = unicode(tag).strip().replace('\t',"#")
             if len(tag)>0 and ok:
+                psid = self.project.getSelectedDataSegmentIDs()[0]
                 new_segment = self.project.createPenDataSegment(tag,psid)
                 self.sigSegmentCreated.emit(new_segment)
+            else:
+                # If segment creation was cancelled or failed, then reset
+                # timeline selection region to original time period.
+                self._penDataTimeLineWidget.currentSelection.setRegion(selectedtimeperiod)
         else:
             ErrorDialog.info_text=u"Segment Creation Failed.\nNo selected pen data."
             ErrorDialog().display()

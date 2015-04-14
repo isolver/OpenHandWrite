@@ -137,8 +137,6 @@ class MarkWriteProject(object):
     def getSelectedDataSegmentIDs(self):
         if len(self._selectedpendata)>0:
             return np.unique(self._selectedpendata['segment_id'])
-            #print "getSelectedDataSegmentIDs:",v
-            #return v
         return []
 
     def createPenDataSegment(self, tag, parent_id):
