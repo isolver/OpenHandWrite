@@ -29,10 +29,20 @@ from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, reg
 #
 
 params = [
+        {'name': 'Segment Creation', 'type': 'group', 'children': [
+            {'name': 'Trim 0 Pressure Points', 'type': 'bool', 'value': False},
+            {'name': 'Suggest Default Segment Name', 'type': 'bool', 'value': False},
+            {'name': 'Autocomplete Segment Name', 'type': 'bool', 'value': True},
+            {'name': 'Allow Sibling Segments Temporal Overlap', 'type': 'bool', 'value': False},
+            {'name': 'Parent Segments Must Temporally Wrap Children', 'type': 'bool', 'value': True}
+
+        ]},
         {'name': 'GUI Options', 'type': 'group', 'children': [
             {'name': 'Auto Focus Selected Segment', 'type': 'bool', 'value': True, 'tip': "Timeline and Spatial Views automatically pan / zoom\nso pen data for a selected segment tree node is fully visible."},
+            {'name': 'Sort Category Tree by Segment Time', 'type': 'bool', 'value': True},
 
             {'name': 'TimeLine View', 'type': 'group', 'children': [
+
                 {'name': 'Background Color', 'type': 'color', 'value': "000", 'tip': "Timeline plot's background color."},
                 {'name': 'Foreground Color', 'type': 'color', 'value': "FFF", 'tip': "Timeline plot's foreground color (axis lines / labels)."},
                 {'name': 'Selected Time Period Color', 'type': 'color', 'value': "FF0", 'tip': "Color of the time region selection bar."},
@@ -63,16 +73,14 @@ params = [
                 ]},
                  {'name': 'Selected Pen Points', 'type': 'group', 'children': [
                     {'name': 'Shape', 'type': 'list', 'values': {"Dot": 'o', "Cross": "x"}, 'value': 0},
-                    {'name': 'Color', 'type': 'color', 'value': "0F0"},
+                    {'name': 'Valid Segment Color', 'type': 'color', 'value': "0F0"},
+                    {'name': 'Invalid Segment Color', 'type': 'color', 'value': "0F0"},
                     {'name': 'Size', 'type': 'int', 'value': 2, 'limits': (1, 5)},
                 ]}
             ]},
 
         ]},
-        {'name': 'Segment Creation', 'type': 'group', 'children': [
-            {'name': 'Temporal Overlap', 'type': 'bool', 'value': False},
-            {'name': 'Parent Segments Must Temporally Wrap Children', 'type': 'bool', 'value': True}
-        ]}
+
         ]
 
 

@@ -309,17 +309,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         self.setWindowIcon(QtGui.QIcon(getIconFilePath('edit&32.png')))
 
-        # Below does not work for some reason.
-        #app_icon = QtGui.QIcon()
-        #app_icon.addFile('edit&16.png', QtCore.QSize(16,16))
-        #app_icon.addFile('edit&24.png', QtCore.QSize(24,24))
-        #app_icon.addFile('edit&32.png', QtCore.QSize(32,32))
-        #app_icon.addFile('edit&64.png', QtCore.QSize(64,64))
-        #app_icon.addFile('edit&128.png', QtCore.QSize(128,128))
-        #app.setWindowIcon(app_icon)
-        #self.setWindowIcon(app_icon)
-
-
         self.updateAppTitle()
         self.resize(*DEFAULT_WIN_SIZE)
 
@@ -355,6 +344,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             if len(file_path) > 0:
                 try:
                     wmproj = MarkWriteProject(file_path=file_path)
+                    self.createSegmentAction.setEnabled(True)
                     self.sigProjectChanged.emit(wmproj)
                     self.sigResetProjectData.emit(wmproj)
                 except:
@@ -503,21 +493,33 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         self.getPlotItem().setLimits(yMin=penValRange[0], yMax=penValRange[1], xMin=numpy_data['time'][0], xMax=numpy_data['time'][-1])
         if self.xPenPosTrace is None:
             # Create DataItem objects
-#            symbols=np.zeros(numpy_data.shape[0],dtype='|S1')
-#            symbols[:]='r'
-#            symbols[numpy_data['pressure']==0]='g'
-            #symbols=np.zeros(numpy_data.shape[0],dtype=int)
-            #symbols[:]='r'
-            #symbols[numpy_data['pressure']==0]=2
-            #print 'symbols:',symbols
-            self.xPenPosTrace = self.getPlotItem().plot(x=numpy_data['time'], y=numpy_data['x'], autoDownsample=True, pen=None, symbol='s', symbolSize=1, symbolPen='r', symbolBrush='r', name="X Position") # pen=None, symbol='o', symbolSize=1, symbolPen='r', symbolBrush='r',
-            self.yPenPosTrace = self.getPlotItem().plot(x=numpy_data['time'], y=numpy_data['y'], autoDownsample=True, pen=None, symbol='s', symbolSize=1, symbolPen='g', symbolBrush='g', name="Y Position") #symbol='o', symbolSize=1, symbolPen='g', symbolBrush='g', name="Y Position")
-            #print "self.xPenPosTrace:",self.xPenPosTrace
-            #self.xPenPosTrace.setSymbolPen()
-            #self.xPenPosTrace.setSymbolBrush()
+            pen = pg.mkPen((0,255,0), width=2)
+            pen2 = pg.mkPen((0,255,255), width=2)
+            penarray=np.empty(numpy_data.shape[0],dtype=object)
+            penarray[:]=pen
+            penarray[numpy_data['pressure']==0]=pen2
 
-            #self.xPenPosTrace.setSymbol(symbols)
-            #self.xPenPosTrace.setSymbolSize()
+            brush=pg.mkBrush((0,255,0))
+            brush2=pg.mkBrush((0,255,255))
+            brusharray=np.empty(numpy_data.shape[0],dtype=object)
+            brusharray[:]=brush
+            brusharray[numpy_data['pressure']==0]=brush2
+
+            self.xPenPosTrace = self.getPlotItem().plot(x=numpy_data['time'], y=numpy_data['x'],  pen=None, symbol='o', symbolSize=1, symbolPen=penarray, symbolBrush=brusharray, name="X Position") # pen=None, symbol='o', symbolSize=1, symbolPen='r', symbolBrush='r',
+
+
+            pen = pg.mkPen((255,255,0), width=2)
+            pen2 = pg.mkPen((255,128,0), width=2)
+            penarray[:]=pen
+            penarray[numpy_data['pressure']==0]=pen2
+
+            brush=pg.mkBrush((255,255,0))
+            brush2=pg.mkBrush((255,128,0))
+            brusharray[:]=brush
+            brusharray[numpy_data['pressure']==0]=brush2
+
+            self.yPenPosTrace = self.getPlotItem().plot(x=numpy_data['time'], y=numpy_data['y'],  pen=None, symbol='o', symbolSize=1, symbolPen=penarray, symbolBrush=brusharray, name="Y Position") #symbol='o', symbolSize=1, symbolPen='g', symbolBrush='g', name="Y Position")
+
             # Add a Selection Region that is used to create segments by user
             self.currentSelection = pg.LinearRegionItem(values=[numpy_data['time'][0],numpy_data['time'][0]+1.0],movable=True)
             self.currentSelection.setBounds(bounds=(numpy_data['time'][0], numpy_data['time'][-1]))
@@ -526,10 +528,35 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
 
         else:
             # Update DataItem objects
-            self.xPenPosTrace.setData(x=numpy_data['time'], y=numpy_data['x'])
-            self.yPenPosTrace.setData(x=numpy_data['time'], y=numpy_data['y'])
+            pen = pg.mkPen((0,255,0), width=2)
+            pen2 = pg.mkPen((0,255,255), width=2)
+            brush=pg.mkBrush((0,255,0))
+            brush2=pg.mkBrush((0,255,255))
+
+            penarray=np.empty(numpy_data.shape[0],dtype=object)
+            penarray[:]=pen
+            penarray[numpy_data['pressure']==0]=pen2
+
+            brusharray=np.empty(numpy_data.shape[0],dtype=object)
+            brusharray[:]=brush
+            brusharray[numpy_data['pressure']==0]=brush2
+
+            self.xPenPosTrace.setData(x=numpy_data['time'], y=numpy_data['x'],symbolPen=penarray, symbolBrush=brusharray)
+
+
+            pen = pg.mkPen((255,255,0), width=2)
+            pen2 = pg.mkPen((255,128,0), width=2)
+            brush=pg.mkBrush((255,255,0))
+            brush2=pg.mkBrush((255,128,0))
+            penarray[:]=pen
+            penarray[numpy_data['pressure']==0]=pen2
+            brusharray[:]=brush
+            brusharray[numpy_data['pressure']==0]=brush2
+
+            self.yPenPosTrace.setData(x=numpy_data['time'], y=numpy_data['y'],symbolPen=penarray, symbolBrush=brusharray)
             self.currentSelection.setRegion([numpy_data['time'][0],numpy_data['time'][0]+1.0])
             self.currentSelection.setBounds(bounds=(numpy_data['time'][0], numpy_data['time'][-1]))
+            
         self.setRange(xRange=(numpy_data['time'][0],numpy_data['time'][-1]), padding=None)
         self.handlePenDataSelectionChanged()
 
@@ -584,8 +611,8 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         self.getPlotItem().invertY(True)
         self.getPlotItem().setAspectLocked(True, 1)
 
-        self.allPlotDataItem=self.getPlotItem().plot(pen=None, symbol='o', symbolSize=1, symbolBrush=(255,255,255), symbolPen=(255,255,255))
-        self.selectedPlotDataItem=self.getPlotItem().plot(pen=None, symbol='o', symbolSize=3, symbolBrush=(0,0,255), symbolPen=(0,0,255))
+        self.allPlotDataItem=None#self.getPlotItem().plot(pen=None, symbol='o', symbolSize=1, symbolBrush=(255,255,255), symbolPen=(255,255,255))
+        self.selectedPlotDataItem=None#self.getPlotItem().plot(pen=None, symbol='o', symbolSize=3, symbolBrush=(0,0,255), symbolPen=(0,0,255))
 
         WRITEMARK_APP_INSTANCE.sigResetProjectData.connect(self.handleResetPenData)
         WRITEMARK_APP_INSTANCE.sigSelectedPenDataUpdate.connect(self.handlePenDataSelectionChanged)
@@ -593,14 +620,54 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
     def handleResetPenData(self, project):
         #print ">> PenDataSpatialPlotWidget.handleResetPenData:",project
         pdat = project.pendata
-        self.getPlotItem().setLimits(xMin=pdat['x'].min(), yMin=pdat['y'].min(),xMax=pdat['x'].max(), yMax=pdat['y'].max())
-        self.allPlotDataItem.setData(x=pdat['x'],y=pdat['y'])
-        self.setRange(xRange=(pdat['x'].min(), pdat['x'].max()), yRange=(pdat['y'].min(), pdat['y'].max()), padding=None)
-        #print "<< PenDataSpatialPlotWidget.handleResetPenData"
+
+        if self.allPlotDataItem is None:
+            pen = pg.mkPen((255,255,255), width=1)
+            pen2 = pg.mkPen((255,0,255), width=1)
+            brush=pg.mkBrush((255,255,255))
+            brush2=pg.mkBrush((255,0,255))
+
+            penarray=np.empty(pdat.shape[0],dtype=object)
+            penarray[:]=pen
+            penarray[pdat['pressure']==0]=pen2
+
+            brusharray=np.empty(pdat.shape[0],dtype=object)
+            brusharray[:]=brush
+            brusharray[pdat['pressure']==0]=brush2
+
+            self.allPlotDataItem=self.getPlotItem().plot(pen=None, symbol='o', symbolSize=1, symbolBrush=brusharray, symbolPen=penarray)
+            self.selectedPlotDataItem=self.getPlotItem().plot(pen=None, symbol='o', symbolSize=3, symbolBrush=(0,0,255), symbolPen=(0,0,255))
+
+        else:
+
+            pen = pg.mkPen((255,255,255), width=1)
+            pen2 = pg.mkPen((255,0,255), width=1)
+            brush=pg.mkBrush((255,255,255))
+            brush2=pg.mkBrush((255,0,255))
+
+            penarray=np.empty(pdat.shape[0],dtype=object)
+            penarray[:]=pen
+            penarray[pdat['pressure']==0]=pen2
+
+            brusharray=np.empty(pdat.shape[0],dtype=object)
+            brusharray[:]=brush
+            brusharray[pdat['pressure']==0]=brush2
+
+            self.allPlotDataItem.setData(x=pdat['x'],y=pdat['y'],symbolBrush=brusharray, symbolPen=penarray)
+            self.getPlotItem().setLimits(xMin=pdat['x'].min(), yMin=pdat['y'].min(),xMax=pdat['x'].max(), yMax=pdat['y'].max())
+            self.setRange(xRange=(pdat['x'].min(), pdat['x'].max()), yRange=(pdat['y'].min(), pdat['y'].max()), padding=None)
+            #print "<< PenDataSpatialPlotWidget.handleResetPenData"
 
     def handlePenDataSelectionChanged(self,timeperiod, selectedpendata):
-        #print ">> PenDataSpatialPlotWidget.handlePenDataSelectionChanged:",timeperiod
-        self.selectedPlotDataItem.setData(x=selectedpendata['x'],y=selectedpendata['y'])
+
+        if self.allPlotDataItem is None:
+            self.handleResetPenData(WRITEMARK_APP_INSTANCE.project)
+
+        if WRITEMARK_APP_INSTANCE.createSegmentAction.isEnabled():
+            self.selectedPlotDataItem.setData(x=selectedpendata['x'],y=selectedpendata['y'],symbolBrush=(0,0,255), symbolPen=(0,0,255))
+        else:
+            self.selectedPlotDataItem.setData(x=selectedpendata['x'],y=selectedpendata['y'],symbolBrush=(255,0,0), symbolPen=(255,0,0))
+
         self.ensureSelectionIsVisible(timeperiod, selectedpendata)
         #print "<< PenDataSpatialPlotWidget.handlePenDataSelectionChanged"
 
