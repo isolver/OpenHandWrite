@@ -556,7 +556,7 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
             self.yPenPosTrace.setData(x=numpy_data['time'], y=numpy_data['y'],symbolPen=penarray, symbolBrush=brusharray)
             self.currentSelection.setRegion([numpy_data['time'][0],numpy_data['time'][0]+1.0])
             self.currentSelection.setBounds(bounds=(numpy_data['time'][0], numpy_data['time'][-1]))
-            
+
         self.setRange(xRange=(numpy_data['time'][0],numpy_data['time'][-1]), padding=None)
         self.handlePenDataSelectionChanged()
 

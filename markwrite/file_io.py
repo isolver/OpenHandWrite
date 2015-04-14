@@ -247,8 +247,8 @@ class PenSampleReportExporter(ReportExporter):
 
     @classmethod
     def headerrow(cls):
-        hdr = unicode("file\ttrial\tindex\ttime\tx\ty\tpressure\tcat1")
-        cls._rowstrformatter = u'{sfile}\t{strial}\t{sindex}\t{time}\t{x}\t{y}\t{pressure}\t{cat1}'
+        hdr = unicode("file\tindex\ttime\tx\ty\tpressure\tcat1")
+        cls._rowstrformatter = u'{sfile}\t{sindex}\t{time}\t{x}\t{y}\t{pressure}\t{cat1}'
         ss = cls.project.segmentset
 
         lvls = range(1,ss.getLevelCount()+1)
@@ -277,13 +277,11 @@ class PenSampleReportExporter(ReportExporter):
     def datarows(cls):
         pendata = cls.project.pendata
 
-        # TODO: Implement File and Trial columns
-        sfile='N/A'
-        strial='N/A'
-
         # Create a dict that matches the kwargs needed for giving input to
         # the row string formatter.
         ss = cls.project.segmentset
+        sfile=ss.name
+
         lvls = range(1,ss.getLevelCount()+1)
         lvls_dict = {'L%d'%l:'' for l in lvls}
 
@@ -312,7 +310,7 @@ class PenSampleReportExporter(ReportExporter):
                     break
 
                 lvls_dict['L%d'%l]=dpsegname
-            datarow = cls._rowstrformatter.format(sfile=sfile,strial=strial,sindex=i,time=dptime,x=dp['x'],y=dp['y'],pressure=dp['pressure'],cat1=catname, **lvls_dict)
+            datarow = cls._rowstrformatter.format(sfile=sfile,sindex=i,time=dptime,x=dp['x'],y=dp['y'],pressure=dp['pressure'],cat1=catname, **lvls_dict)
             yield datarow
 
 
