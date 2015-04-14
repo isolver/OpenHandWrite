@@ -18,6 +18,7 @@ from __future__ import division
 
 
 from weakref import proxy,WeakValueDictionary
+import numpy as np
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
@@ -390,17 +391,13 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 currently selected segment, otherwise use current logic.
         :return:
         """
-        if self.project:
-            psids = self.project.getSelectedDataSegmentIDs()
-            if len(psids)==1:
-                #print 'App.Determined Parent Segment ID:', psids[0]
-                tag, ok = showSegmentNameDialog(self.predefinedtags)
-                tag = unicode(tag).strip().replace('\t',"#")
-                if len(tag)>0 and ok:
-                    new_segment = self.project.createPenDataSegment(tag,psids[0])
-                    self.sigSegmentCreated.emit(new_segment)
-            else:
-                print "ERROR: Could not create segment. detected parent ids:",psids
+        if self.createSegmentAction.isEnabled():
+            psid = self.project.getSelectedDataSegmentIDs()[0]
+            tag, ok = showSegmentNameDialog(self.predefinedtags)
+            tag = unicode(tag).strip().replace('\t',"#")
+            if len(tag)>0 and ok:
+                new_segment = self.project.createPenDataSegment(tag,psid)
+                self.sigSegmentCreated.emit(new_segment)
         else:
             ErrorDialog.info_text=u"Segment Creation Failed.\nNo selected pen data."
             ErrorDialog().display()
@@ -411,17 +408,14 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         if segment and segment.parent is not None:
             seg_ix = segment.parent.getChildIndex(segment)
 
-            # Decrement the pendata array 'segmented' field for elements within
+            # Decrement the pendata array 'segment_id' field for elements within
             # the segment being removed so that # of segments that contain each
             # pen point can be tracked
             allpendata = self.project.pendata
             segment_filter = (allpendata['time']>=segment.starttime) & (allpendata['time']<=segment.endtime)
-            #print '>> App.removeSegment:', segment.id, allpendata['segmented'][segment_filter], self.project.getSelectedDataSegmentIDs()
-            allpendata['segmented'][segment_filter]=segment.parent.id
-            sid=segment.id
+            allpendata['segment_id'][segment_filter]=segment.parent.id
             self.sigSegmentRemoved.emit(segment, seg_ix)
             segment.parent.removeChild(segment)
-            #print '<< App.removeSegment:', sid, allpendata['segmented'][segment_filter], self.project.getSelectedDataSegmentIDs()
 
 
     def handleProjectChange(self, project):
@@ -434,7 +428,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
     def handleSelectedPenDataUpdate(self, timeperiod, pendata):
         #print '>> App.handleSelectedPenDataUpdate:',timeperiod
-        self.createSegmentAction.setEnabled(self.project and len(self.project.getSelectedDataSegmentIDs())==1)
+        self.createSegmentAction.setEnabled(self.project and self.project.isSelectedDataValidForNewSegment())
         #print '<< App.handleSelectedPenDataUpdate'
 
     def handleDisplayAppSettingsDialogEvent(self):
@@ -490,7 +484,6 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
 
         self.getPlotItem().setLabel('left', "Pen Position", units='pix')
         self.getPlotItem().setLabel('bottom', "Time", units='sec')
-
         self.xPenPosTrace = None
         self.yPenPosTrace = None
         self.currentSelection = None
@@ -510,14 +503,26 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         self.getPlotItem().setLimits(yMin=penValRange[0], yMax=penValRange[1], xMin=numpy_data['time'][0], xMax=numpy_data['time'][-1])
         if self.xPenPosTrace is None:
             # Create DataItem objects
-            self.xPenPosTrace = self.getPlotItem().plot(x=numpy_data['time'], y=numpy_data['x'], pen=None, symbol='+', symbolSize=1, symbolPen=(0,255,0), name="X Position")
-            self.yPenPosTrace = self.getPlotItem().plot(x=numpy_data['time'], y=numpy_data['y'], pen=None, symbol='+', symbolSize=1, symbolPen=(255,0,0), name="Y Position")
+#            symbols=np.zeros(numpy_data.shape[0],dtype='|S1')
+#            symbols[:]='r'
+#            symbols[numpy_data['pressure']==0]='g'
+            #symbols=np.zeros(numpy_data.shape[0],dtype=int)
+            #symbols[:]='r'
+            #symbols[numpy_data['pressure']==0]=2
+            #print 'symbols:',symbols
+            self.xPenPosTrace = self.getPlotItem().plot(x=numpy_data['time'], y=numpy_data['x'], autoDownsample=True, pen=None, symbol='s', symbolSize=1, symbolPen='r', symbolBrush='r', name="X Position") # pen=None, symbol='o', symbolSize=1, symbolPen='r', symbolBrush='r',
+            self.yPenPosTrace = self.getPlotItem().plot(x=numpy_data['time'], y=numpy_data['y'], autoDownsample=True, pen=None, symbol='s', symbolSize=1, symbolPen='g', symbolBrush='g', name="Y Position") #symbol='o', symbolSize=1, symbolPen='g', symbolBrush='g', name="Y Position")
+            #print "self.xPenPosTrace:",self.xPenPosTrace
+            #self.xPenPosTrace.setSymbolPen()
+            #self.xPenPosTrace.setSymbolBrush()
 
+            #self.xPenPosTrace.setSymbol(symbols)
+            #self.xPenPosTrace.setSymbolSize()
             # Add a Selection Region that is used to create segments by user
             self.currentSelection = pg.LinearRegionItem(values=[numpy_data['time'][0],numpy_data['time'][0]+1.0],movable=True)
             self.currentSelection.setBounds(bounds=(numpy_data['time'][0], numpy_data['time'][-1]))
             self.addItem(self.currentSelection)
-            self.sigRegionChangedProxy=pg.SignalProxy(self.currentSelection.sigRegionChanged, rateLimit=60, slot=self.handlePenDataSelectionChanged)
+            self.sigRegionChangedProxy=pg.SignalProxy(self.currentSelection.sigRegionChanged, rateLimit=30, slot=self.handlePenDataSelectionChanged)
 
         else:
             # Update DataItem objects
@@ -579,8 +584,8 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         self.getPlotItem().invertY(True)
         self.getPlotItem().setAspectLocked(True, 1)
 
-        self.allPlotDataItem=self.getPlotItem().plot(pen=None, symbol='o', symbolSize=1)
-        self.selectedPlotDataItem=self.getPlotItem().plot(pen=None, symbol='o', symbolSize=2, symbolBrush=(0,0,255), symbolPen=(0,0,255))
+        self.allPlotDataItem=self.getPlotItem().plot(pen=None, symbol='o', symbolSize=1, symbolBrush=(255,255,255), symbolPen=(255,255,255))
+        self.selectedPlotDataItem=self.getPlotItem().plot(pen=None, symbol='o', symbolSize=3, symbolBrush=(0,0,255), symbolPen=(0,0,255))
 
         WRITEMARK_APP_INSTANCE.sigResetProjectData.connect(self.handleResetPenData)
         WRITEMARK_APP_INSTANCE.sigSelectedPenDataUpdate.connect(self.handlePenDataSelectionChanged)
@@ -657,7 +662,7 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
         #self.getPlotItem().hideButtons()
         self.getPlotItem().hideAxis('left')
         self.getPlotItem().hideAxis('bottom')
-        self.plotDataItem = self.getPlotItem().plot(pen=None, symbol='o', symbolSize=1)
+        self.plotDataItem = self.getPlotItem().plot(pen=None, symbol='o', symbolSize=1, symbolBrush=(255,255,255), symbolPen=(255,255,255))
 
         WRITEMARK_APP_INSTANCE.sigSelectedPenDataUpdate.connect(self.handlePenDataSelectionChanged)
 

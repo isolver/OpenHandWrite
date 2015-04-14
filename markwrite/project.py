@@ -51,6 +51,7 @@ class MarkWriteProject(object):
         :return: MarkWriteProject instance
         """
         self._pendata = []
+
         self._selectedtimeperiod=[0,0]
         self._selectedpendata=[]
         self._segmentset=None
@@ -92,6 +93,7 @@ class MarkWriteProject(object):
 
     def createNewProject(self, file_name, pen_data):
             # TODO : Define MarkWrite project setting and implement GUI for editing
+            PenDataSegmentCategory.clearSegmentCache()
             self._project_settings = OrderedDict()
             self._name = file_name
 
@@ -104,7 +106,7 @@ class MarkWriteProject(object):
             self._selectedtimeperiod=[0,0]
             self._selectedpendata=[]
             self._segmentset=PenDataSegmentCategory(name=self.name,project=self)
-            self._pendata['segmented']=self._segmentset.id
+            self._pendata['segment_id']=self._segmentset.id
             self._project_file_path = u''
             self._modified = True
             self._created_date = time.strftime("%c")
@@ -134,7 +136,7 @@ class MarkWriteProject(object):
 
     def getSelectedDataSegmentIDs(self):
         if len(self._selectedpendata)>0:
-            return np.unique(self._selectedpendata['segmented'])
+            return np.unique(self._selectedpendata['segment_id'])
             #print "getSelectedDataSegmentIDs:",v
             #return v
         return []
@@ -150,12 +152,12 @@ class MarkWriteProject(object):
         sparent = self._segmentset.id2obj[parent_id]
         new_segment = PenDataSegment(name=tag, pendata=self._selectedpendata, parent=sparent)
         #print "Created segment:",sparent, sparent.id, new_segment,new_segment.id
-        # Increment the pendata array 'segmented' field for elements within
+        # Increment the pendata array 'segment_id' field for elements within
         # the segment so that # of segments created that contain each
         # pen point can be tracked
         allpendata = self.pendata
         segment_filter = (allpendata['time']>=new_segment.starttime) & (allpendata['time']<=new_segment.endtime)
-        allpendata['segmented'][segment_filter]=new_segment.id
+        allpendata['segment_id'][segment_filter]=new_segment.id
         return new_segment
 
     @property
@@ -206,20 +208,34 @@ class MarkWriteProject(object):
 
     @property
     def unsegmentedpendata(self):
-        return self._pendata[self._pendata['segmented']==0]
+        return self._pendata[self._pendata['segment_id']==0]
 
     @property
     def segmentedpendata(self):
-        return self._pendata[self._pendata['segmented']>0]
+        return self._pendata[self._pendata['segment_id']>0]
 
     @property
     def selectedtimeperiod(self):
         return self._selectedtimeperiod
 
     @property
+    def selecteddatatimerange(self):
+        if len(self._selectedpendata)>0:
+            return self._selectedpendata['time'][[0,-1]]
+
+    @property
     def selectedpendata(self):
         return self._selectedpendata
 
+    def isSelectedDataValidForNewSegment(self):
+        if len(self.selectedpendata)>0:
+            sids = self.getSelectedDataSegmentIDs()
+            if len(sids)==1:
+                if sids[0] == 0:
+                    return True
+                if self.segmentset.id2obj[sids[0]].pointcount > self.selectedpendata.shape[0]:
+                    return True
+        return False
     @property
     def segmentset(self):
         return self._segmentset

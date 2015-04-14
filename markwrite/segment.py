@@ -22,7 +22,7 @@ from weakref import proxy, ProxyType,WeakValueDictionary
 import numpy as np
 
 class PenDataSegmentCategory(object):
-    _nextid=1
+    _nextid=0
     id2obj=WeakValueDictionary()
     _project = None
     def __init__(self, name=None, parent=None, clear_lookup=True, project = None):
@@ -55,6 +55,12 @@ class PenDataSegmentCategory(object):
                 PenDataSegmentCategory._project = project
             else:
                 PenDataSegmentCategory._project = proxy(project)
+
+    @classmethod
+    def clearSegmentCache(cls):
+        cls._id=0
+        cls.id2obj.clear()
+        cls.project=None
 
     @property
     def nextid(self):
@@ -171,7 +177,7 @@ class PenDataSegmentCategory(object):
                 return np.any(self.pendata['pressure']==v)
             elif k == 'timeperiod':
                 stime, etime = v
-                return stime >= self.starttime and etime <= self.endtime
+                return stime > self.starttime and etime < self.endtime
             elif k == 'tag':
                 return self.name is v
             elif k == 'child':
@@ -225,20 +231,20 @@ class PenDataSegmentCategory(object):
 
     @property
     def starttime(self):
-        return self._project._pendata['time'][0]
+        return self.pendata['time'][0]
 
     @property
     def endtime(self):
-        return self._project._pendata['time'][-1]
+        return self.pendata['time'][-1]
 
     @property
     def timerange(self):
-        return self._project._pendata['time'][0],self._project._pendata['time'][-1]
+        return self.pendata['time'][[0,-1]]
 
 
     @property
     def pointcount(self):
-        return self._project._pendata.shape[0]
+        return self.pendata.shape[0]
 
     def propertiesTableData(self):
         """
@@ -281,23 +287,6 @@ class PenDataSegment(PenDataSegmentCategory):
     @pendata.setter
     def pendata(self, n):
         self._pendata = n
-
-    @property
-    def starttime(self):
-        return self._pendata['time'][0]
-
-    @property
-    def endtime(self):
-        return self._pendata['time'][-1]
-
-    @property
-    def timerange(self):
-        return self._pendata['time'][0],self._pendata['time'][-1]
-
-
-    @property
-    def pointcount(self):
-        return self._pendata.shape[0]
 
     def propertiesTableData(self):
         """

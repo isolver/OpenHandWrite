@@ -24,7 +24,7 @@ numpy_pendata_format = [('time', np.float64),
                     ('y', np.int32),
                     ('pressure', np.int16),
                     # Following are set by MarkWrite
-                    ('segmented', np.uint8)]
+                    ('segment_id', np.uint16)]
 
 
 class DataImporter(object):
