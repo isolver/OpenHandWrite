@@ -20,6 +20,7 @@ from collections import OrderedDict
 from operator import attrgetter
 from weakref import proxy, ProxyType,WeakValueDictionary
 import numpy as np
+from markwrite.gui.projectsettings import SETTINGS
 
 class PenDataSegmentCategory(object):
     _nextid=0
@@ -245,6 +246,24 @@ class PenDataSegmentCategory(object):
     @property
     def pointcount(self):
         return self.pendata.shape[0]
+
+    @classmethod
+    def calculateTrimmedSegmentIndexBoundsFromTimeRange(cls, starttime, endtime):
+        """
+        Calculates the first and last array indices in the full projects
+        pen data that wuld be used for creating a segment with the uncorrected time range
+        provided by starttime, endtime.
+        :param startt:
+        :param endt:
+        :return:
+        """
+        pendata = cls._project._pendata
+        mask = None
+        if SETTINGS['new_segment_trim_0_pressure_points']:
+            mask = (pendata['time'] >= starttime) & (pendata['time'] <=endtime) & (pendata['pressure'] > 0)
+        else:
+            mask = (pendata['time'] >= starttime) & (pendata['time'] <= endtime)
+        return np.nonzero(mask)[0][[0,-1]]
 
     def propertiesTableData(self):
         """

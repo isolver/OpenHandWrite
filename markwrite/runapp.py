@@ -40,10 +40,20 @@ if sys.platform == 'win32':
     myappid = u'isolver.markwrite.editor.version' # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
+import pyqtgraph as pg
+# # Switch to using white background and black foreground
+
 from pyqtgraph.Qt import QtGui
-import markwrite.gui as gui
+from markwrite.gui.mainwin import MarkWriteMainWindow
+
 app = QtGui.QApplication(sys.argv)
-wmwin = gui.MarkWriteMainWindow(app)
+from markwrite.gui.projectsettings import ProjectSettingsDialog
+_ = ProjectSettingsDialog()
+from markwrite.gui.projectsettings import SETTINGS
+pg.setConfigOption('background', SETTINGS['plotviews_background_color'])
+pg.setConfigOption('foreground', SETTINGS['plotviews_foreground_color'])
+
+wmwin = MarkWriteMainWindow(app)
 wmwin.show()
 status = app.exec_()
 sys.exit(status)

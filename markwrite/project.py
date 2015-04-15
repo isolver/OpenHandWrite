@@ -27,6 +27,7 @@ from pyqtgraph import OrderedDict
 from pyqtgraph.Qt import QtGui
 from file_io import EyePenDataImporter, XmlDataImporter
 from segment import PenDataSegment, PenDataSegmentCategory
+from gui.projectsettings import SETTINGS
 
 class MarkWriteProject(object):
     project_file_extension = u'mwp'
@@ -131,7 +132,8 @@ class MarkWriteProject(object):
 
     def updateSelectedData(self,minT,maxT):
         self._selectedtimeperiod=minT, maxT
-        self._selectedpendata = self._pendata[(self._pendata['time'] >= minT) & (self._pendata['time'] <= maxT)]
+        pendata = self._pendata
+        self._selectedpendata = pendata[(pendata['time'] >= minT) & (pendata['time'] <= maxT)]
         return self._selectedpendata
 
     def getSelectedDataSegmentIDs(self):
@@ -143,19 +145,18 @@ class MarkWriteProject(object):
         """
         Only called if the currently selected pen data can make a valid segment.
         i.e. getSelectedDataSegmentIDs() returned a list of exactly 1 segment id
+
+        Also ensure that self._selectedpendata has been trimmed as required
+         based on enabled state of rules like the 0 pressure trim rule
         :param tag:
         :param parent_id:
         :return:
         """
         sparent = self._segmentset.id2obj[parent_id]
         new_segment = PenDataSegment(name=tag, pendata=self._selectedpendata, parent=sparent)
-        #print "Created segment:",sparent, sparent.id, new_segment,new_segment.id
-        # Increment the pendata array 'segment_id' field for elements within
-        # the segment so that # of segments created that contain each
-        # pen point can be tracked
-        allpendata = self.pendata
-        segment_filter = (allpendata['time']>=new_segment.starttime) & (allpendata['time']<=new_segment.endtime)
-        allpendata['segment_id'][segment_filter]=new_segment.id
+        pendata = self.pendata
+        mask = (pendata['time'] >= new_segment.starttime) & (pendata['time'] <= new_segment.endtime)
+        self.pendata['segment_id'][mask]=new_segment.id
         return new_segment
 
     @property
