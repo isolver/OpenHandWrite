@@ -305,3 +305,4 @@ class MarkWriteProject(object):
         project_properties['Last Saved'] = dict(val=self.modified_date)
         project_properties['Currently Modified'] = dict(val=self.modified)
         return project_properties
+

@@ -36,7 +36,7 @@ flattenned_settings_dict['timeplot_ytrace_size'] ={'name': 'Point Size', 'type':
 flattenned_settings_dict['spatialplot_default_color'] = {'name':'Default Point Color', 'type': 'color', 'value':(224,224,224)}
 flattenned_settings_dict['spatialplot_validselected_color'] = {'name': 'Valid Segment Color', 'type': 'color', 'value':(0,160,0)}
 flattenned_settings_dict['spatialplot_invalidselected_color'] ={'name': 'Invalid Segment Color', 'type': 'color', 'value': (160,0,0)}
-flattenned_settings_dict['spatialplot_point_size'] = {'name': 'Size', 'type': 'int', 'value': 2, 'limits': (1, 5)}
+flattenned_settings_dict['spatialplot_point_size'] = {'name': 'Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
 
 settings_params = [
         {'name': 'Segment Creation', 'type': 'group', 'children': [
