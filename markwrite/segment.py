@@ -24,6 +24,7 @@ from markwrite.gui.projectsettings import SETTINGS
 
 class PenDataSegmentCategory(object):
     _nextid=0
+    totalsegmentcount=0
     id2obj=WeakValueDictionary()
     _project = None
     def __init__(self, name=None, parent=None, clear_lookup=True, project = None):
@@ -62,6 +63,7 @@ class PenDataSegmentCategory(object):
         cls._id=0
         cls.id2obj.clear()
         cls.project=None
+        PenDataSegmentCategory.totalsegmentcount=0
 
     @property
     def nextid(self):
@@ -107,11 +109,13 @@ class PenDataSegmentCategory(object):
         self._childsegments.append(s)
         self._childsegments = sorted(self._childsegments, key=attrgetter('starttime'))
         self._childsegment_ids.insert(self._childsegments.index(s),s.id)
+        PenDataSegmentCategory.totalsegmentcount+=1
 
     def removeChild(self, s):
         seg_index = self._childsegment_ids.index(s.id)
         self._childsegment_ids.remove(s.id)
         self._childsegments.pop(seg_index)
+        PenDataSegmentCategory.totalsegmentcount-=1
 
     @property
     def parent(self):
