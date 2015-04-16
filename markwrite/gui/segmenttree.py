@@ -121,12 +121,12 @@ class SegmentInfoDockArea(DockArea):
         self.current_pydat_obj = project.segmentset
         #TODO: UPDATE TO SUPPORT PROJECT REOPENNING WITH SEG. HEIRARCHY.
         # Current code assumes list on segments only
-        for pds in project.segmentset.children:
-            segtreeitem = QtGui.QTreeWidgetItem([pds.name])
-            segtreeitem._pydat = proxy(pds)
-            projecttreeitem.addChild(segtreeitem)
+        #for pds in project.segmentset.children:
+        #    segtreeitem = QtGui.QTreeWidgetItem([pds.name])
+        #    segtreeitem._pydat = proxy(pds)
+        #    projecttreeitem.addChild(segtreeitem)
 
-        self.updatePropertiesTableData(project.propertiesTableData())
+        self.updatePropertiesTableData(project.segmentset.propertiesTableData())
 
     def handleSegmentCreated(self, segment):
         #print '>>TREE.handleSegmentCreated:',segment

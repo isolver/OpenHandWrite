@@ -175,13 +175,22 @@ class ReportExporter(object):
     Parent class for all report export formats. Each subclass must implement
     the following methods:
 
-    * headerrow()
+    * columnnames()
     * datarowcount()
     * datarows()
 
     And optionally set the following class attribute:
 
     * progress_dialog_title
+    * sep
+    * nl
+    * writepreamble
+    * writeheader
+    * formating
+
+    and class methods:
+
+    * preamble()
 
     For example, given a ReportExporter subclass called MyReportExporter,
     the specified report can be exxported / saved to disk using:
@@ -190,13 +199,20 @@ class ReportExporter(object):
 
     '''
     progress_dialog_title = "Saving MarkWrite Report .."
+    sep=u'\t'
+    nl=u'\n'
+    writepreamble=False
+    writeheader=True
+    formating={}
+
     project = None
+
     def __init__(self):
         pass
 
     @classmethod
-    def headerrow(cls):
-        return unicode("undefined header row")
+    def columnnames(cls):
+        return []
 
     @classmethod
     def datarowcount(cls):
@@ -205,6 +221,17 @@ class ReportExporter(object):
     @classmethod
     def datarows(cls):
         return []
+
+    @classmethod
+    def preamble(cls):
+        return ''
+
+    @classmethod
+    def rowformat(cls):
+        rowformater=[]
+        for cname in cls.columnnames():
+            rowformater.append(cls.formating.get(cname,u"{}"))
+        return cls.sep.join(rowformater)+cls.nl
 
     @classmethod
     def export(cls, file_path, project):
@@ -219,11 +246,22 @@ class ReportExporter(object):
         try:
             import pyqtgraph
             with codecs.open(file_path, "w", "utf-8") as f:
-                f.write(cls.headerrow())
                 with pyqtgraph.ProgressDialog(cls.progress_dialog_title, 0,cls.datarowcount()) as dlg:
+
+                    if cls.writepreamble:
+                        # TODO: Should split into lines and prefix each line
+                        # with a 'comment' character(s), like '#' is used in python
+
+                        f.write(cls.preamble()+cls.nl)
+
+                    if cls.writeheader:
+                        f.write(cls.sep.join(cls.columnnames())+cls.nl)
+
+                    rowformatstr=cls.rowformat()
                     ri = 0
-                    for rowstr in cls.datarows():
-                        f.write(rowstr)
+                    for row in cls.datarows():
+                        f.write(rowformatstr.format(*row))
+
                         if ri%10==0:
                             dlg.setValue(ri)
                         if dlg.wasCanceled():
@@ -246,28 +284,13 @@ class PenSampleReportExporter(ReportExporter):
         ReportExporter.__init__(self)
 
     @classmethod
-    def headerrow(cls):
-        hdr = unicode("file\tindex\ttime\tx\ty\tpressure\tcat1")
-        cls._rowstrformatter = u'{sfile}\t{sindex}\t{time}\t{x}\t{y}\t{pressure}\t{cat1}'
+    def columnnames(cls):
+        column_names=['file','index','time','x','y','pressure','cat1']
         ss = cls.project.segmentset
-
         lvls = range(1,ss.getLevelCount()+1)
+        column_names.extend([u'cat1.L%d'%l for l in lvls])
 
-        if lvls:
-            lvl_names = [u'cat1.L%d'%l for l in lvls]
-            lvlhdrstr = u'\t'.join(lvl_names)
-            hdr=hdr+u'\t'+lvlhdrstr+u'\n'
-        else:
-            hdr=hdr+u'\n'
-
-        if lvls:
-            lvlsfmtnames = [u'{L%d}'%l for l in lvls]
-            lvlsfmtnames = u'\t'.join(lvlsfmtnames)
-            cls._rowstrformatter=cls._rowstrformatter+u'\t'+lvlsfmtnames+u'\n'
-        else:
-            cls._rowstrformatter=cls._rowstrformatter+u'\n'
-
-        return hdr
+        return column_names
 
     @classmethod
     def datarowcount(cls):
@@ -277,13 +300,10 @@ class PenSampleReportExporter(ReportExporter):
     def datarows(cls):
         pendata = cls.project.pendata
 
-        # Create a dict that matches the kwargs needed for giving input to
-        # the row string formatter.
         ss = cls.project.segmentset
         sfile=ss.name
 
         lvls = range(1,ss.getLevelCount()+1)
-        lvls_dict = {'L%d'%l:'' for l in lvls}
 
         segs_by_lvl=ss.getLeveledSegments()
         catname = ss.name
@@ -291,7 +311,8 @@ class PenSampleReportExporter(ReportExporter):
         for i in xrange(pendata.shape[0]):
             dp=pendata[i]
 
-            dptime = dp['time']
+
+            rowdata = [sfile,i,dp['time'],dp['x'],dp['y'],dp['pressure'],catname]
 
             # Go through segment levels finding matching seg at each level for
             # current data point. Use '' for levels where no seg matched
@@ -299,19 +320,75 @@ class PenSampleReportExporter(ReportExporter):
             for l in lvls:
                 dpsegname=''
                 for seg in segs_by_lvl[l]:
-                    if seg.contains(time=dptime):
+                    if seg.contains(time=dp['time']):
                         dpsegname=seg.name
                         break
                 # If no seg was found at this level, none will exist at lower
                 # levels for this point, so fill in remaining levels with ''
                 if len(dpsegname)==0:
-                    for fl in lvls[l-1:]:
-                        lvls_dict['L%d'%fl]=dpsegname
+                    rowdata.extend([dpsegname,]*len(lvls[l-1:]))
                     break
+                rowdata.append(dpsegname)
 
-                lvls_dict['L%d'%l]=dpsegname
-            datarow = cls._rowstrformatter.format(sfile=sfile,sindex=i,time=dptime,x=dp['x'],y=dp['y'],pressure=dp['pressure'],cat1=catname, **lvls_dict)
-            yield datarow
+            yield rowdata
+
+
+class SegmentLevelReportExporter(ReportExporter):
+    progress_dialog_title = "Saving Pen Data Segmentation Report .."
+    def __init__(self):
+        ReportExporter.__init__(self)
+
+    @classmethod
+    def columnnames(cls):
+        print "TODO: UPDATE TO CORRECT CONTENT"
+        column_names=['file','index','time','x','y','pressure','cat1']
+        ss = cls.project.segmentset
+        lvls = range(1,ss.getLevelCount()+1)
+        column_names.extend([u'cat1.L%d'%l for l in lvls])
+
+        return column_names
+
+    @classmethod
+    def datarowcount(cls):
+        print "TODO: UPDATE TO CORRECT CONTENT"
+        return cls.project.pendata.shape[0]
+
+    @classmethod
+    def datarows(cls):
+        print "TODO: UPDATE TO CORRECT CONTENT"
+        pendata = cls.project.pendata
+
+        ss = cls.project.segmentset
+        sfile=ss.name
+
+        lvls = range(1,ss.getLevelCount()+1)
+
+        segs_by_lvl=ss.getLeveledSegments()
+        catname = ss.name
+
+        for i in xrange(pendata.shape[0]):
+            dp=pendata[i]
+
+
+            rowdata = [sfile,i,dp['time'],dp['x'],dp['y'],dp['pressure'],catname]
+
+            # Go through segment levels finding matching seg at each level for
+            # current data point. Use '' for levels where no seg matched
+            # data point time, otherwise use segment name.
+            for l in lvls:
+                dpsegname=''
+                for seg in segs_by_lvl[l]:
+                    if seg.contains(time=dp['time']):
+                        dpsegname=seg.name
+                        break
+                # If no seg was found at this level, none will exist at lower
+                # levels for this point, so fill in remaining levels with ''
+                if len(dpsegname)==0:
+                    rowdata.extend([dpsegname,]*len(lvls[l-1:]))
+                    break
+                rowdata.append(dpsegname)
+
+            yield rowdata
 
 
 ################################################################################

@@ -89,9 +89,9 @@ def fileOpenDlg(tryFilePath="",
     """
 
     if allowed is None:
-        allowed = "All Supported Files (*.txyp *.xml *.mwp);;" \
-                  "Data Files (*.txyp *.xml);;" \
-                  "Project Files (*.mwp);;"
+        allowed = "Supported Input Files (*.txyp *.xml);;"
+                  #"Data Files (*.txyp *.xml);;"
+                  #"Project Files (*.mwp);;"
     fdlg = QtGui.QFileDialog.getOpenFileName
     if allow_multiple_select is True:
         fdlg = QtGui.QFileDialog.getOpenFileNames
@@ -196,7 +196,7 @@ class ExitApplication(ConfirmAction):
     text = 'Exit Application'
     info_text = "Are you sure you want to quit the application?"
 
-class SaveProjectChanges(ConfirmAction):
-    instance = None
-    text = 'Save Modified Project'
-    info_text = "Save the current project's changes?"
+#class SaveProjectChanges(ConfirmAction):
+#    instance = None
+#    text = 'Save Modified Project'
+#    info_text = "Save the current project's changes?"

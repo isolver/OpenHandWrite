@@ -159,16 +159,16 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.openFileAction.setStatusTip(atext)
         self.openFileAction.triggered.connect(self.openFile)
 
-        atext = 'Save Current Project.'
-        aicon = 'save&32.png'
-        self.saveProjectAction = ContextualStateAction(
-            QtGui.QIcon(getIconFilePath(aicon)),
-            'Save',
-            self)
-        self.saveProjectAction.setShortcut('Ctrl+S')
-        self.saveProjectAction.setEnabled(False)
-        self.saveProjectAction.setStatusTip(atext)
-        self.saveProjectAction.triggered.connect(self.saveProject)
+        #atext = 'Save Current Project.'
+        #aicon = 'save&32.png'
+        #self.saveProjectAction = ContextualStateAction(
+        #    QtGui.QIcon(getIconFilePath(aicon)),
+        #    'Save',
+        #    self)
+        #self.saveProjectAction.setShortcut('Ctrl+S')
+        #self.saveProjectAction.setEnabled(False)
+        #self.saveProjectAction.setStatusTip(atext)
+        #self.saveProjectAction.triggered.connect(self.saveProject)
 
         atext = 'Export Pen Sample Report File.'
         aicon = 'page&32.png'
@@ -256,7 +256,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(self.openFileAction)
-        fileMenu.addAction(self.saveProjectAction)
+        #fileMenu.addAction(self.saveProjectAction)
         fileMenu.addAction(self.showProjectSettingsDialogAction)
         fileMenu.addSeparator()
         exportMenu = fileMenu.addMenu("&Export")
@@ -273,7 +273,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         self.toolbarFile = self.addToolBar('File')
         self.toolbarFile.addAction(self.openFileAction)
-        self.toolbarFile.addAction(self.saveProjectAction)
+        #self.toolbarFile.addAction(self.saveProjectAction)
         self.toolbarFile.addAction(self.showProjectSettingsDialogAction)
 
         self.toolbarExport = self.addToolBar('Export')
@@ -343,10 +343,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         else:
             fileName = self._current_project.name
 
-            if self._current_project.modified:
-                fileName = u'[{0}] : '.format(fileName)
-            else:
-                fileName = u'{0} : '.format(fileName)
+            #if self._current_project.modified:
+            #    fileName = u'[{0}] : '.format(fileName)
+            #else:
+            fileName = u'{0} : '.format(fileName)
 
         app_title = u'MarkWrite'
         full_title = u'{0}{1}'.format(fileName, app_title)
@@ -379,13 +379,13 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                     ErrorDialog().display()
                     self.closeEvent(u'FORCE_EXIT')
 
-    def saveProject(self, confirm_save=False):
-        if self._current_project:
-            self._current_project.save()
-        self.updateAppTitle()
-        self.saveProjectAction.setEnabled(
-            self._current_project and self._current_project.modified)
-        warnDlg(prompt=u"Project Saving is not Implemented Yet. Sorry.")
+#    def saveProject(self, confirm_save=False):
+#        if self._current_project:
+#            self._current_project.save()
+#        self.updateAppTitle()
+#        self.saveProjectAction.setEnabled(
+#            self._current_project and self._current_project.modified)
+#        warnDlg(prompt=u"Project Saving is not Implemented Yet. Sorry.")
 
     def createPenSampleLevelReportFile(self):
         default_file_name = u"pen_samples_{0}.txt".format(self.project.name)
@@ -459,7 +459,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                   "should be saved."
         self._current_project = project
         self.updateAppTitle()
-        self.saveProjectAction.setEnabled(project.modified)
+        #self.saveProjectAction.setEnabled(project.modified)
         self.exportSampleReportAction.setEnabled(True)
 
     def handleSelectedPenDataUpdate(self, timeperiod, pendata):
@@ -478,9 +478,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         exitapp = ExitApplication.display()
         if exitapp:
-            if self._current_project and self._current_project.modified:
-                print "TODO: Since open project has been modified, ask if it " \
-                      "should be saved before exiting app."
+            #if self._current_project and self._current_project.modified:
+            #    print "TODO: Since open project has been modified, ask if it " \
+            #          "should be saved before exiting app."
             if event:
                 event.accept()
             else:

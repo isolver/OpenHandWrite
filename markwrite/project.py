@@ -68,8 +68,8 @@ class MarkWriteProject(object):
             if fimporter:
                 self.createNewProject(fname, fimporter.asarray(file_path))
                 self.autodetected_segment_tags=self.detectAssociatedSegmentTagsFile(dir_path,fname,fext)
-            elif file_name.lower().endswith(self.project_file_extension):
-                self.openExistingProject(file_path)
+ #           elif file_name.lower().endswith(self.project_file_extension):
+ #               self.openExistingProject(file_path)
             else:
                 print "Unsupported file type:",file_path
         else:
@@ -108,27 +108,27 @@ class MarkWriteProject(object):
             self._selectedpendata=[]
             self._segmentset=PenDataSegmentCategory(name=self.name,project=self)
             self._pendata['segment_id']=self._segmentset.id
-            self._project_file_path = u''
-            self._modified = True
-            self._created_date = time.strftime("%c")
-            self._modified_date = self._created_date
+#            self._project_file_path = u''
+#            self._modified = True
+#            self._created_date = time.strftime("%c")
+#            self._modified_date = self._created_date
 
             #self._project_tree = None
             #self.projectTreeNode()
 
-    def openExistingProject(self, file_path):
-        print "Reloading a saved MarkWrite Project is not implemented."
-        dir_path, file_name = os.path.split(file_path)
-        self._name = file_name
-        self._pendata = [] #TODO: Load from proj file.
-        self._selectedtimeperiod=[0,0] #TODO: Load from proj file.
-        self._selectedpendata=[] #TODO: Load from proj file.
-        self._segmentset=None #TODO: Load from proj file.
-        self._project_settings = OrderedDict() #TODO: Load from proj file.
-        self._project_file_path = file_path
-        self._modified = False
-        self._created_date = u"READ FROM PROJ FILE"
-        self._modified_date = u"READ FROM PROJ FILE"
+#    def openExistingProject(self, file_path):
+#        print "Reloading a saved MarkWrite Project is not implemented."
+#        dir_path, file_name = os.path.split(file_path)
+#        self._name = file_name
+#        self._pendata = [] #TODO: Load from proj file.
+#        self._selectedtimeperiod=[0,0] #TODO: Load from proj file.
+#        self._selectedpendata=[] #TODO: Load from proj file.
+#        self._segmentset=None #TODO: Load from proj file.
+#        self._project_settings = OrderedDict() #TODO: Load from proj file.
+#        self._project_file_path = file_path
+#        self._modified = False
+#        self._created_date = u"READ FROM PROJ FILE"
+#        self._modified_date = u"READ FROM PROJ FILE"
 
     def updateSelectedData(self,minT,maxT):
         self._selectedtimeperiod=minT, maxT
@@ -167,35 +167,35 @@ class MarkWriteProject(object):
     def name(self, n):
         self._name = n
 
-    @property
-    def created_date(self):
-        """
-        A string representing the date and time that the project was
-        first created.
+#    @property
+#    def created_date(self):
+#        """
+#        A string representing the date and time that the project was
+#        first created.
+#
+#        :return: str
+#        """
+#        return self._created_date
 
-        :return: str
-        """
-        return self._created_date
+#    @property
+#    def modified_date(self):
+#        """
+#        A string representing the last date and time that the project was
+#        modified and saved.
+#
+#        :return: str
+#        """
+#        return self._modified_date
 
-    @property
-    def modified_date(self):
-        """
-        A string representing the last date and time that the project was
-        modified and saved.
-
-        :return: str
-        """
-        return self._modified_date
-
-    @property
-    def modified(self):
-        """
-        True if the project has been modified since it was last saved; False
-        otherwise.
-
-        :return: bool
-        """
-        return self._modified
+#    @property
+#    def modified(self):
+#        """
+#        True if the project has been modified since it was last saved; False
+#        otherwise.
+#
+#        :return: bool
+#        """
+#        return self._modified
 
     @property
     def pendata(self):
@@ -239,45 +239,45 @@ class MarkWriteProject(object):
     def segmentset(self):
         return self._segmentset
 
-    def save(self):
-        """
-        Save the this MarkWrite project to self.file_path.
-        Return True is the project was saved, otherwise return False.
+#    def save(self):
+#        """
+#        Save the this MarkWrite project to self.file_path.
+#        Return True is the project was saved, otherwise return False.
+#
+#        :return: bool
+#        """
+#        # TODO : Implement MarkWrite project saving
+#        # To Save:
+#        #    1) TBD
+#        print 'MarkWriteProject save not implemented'
+#        if self._project_file_path is None:
+#            print 'Should be calling saveas, not save.'
+#        print 'Should save project file'
+#        print '------'
+#        #self._modified=False
+#        #self._modified_date = time.strftime("%c")
+#        return False
 
-        :return: bool
-        """
-        # TODO : Implement MarkWrite project saving
-        # To Save:
-        #    1) TBD
-        print 'MarkWriteProject save not implemented'
-        if self._project_file_path is None:
-            print 'Should be calling saveas, not save.'
-        print 'Should save project file'
-        print '------'
-        self._modified=False
-        self._modified_date = time.strftime("%c")
-        return False
-
-    def saveAs(self,path):
-        """
-        Save a copy of this MarkWrite project to the file system absolute path given
-        by path. Any modifications made to the project since it was last opened
-        are not saved to the original project file and are instead saved in
-        the new project file.
-
-        Return True is the project was saved, otherwise return False.
-
-        :param path: str
-        :return: bool
-        """
-        # TODO : Implement MarkWrite project saveAs
-        print 'MarkWriteProject saveAs not implemented'
-        print 'Should prompt for directory to save project file'
-        print 'Should save project file'
-        print '------'
-        self._modified=False
-        self._created_date = time.strftime("%c")
-        self._modified_date = self._created_date
+#    def saveAs(self,path):
+#        """
+#        Save a copy of this MarkWrite project to the file system absolute path given
+#        by path. Any modifications made to the project since it was last opened
+#        are not saved to the original project file and are instead saved in
+#        the new project file.
+#
+#        Return True is the project was saved, otherwise return False.
+#
+#        :param path: str
+#        :return: bool
+#        """
+#        # TODO : Implement MarkWrite project saveAs
+#        print 'MarkWriteProject saveAs not implemented'
+#        print 'Should prompt for directory to save project file'
+#        print 'Should save project file'
+#        print '------'
+#        self._modified=False
+#        self._created_date = time.strftime("%c")
+#        self._modified_date = self._created_date
 
     def close(self):
         """
@@ -286,23 +286,23 @@ class MarkWriteProject(object):
 
         :return: bool
         """
-        self._modified = False
+#        self._modified = False
         self._pendata = None
         return True
 
-    def propertiesTableData(self):
-        """
-        Return a dict of project properties to display in the MarkWrite
-        Application Project Properties Table.
-
-        :return: dict of project properties to display
-        """
-
-        project_properties = OrderedDict()
-        project_properties['Name'] = dict(val=self.name)
-        project_properties['Pen Points Count'] = dict(val=self._pendata.shape[0])
-        project_properties['Created On'] = dict(val=self.created_date)
-        project_properties['Last Saved'] = dict(val=self.modified_date)
-        project_properties['Currently Modified'] = dict(val=self.modified)
-        return project_properties
+#    def propertiesTableData(self):
+#        """
+#        Return a dict of project properties to display in the MarkWrite
+#        Application Project Properties Table.
+#
+#        :return: dict of project properties to display
+#        """
+#
+#        project_properties = OrderedDict()
+#        project_properties['Name'] = dict(val=self.name)
+#        project_properties['Pen Points Count'] = dict(val=self._pendata.shape[0])
+#        project_properties['Created On'] = dict(val=self.created_date)
+#        project_properties['Last Saved'] = dict(val=self.modified_date)
+#        project_properties['Currently Modified'] = dict(val=self.modified)
+#        return project_properties
 
