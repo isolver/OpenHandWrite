@@ -18,6 +18,7 @@
 import numpy as np
 from util import getSegmentTagsFilePath
 import codecs
+import os
 
 numpy_pendata_format = [('time', np.float64),
                     ('x', np.int32),
@@ -174,3 +175,22 @@ def loadPredefinedSegmentTagList(file_name=u'default.tag'):
     tag_file_path = getSegmentTagsFilePath(file_name)
     with codecs.open(tag_file_path, "r", "utf-8") as f:
         return [tag.strip() for tag in f if len(tag.strip())>0]
+
+################################################################################
+
+import cPickle
+import os
+
+def readPickle(file_path, file_name):
+    abs_file_path = os.path.join(file_path,file_name)
+    if os.path.isfile(abs_file_path):
+        with open(abs_file_path, 'rb') as f:
+            return cPickle.load(f)
+    return None
+
+def writePickle(file_path, file_name, dictobj):
+    abs_file_path = os.path.join(file_path,file_name)
+    if not os.path.exists(file_path):
+        os.makedirs(file_path)
+    with open(abs_file_path, 'wb') as f:
+        cPickle.dump(dictobj, f, cPickle.HIGHEST_PROTOCOL)

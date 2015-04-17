@@ -20,12 +20,11 @@ import pyqtgraph as pg
 
 from markwrite.gui import ProjectSettingsDialog
 
-
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.dockarea import DockArea, Dock
 
 from markwrite.util import getIconFilePath
-from markwrite.file_io import loadPredefinedSegmentTagList
+from markwrite.file_io import loadPredefinedSegmentTagList, readPickle, writePickle
 from markwrite.reports import PenSampleReportExporter, SegmentLevelReportExporter
 
 from dialogs import ExitApplication, fileOpenDlg, ErrorDialog, warnDlg, \
@@ -96,9 +95,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                                       object)  # segment being removed,
                                       # segment index in list
     _mainwin_instance=None
+    _appdirs = None
     def __init__(self, qtapp):
         global  SETTINGS
-
         QtGui.QMainWindow.__init__(self)
         MarkWriteMainWindow._mainwin_instance = self
 
@@ -480,8 +479,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
     def handleProjectChange(self, project):
         if self._current_project:
-            print "TODO: If current project has been modified, ask if it " \
-                  "should be saved."
+            pass
         self._current_project = project
         self.updateAppTitle()
         #self.saveProjectAction.setEnabled(project.modified)
@@ -494,7 +492,12 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         #print '<< App.handleSelectedPenDataUpdate'
 
     def handleDisplayAppSettingsDialogEvent(self):
-        projsettings, ok = ProjectSettingsDialog.getProjectSettings(self)
+        usersettings = readPickle(self._appdirs.user_config_dir,u'usersettings.pkl')
+
+        updatedsettings, savestate, ok = ProjectSettingsDialog.getProjectSettings(self, usersettings)
+        if ok is True:
+            print ">> Saving updated settings state to user dir:",self._appdirs.user_config_dir, u'usersettings.pkl'
+            writePickle(self._appdirs.user_config_dir,u'usersettings.pkl', savestate)
 
     def closeEvent(self, event):
         if event == u'FORCE_EXIT':

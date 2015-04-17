@@ -95,7 +95,9 @@ class MarkWriteProject(object):
     def createNewProject(self, file_name, pen_data):
             # TODO : Define MarkWrite project setting and implement GUI for editing
             PenDataSegmentCategory.clearSegmentCache()
-            self._project_settings = OrderedDict()
+
+            self._project_settings = None
+
             self._name = file_name
 
             # Normalize pen sample times so first sample starts at 0.0 sec.

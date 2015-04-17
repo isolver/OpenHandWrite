@@ -39,6 +39,7 @@ flattenned_settings_dict['spatialplot_invalidselected_color'] ={'name': 'Invalid
 flattenned_settings_dict['spatialplot_point_size'] = {'name': 'Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
 
 settings_params = [
+#       {'name': 'markwrite_version', 'type': 'float', 'value': 0.1, 'visible':False},
         {'name': 'Segment Creation', 'type': 'group', 'children': [
             'new_segment_trim_0_pressure_points',
 #            {'name': 'Suggest Default Segment Name', 'type': 'bool', 'value': False},
@@ -94,30 +95,37 @@ settings_params = [
 SETTINGS=dict()
 
 path2key=dict()
-def replaceGroupKeys(paramlist, parent_path=[]):
-    for i,p in enumerate(paramlist):
-        if isinstance(p,basestring):
-            pdict=flattenned_settings_dict[p]
-            paramlist[i]=pdict
-            path2key['.'.join(parent_path+[pdict['name'],])]=p
-        elif isinstance(p,dict):
-            replaceGroupKeys(p.get('children'),parent_path+[p.get('name'),])
-replaceGroupKeys(settings_params)
-#print 'settings_params:',settings_params
-paramdef = Parameter.create(name='params', type='group', children=settings_params)
+
+def initKeyParamMapping():
+    if len(path2key)==0:
+        def replaceGroupKeys(paramlist, parent_path=[]):
+            for i,p in enumerate(paramlist):
+                if isinstance(p,basestring):
+                    pdict=flattenned_settings_dict[p]
+                    paramlist[i]=pdict
+                    path2key['.'.join(parent_path+[pdict['name'],])]=p
+                elif isinstance(p,dict):
+                    replaceGroupKeys(p.get('children'),parent_path+[p.get('name'),])
+        replaceGroupKeys(settings_params)
+    #print 'settings_params:',settings_params
 
 class ProjectSettingsDialog(QtGui.QDialog):
     path2key=dict()
-    cachedstate =  None#p.saveState()
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, savedstate=None):
         super(ProjectSettingsDialog, self).__init__(parent)
         self.setWindowTitle("Application Settings")
         layout = QtGui.QVBoxLayout(self)
 
-        self._settings = paramdef
+        initKeyParamMapping()
 
-        if ProjectSettingsDialog.cachedstate:
-            self._settings.restoreState(ProjectSettingsDialog.cachedstate, addChildren=True, removeChildren=True)
+        self._settings = Parameter.create(name='params', type='group', children=settings_params)
+
+        if savedstate:
+            self._settings.restoreState(savedstate, addChildren=True, removeChildren=True)
+
+        # Holds settings keys that havve changed by the user when the
+        # dialog is closed. Used to update any needed gui values..
+        self._updated_settings={}
 
         self._settings.sigTreeStateChanged.connect(self.handleSettingChange)
 
@@ -171,61 +179,23 @@ class ProjectSettingsDialog(QtGui.QDialog):
             #print('  ----------')
             if change == 'value':
                 SETTINGS[path2key[childName]]=data
+                self._updated_settings[path2key[childName]] = data
                 #print 'settings_state:',self.settings_state
-    # get current date and time from the dialog
-    @property
-    def settings(self):
-        return self._settings
 
     # static method to create the dialog and return (date, time, accepted)
     @staticmethod
-    def getProjectSettings(parent = None):
-        dialog = ProjectSettingsDialog(parent)
+    def getProjectSettings(parent = None, usersettings = None):
+        dialog = ProjectSettingsDialog(parent, usersettings)
         result = dialog.exec_()
-        ProjectSettingsDialog.cachedstate=dialog.settings.saveState()
-        return dialog.settings, result == QtGui.QDialog.Accepted
+        usersettings=dialog._settings.saveState()
+        return dialog._updated_settings, usersettings, result == QtGui.QDialog.Accepted
 
 ############### Unimplemented
 
 
-def getSettingsForCurrentApplicationLaunch():
-    """
-    TODO: Either load default settings for app, or if a user saved settings
-     state file exists, read it and load those as the settings to use for the
-     application when run.
-    :return:
-    """
-    pass
-
-def loadUserSavedSettingsDict():
-    """
-    TODO: Implement ability to load a saved settings state dict so that they
-    are used as the setting values for the application.
-    :return:
-
-    """
-    pass
-
-def saveSettingsDict():
-    """
-    TODO: Implement ability to save the current settings state so that they
-    are used instead of the default settting values when the application starts
-    again in the future.
-    :return:
-
-    """
-    pass
-
-def resetSettingsToDefault():
-    """
-    TODO: Resets the settings values back to the defaults, removing
-          any user changes made.
-    :return:
-    """
-    pass
-
 if __name__ == '__main__':
     app = QtGui.QApplication([])
-    projsettings, ok = ProjectSettingsDialog.getProjectSettings()
-    print("{} {}".format(projsettings, ok))
+    updatedsettings, usersettings, ok = ProjectSettingsDialog.getProjectSettings()
+    print("UPDATES:\n{}\n\nALL:\n{}\n\n{}".format(updatedsettings, usersettings, ok))
+    print type(usersettings)
     app.exec_()
