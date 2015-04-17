@@ -25,19 +25,23 @@ class SegmentLevelReportExporter(ReportExporter):
     Columns are:
         * file: name of imported pen sample data file
         * seg_id: unique identifier assigned to segment.
-        * category: The name of segment tree the root the segment is part of
+        * category: The name of segment tree root the segment is part of
         * level: Segment level in the segmentation tree.
-        * segpath: tree branch path to segment, not including root of tree
-        * name
-        * start_time:
-        * end_time:
-        * duration:
-        * start_index:
-        * end_index:
-        * sample_count:
-        * subsegment_count:
-        * prev_penpress_time
-        * next_penpress_time
+        * segpath: tree branch path to segment, not including current segment
+        * name: Name / tag assigned to the segment
+        * start_time: Start time of the segment, in sec.msec format.
+        * end_time: End time of the segment, in sec.msec format.
+        * duration: end_time - start_time
+        * start_index: The index of the segments first pen sample point
+                       in the full sample array ( 0 based indexing)
+        * end_index:   The index of the segments last pen sample point
+                       in the full sample array ( 0 based indexing)
+        * sample_count: Number of pen data samples that make up the segment
+        * subsegment_count: Number of direct children of the segment.
+        * prev_penpress_time: The first pen data point prior to the start
+                              of the segment, that has a pressure value > 0
+        * next_penpress_time: The first pen data point following to the end
+                              of the segment, that has a pressure value > 0
     """
     progress_dialog_title = "Saving Pen Data Segmentation Report .."
     progress_update_rate=1
@@ -47,10 +51,21 @@ class SegmentLevelReportExporter(ReportExporter):
 
     @classmethod
     def columnnames(cls):
-        column_names=['file','seg_id','category','level','segpath','name'
-            ,'start_time','end_time','duration','start_index','end_index',
-            'sample_count','subsegment_count','prev_penpress_time'
-            ,'next_penpress_time']
+        column_names=['file',
+                      'seg_id',
+                      'category',
+                      'level',
+                      'segpath',
+                      'name',
+                      'start_time',
+                      'end_time',
+                      'duration',
+                      'start_index',
+                      'end_index',
+                      'sample_count',
+                      'subsegment_count',
+                      'prev_penpress_time',
+                      'next_penpress_time']
         return column_names
 
     @classmethod
@@ -68,18 +83,7 @@ class SegmentLevelReportExporter(ReportExporter):
         filename=catname=segment_tree.name
 
         for level_num, segment_list in cls.project.segmentset.getLeveledSegments().items():
-            """
-
-
-            * start_index:
-            * end_index:
-            * sample_count:
-            *subsegment_count
-            * prev_penpress_time
-            * next_penpress_time
-            """
             for segment in segment_list:
-                #TODO: Segment path string
                 segpath = cls.segpathsep.join(segment.path)
 
                 stime, etime = segment.timerange
