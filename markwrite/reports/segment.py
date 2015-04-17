@@ -41,7 +41,7 @@ class SegmentLevelReportExporter(ReportExporter):
     """
     progress_dialog_title = "Saving Pen Data Segmentation Report .."
     progress_update_rate=1
-
+    segpathsep=u'->'
     def __init__(self):
         ReportExporter.__init__(self)
 
@@ -60,12 +60,12 @@ class SegmentLevelReportExporter(ReportExporter):
     @classmethod
     def datarows(cls):
         pendata = cls.project.pendata
-
+        pointcount=pendata.shape[0]
+        nonzero_pressure_ixs = np.nonzero(pendata['pressure'])[0]
         segment_tree = cls.project.segmentset
-        filename=catname=segment_tree.name
-        catname = segment_tree.name
 
-        lvls = range(1,segment_tree.getLevelCount()+1)
+        catname = segment_tree.name
+        filename=catname=segment_tree.name
 
         for level_num, segment_list in cls.project.segmentset.getLeveledSegments().items():
             """
@@ -80,14 +80,23 @@ class SegmentLevelReportExporter(ReportExporter):
             """
             for segment in segment_list:
                 #TODO: Segment path string
-                segpath = "TBC"
-                prev_penpress_time = 'TBC'
-                next_penpress_time = "TBC"
+                segpath = cls.segpathsep.join(segment.path)
 
                 stime, etime = segment.timerange
                 start_index, end_index = segment_tree.calculateTrimmedSegmentIndexBoundsFromTimeRange(stime, etime)
                 duration = etime - stime
                 subsegment_count = len(segment.children)
+
+                prev_penpress_time=''
+                next_penpress_time=''
+
+                if start_index>0:
+                    prev_nonzero_ix = np.searchsorted(nonzero_pressure_ixs, start_index, side='left')-1
+                    prev_penpress_time = pendata['time'][prev_nonzero_ix]
+                if end_index < pointcount:
+                    next_nonzero_ix = np.searchsorted(nonzero_pressure_ixs, end_index, side='left')+1
+                    next_penpress_time = pendata['time'][next_nonzero_ix]
+
                 yield [filename,
                            segment.id,
                            catname,

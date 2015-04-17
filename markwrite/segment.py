@@ -121,10 +121,6 @@ class PenDataSegmentCategory(object):
     def parent(self):
         return self._parent
 
-    @property
-    def project(self):
-        return self._project
-
     @parent.setter
     def parent(self, s):
         self._parent = s
@@ -140,6 +136,19 @@ class PenDataSegmentCategory(object):
         while p.parent is not None:
             p=p.parent
         return p
+
+    @property
+    def project(self):
+        return self._project
+
+    @property
+    def path(self):
+        spath=[]
+        p = self.parent
+        while p is not None:
+            spath.append(p.name)
+            p=p.parent
+        return spath[::-1]
 
     def _args2kwargs(self, args, kwargs={}):
         for a in args:
