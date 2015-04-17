@@ -94,6 +94,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     sigSegmentRemoved = QtCore.Signal(object,
                                       object)  # segment being removed,
                                       # segment index in list
+    sigAppSettingsUpdated = QtCore.Signal(object, #dict of app settings that changed
+                                          object,) #ful settings dict
     _mainwin_instance=None
     _appdirs = None
     def __init__(self, qtapp):
@@ -118,6 +120,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         self.sigProjectChanged.connect(self.handleProjectChange)
         self.sigSelectedPenDataUpdate.connect(self.handleSelectedPenDataUpdate)
+        self.sigAppSettingsUpdated.connect(self._penDataTimeLineWidget.handleUpdatedSettingsEvent)
+        self.sigAppSettingsUpdated.connect(self._penDataSpatialViewWidget.handleUpdatedSettingsEvent)
 
     @staticmethod
     def instance():
@@ -494,10 +498,11 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     def handleDisplayAppSettingsDialogEvent(self):
         usersettings = readPickle(self._appdirs.user_config_dir,u'usersettings.pkl')
 
-        updatedsettings, savestate, ok = ProjectSettingsDialog.getProjectSettings(self, usersettings)
-        if ok is True:
-            print ">> Saving updated settings state to user dir:",self._appdirs.user_config_dir, u'usersettings.pkl'
+        updatedsettings, allsettings, savestate, ok = ProjectSettingsDialog.getProjectSettings(self, usersettings)
+        if ok is True and len(updatedsettings)>0:
             writePickle(self._appdirs.user_config_dir,u'usersettings.pkl', savestate)
+            if self.project:
+                self.sigAppSettingsUpdated.emit(updatedsettings, allsettings)
 
     def closeEvent(self, event):
         if event == u'FORCE_EXIT':
@@ -506,9 +511,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         exitapp = ExitApplication.display()
         if exitapp:
-            #if self._current_project and self._current_project.modified:
-            #    print "TODO: Since open project has been modified, ask if it " \
-            #          "should be saved before exiting app."
+            pass
             if event:
                 event.accept()
             else:

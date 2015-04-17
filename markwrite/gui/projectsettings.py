@@ -25,7 +25,7 @@ from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, reg
 
 flattenned_settings_dict = OrderedDict()
 flattenned_settings_dict['new_segment_trim_0_pressure_points'] = {'name': 'Trim 0 Pressure Points', 'type': 'bool', 'value': True}
-flattenned_settings_dict['plotviews_background_color'] = {'name': 'Background Color', 'type': 'color', 'value': (32,32,32), 'tip': "Application Plot's background color."}
+flattenned_settings_dict['plotviews_background_color'] = {'name': 'Background Color', 'type': 'color', 'value': (32,32,32), 'tip': "Application Plot's background color. Change will not take effect until the application is restarted."}
 flattenned_settings_dict['plotviews_foreground_color'] =  {'name': 'Foreground Color', 'type': 'color', 'value': (224,224,224), 'tip': "Application Plot's foreground color (axis lines / labels)."}
 
 flattenned_settings_dict['timeplot_xtrace_color'] = {'name': 'Point Color', 'type': 'color', 'value': (170,255,127)}
@@ -34,9 +34,10 @@ flattenned_settings_dict['timeplot_ytrace_color'] = {'name': 'Point Color', 'typ
 flattenned_settings_dict['timeplot_ytrace_size'] ={'name': 'Point Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
 
 flattenned_settings_dict['spatialplot_default_color'] = {'name':'Default Point Color', 'type': 'color', 'value':(224,224,224)}
-flattenned_settings_dict['spatialplot_validselected_color'] = {'name': 'Valid Segment Color', 'type': 'color', 'value':(0,160,0)}
-flattenned_settings_dict['spatialplot_invalidselected_color'] ={'name': 'Invalid Segment Color', 'type': 'color', 'value': (160,0,0)}
-flattenned_settings_dict['spatialplot_point_size'] = {'name': 'Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
+flattenned_settings_dict['spatialplot_default_point_size'] = {'name': 'Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
+flattenned_settings_dict['spatialplot_selectedvalid_color'] = {'name': 'Valid Segment Color', 'type': 'color', 'value':(0,160,0)}
+flattenned_settings_dict['spatialplot_selectedinvalid_color'] ={'name': 'Invalid Segment Color', 'type': 'color', 'value': (160,0,0)}
+flattenned_settings_dict['spatialplot_selectedpoint_size'] = {'name': 'Size', 'type': 'int', 'value': 2, 'limits': (1, 5)}
 
 settings_params = [
 #       {'name': 'markwrite_version', 'type': 'float', 'value': 0.1, 'visible':False},
@@ -68,24 +69,13 @@ settings_params = [
                  ]},
            ]},
             {'name': 'Spatial View', 'type': 'group', 'children': [
-#                {'name': 'Background Color', 'type': 'color', 'value': "000", 'tip': "Spatial pen point plot's background color."},
-#                {'name': 'Foreground Color', 'type': 'color', 'value': "FFF", 'tip': "Spatial pen point plot's foreground color (axis lines / labels)."},
-#                {'name': 'Non Segmented Pen Points', 'type': 'group', 'children': [
-#                    {'name': 'Shape', 'type': 'list', 'values': {"Dot": 'o', "Cross": "x"}, 'value': 0},
-#                    {'name': 'Color', 'type': 'color', 'value': "0F0"},
-#                    {'name': 'Size', 'type': 'int', 'value': 2, 'limits': (1, 5)},
-#                ]},
-#               {'name': 'Segmented Pen Points', 'type': 'group', 'children': [
-#                    {'name': 'Shape', 'type': 'list', 'values': {"Dot": 'o', "Cross": "x"}, 'value': 0},
-#                    {'name': 'Color', 'type': 'color', 'value': "0F0"},
-#                    {'name': 'Size', 'type': 'int', 'value': 2, 'limits': (1, 5)},
-#                ]},
+                'spatialplot_default_color',
+                'spatialplot_default_point_size',
                  {'name': 'Selected Pen Points', 'type': 'group', 'children': [
                     #{'name': 'Shape', 'type': 'list', 'values': {"Dot": 'o', "Cross": "x"}, 'value': 0},
-                    'spatialplot_default_color',
-                    'spatialplot_validselected_color',
-                    'spatialplot_invalidselected_color',
-                    'spatialplot_point_size',
+                    'spatialplot_selectedvalid_color',
+                    'spatialplot_selectedinvalid_color',
+                    'spatialplot_selectedpoint_size',
                 ]}
             ]},
              ]},
@@ -94,21 +84,6 @@ settings_params = [
 
 SETTINGS=dict()
 
-path2key=dict()
-
-def initKeyParamMapping():
-    if len(path2key)==0:
-        def replaceGroupKeys(paramlist, parent_path=[]):
-            for i,p in enumerate(paramlist):
-                if isinstance(p,basestring):
-                    pdict=flattenned_settings_dict[p]
-                    paramlist[i]=pdict
-                    path2key['.'.join(parent_path+[pdict['name'],])]=p
-                elif isinstance(p,dict):
-                    replaceGroupKeys(p.get('children'),parent_path+[p.get('name'),])
-        replaceGroupKeys(settings_params)
-    #print 'settings_params:',settings_params
-
 class ProjectSettingsDialog(QtGui.QDialog):
     path2key=dict()
     def __init__(self, parent = None, savedstate=None):
@@ -116,7 +91,7 @@ class ProjectSettingsDialog(QtGui.QDialog):
         self.setWindowTitle("Application Settings")
         layout = QtGui.QVBoxLayout(self)
 
-        initKeyParamMapping()
+        self.initKeyParamMapping()
 
         self._settings = Parameter.create(name='params', type='group', children=settings_params)
 
@@ -148,6 +123,18 @@ class ProjectSettingsDialog(QtGui.QDialog):
 
         self.resize(500,700)
 
+    def initKeyParamMapping(self):
+        if len(self.path2key)==0:
+            def replaceGroupKeys(paramlist, parent_path=[]):
+                for i,p in enumerate(paramlist):
+                    if isinstance(p,basestring):
+                        pdict=flattenned_settings_dict[p]
+                        paramlist[i]=pdict
+                        self.path2key['.'.join(parent_path+[pdict['name'],])]=p
+                    elif isinstance(p,dict):
+                        replaceGroupKeys(p.get('children'),parent_path+[p.get('name'),])
+            replaceGroupKeys(settings_params)
+
     def initSettingsValues(self, pgroup=None):
         global SETTINGS
         if pgroup is None:
@@ -161,7 +148,7 @@ class ProjectSettingsDialog(QtGui.QDialog):
                     childName = '.'.join(path)
                 else:
                     childName = child.name()
-                SETTINGS[path2key[childName]]=child.value()
+                SETTINGS[self.path2key[childName]]=child.value()
 
     ## If anything changes in the tree, print a message
     def handleSettingChange(self, param, changes):
@@ -178,8 +165,9 @@ class ProjectSettingsDialog(QtGui.QDialog):
             #print('  data:      %s'% str(data))
             #print('  ----------')
             if change == 'value':
-                SETTINGS[path2key[childName]]=data
-                self._updated_settings[path2key[childName]] = data
+                setting_key = self.path2key[childName]
+                SETTINGS[setting_key]=data
+                self._updated_settings[setting_key] = data
                 #print 'settings_state:',self.settings_state
 
     # static method to create the dialog and return (date, time, accepted)
@@ -188,14 +176,14 @@ class ProjectSettingsDialog(QtGui.QDialog):
         dialog = ProjectSettingsDialog(parent, usersettings)
         result = dialog.exec_()
         usersettings=dialog._settings.saveState()
-        return dialog._updated_settings, usersettings, result == QtGui.QDialog.Accepted
+        return dialog._updated_settings,SETTINGS, usersettings, result == QtGui.QDialog.Accepted
 
 ############### Unimplemented
 
 
 if __name__ == '__main__':
     app = QtGui.QApplication([])
-    updatedsettings, usersettings, ok = ProjectSettingsDialog.getProjectSettings()
+    updatedsettings, allsettings, usersettings, ok = ProjectSettingsDialog.getProjectSettings()
     print("UPDATES:\n{}\n\nALL:\n{}\n\n{}".format(updatedsettings, usersettings, ok))
     print type(usersettings)
     app.exec_()

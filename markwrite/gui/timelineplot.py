@@ -4,6 +4,7 @@ import pyqtgraph as pg
 from markwrite.gui.projectsettings import SETTINGS
 
 from markwrite.gui.mainwin import MarkWriteMainWindow
+
 __author__ = 'Sol'
 
 
@@ -20,7 +21,60 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         self._lastselectedtimerange = None
         self.sigRegionChangedProxy = None
         MarkWriteMainWindow.instance().sigResetProjectData.connect(
-        self.handleResetPenData)
+            self.handleResetPenData)
+
+    def getPenBrushX(self, penpoints, penarray=None, brusharray=None):
+        if penarray is None:
+            penarray = np.empty(penpoints.shape[0], dtype=object)
+            brusharray = np.empty(penpoints.shape[0], dtype=object)
+
+        pen = pg.mkPen(SETTINGS['timeplot_xtrace_color'],
+                       width=SETTINGS['timeplot_xtrace_size'])
+        pen2 = pg.mkPen(SETTINGS['timeplot_xtrace_color'].darker(),
+                        width=SETTINGS['timeplot_xtrace_size'])
+        penarray[:] = pen
+        penarray[penpoints['pressure'] == 0] = pen2
+
+        brush = pg.mkBrush(SETTINGS['timeplot_xtrace_color'])
+        brush2 = pg.mkBrush(SETTINGS['timeplot_xtrace_color'].darker())
+        brusharray[:] = brush
+        brusharray[penpoints['pressure'] == 0] = brush2
+
+        return penarray, brusharray
+
+    def updateTraceX(self, brusharray, penarray, penpoints):
+        penarray, brusharray = self.getPenBrushX(penpoints, penarray,
+                                                 brusharray)
+        self.xPenPosTrace.setData(x=penpoints['time'], y=penpoints['x'],
+                                  symbolPen=penarray,
+                                  symbolBrush=brusharray)
+        return brusharray, penarray
+
+    def getPenBrushY(self, penpoints, penarray=None, brusharray=None):
+        if penarray is None:
+            penarray = np.empty(penpoints.shape[0], dtype=object)
+            brusharray = np.empty(penpoints.shape[0], dtype=object)
+
+        pen = pg.mkPen(SETTINGS['timeplot_ytrace_color'],
+                       width=SETTINGS['timeplot_ytrace_size'])
+        pen2 = pg.mkPen(SETTINGS['timeplot_ytrace_color'].darker(),
+                        width=SETTINGS['timeplot_ytrace_size'])
+        penarray[:] = pen
+        penarray[penpoints['pressure'] == 0] = pen2
+        brush = pg.mkBrush(SETTINGS['timeplot_ytrace_color'])
+        brush2 = pg.mkBrush(SETTINGS['timeplot_ytrace_color'].darker())
+        brusharray[:] = brush
+        brusharray[penpoints['pressure'] == 0] = brush2
+
+        return penarray, brusharray
+
+    def updateTraceY(self, brusharray, penarray, penpoints):
+        penarray, brusharray = self.getPenBrushY(penpoints, penarray,
+                                                 brusharray)
+        self.xPenPosTrace.setData(x=penpoints['time'], y=penpoints['y'],
+                                  symbolPen=penarray,
+                                  symbolBrush=brusharray)
+        return brusharray, penarray
 
     def handleResetPenData(self, project):
         '''
@@ -35,59 +89,32 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         self.getPlotItem().setLimits(yMin=penValRange[0], yMax=penValRange[1],
                                      xMin=penpoints['time'][0],
                                      xMax=penpoints['time'][-1])
+
+        penarray, brusharray = None, None
+
         if self.xPenPosTrace is None:
             # Create DataItem objects
-            pen = pg.mkPen(SETTINGS['timeplot_xtrace_color'],
-                           width=SETTINGS['timeplot_xtrace_size'])
-            pen2 = pg.mkPen(SETTINGS['timeplot_xtrace_color'].darker(),
-                            width=SETTINGS['timeplot_xtrace_size'])
-            penarray = np.empty(penpoints.shape[0], dtype=object)
-            penarray[:] = pen
-            penarray[penpoints['pressure'] == 0] = pen2
-
-            brush = pg.mkBrush(SETTINGS['timeplot_xtrace_color'])
-            brush2 = pg.mkBrush(SETTINGS['timeplot_xtrace_color'].darker())
-            brusharray = np.empty(penpoints.shape[0], dtype=object)
-            brusharray[:] = brush
-            brusharray[penpoints['pressure'] == 0] = brush2
-
+            penarray, brusharray = self.getPenBrushX(penpoints, penarray,
+                                                     brusharray)
             self.xPenPosTrace = self.getPlotItem().plot(x=penpoints['time'],
                                                         y=penpoints['x'],
                                                         pen=None, symbol='o',
-                                                        symbolSize=1,
+                                                        symbolSize=SETTINGS[
+                                                            'timeplot_xtrace_size'],
                                                         symbolPen=penarray,
                                                         symbolBrush=brusharray,
-                                                        name="X Position")  #
-                                                        #  pen=None,
-                                                        # symbol='o',
-                                                        # symbolSize=1,
-                                                        # symbolPen='r',
-                                                        # symbolBrush='r',
+                                                        name="X Position")
 
-            pen = pg.mkPen(SETTINGS['timeplot_ytrace_color'],
-                           width=SETTINGS['timeplot_ytrace_size'])
-            pen2 = pg.mkPen(SETTINGS['timeplot_ytrace_color'].darker(),
-                            width=SETTINGS['timeplot_ytrace_size'])
-            penarray[:] = pen
-            penarray[penpoints['pressure'] == 0] = pen2
-
-            brush = pg.mkBrush(SETTINGS['timeplot_ytrace_color'])
-            brush2 = pg.mkBrush(SETTINGS['timeplot_ytrace_color'].darker())
-            brusharray[:] = brush
-            brusharray[penpoints['pressure'] == 0] = brush2
-
+            penarray, brusharray = self.getPenBrushY(penpoints, penarray,
+                                                     brusharray)
             self.yPenPosTrace = self.getPlotItem().plot(x=penpoints['time'],
                                                         y=penpoints['y'],
                                                         pen=None, symbol='o',
-                                                        symbolSize=1,
+                                                        symbolSize=SETTINGS[
+                                                            'timeplot_ytrace_size'],
                                                         symbolPen=penarray,
                                                         symbolBrush=brusharray,
                                                         name="Y Position")
-                                                        #symbol='o',
-                                                        # symbolSize=1,
-                                                        # symbolPen='g',
-                                                        # symbolBrush='g',
-                                                        # name="Y Position")
 
             # Add a Selection Region that is used to create segments by user
             self.currentSelection = pg.LinearRegionItem(
@@ -102,39 +129,10 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
 
         else:
             # Update DataItem objects
-            pen = pg.mkPen(SETTINGS['timeplot_xtrace_color'],
-                           width=SETTINGS['timeplot_xtrace_size'])
-            pen2 = pg.mkPen(SETTINGS['timeplot_xtrace_color'].darker(),
-                            width=SETTINGS['timeplot_xtrace_size'])
-            penarray = np.empty(penpoints.shape[0], dtype=object)
-            penarray[:] = pen
-            penarray[penpoints['pressure'] == 0] = pen2
+            brusharray, penarray = self.updateTraceX(brusharray, penarray,
+                                                     penpoints)
+            self.updateTraceY(penpoints, penarray, brusharray)
 
-            brush = pg.mkBrush(SETTINGS['timeplot_xtrace_color'])
-            brush2 = pg.mkBrush(SETTINGS['timeplot_xtrace_color'].darker())
-            brusharray = np.empty(penpoints.shape[0], dtype=object)
-            brusharray[:] = brush
-            brusharray[penpoints['pressure'] == 0] = brush2
-
-            self.xPenPosTrace.setData(x=penpoints['time'], y=penpoints['x'],
-                                      symbolPen=penarray,
-                                      symbolBrush=brusharray)
-
-            pen = pg.mkPen(SETTINGS['timeplot_ytrace_color'],
-                           width=SETTINGS['timeplot_ytrace_size'])
-            pen2 = pg.mkPen(SETTINGS['timeplot_ytrace_color'].darker(),
-                            width=SETTINGS['timeplot_ytrace_size'])
-            penarray[:] = pen
-            penarray[penpoints['pressure'] == 0] = pen2
-
-            brush = pg.mkBrush(SETTINGS['timeplot_ytrace_color'])
-            brush2 = pg.mkBrush(SETTINGS['timeplot_ytrace_color'].darker())
-            brusharray[:] = brush
-            brusharray[penpoints['pressure'] == 0] = brush2
-
-            self.yPenPosTrace.setData(x=penpoints['time'], y=penpoints['y'],
-                                      symbolPen=penarray,
-                                      symbolBrush=brusharray)
             self.currentSelection.setRegion(
                 [penpoints['time'][0], penpoints['time'][0] + 1.0])
             self.currentSelection.setBounds(
@@ -144,27 +142,46 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
                       padding=None)
         self.handlePenDataSelectionChanged()
 
+
+    def handleUpdatedSettingsEvent(self, updates, settings):
+        penarray, brusharray = None, None
+        penpoints = MarkWriteMainWindow.instance().project.pendata
+        for k in updates.keys():
+            if k.startswith('timeplot_xtrace'):
+                brusharray, penarray = self.updateTraceX(brusharray, penarray,
+                                                         penpoints)
+            break
+
+        for k in updates.keys():
+            if k.startswith('timeplot_ytrace'):
+                self.updateTraceY(penpoints, penarray, brusharray)
+                break
+
+
     def handlePenDataSelectionChanged(self):
         self.currentSelection.setZValue(10)
         minT, maxT = self.currentSelection.getRegion()
-        #print '>> Timeline.handlePenDataSelectionChanged:',( minT, maxT)
+        # print '>> Timeline.handlePenDataSelectionChanged:',( minT, maxT)
         selectedpendata = MarkWriteMainWindow.instance().project.updateSelectedData(
             minT, maxT)
         MarkWriteMainWindow.instance().sigSelectedPenDataUpdate.emit((minT, maxT),
-                                                             selectedpendata)
+                                                                     selectedpendata)
+
         self.ensureSelectionIsVisible([minT, maxT], selectedpendata)
         #print '<< Timeline.handlePenDataSelectionChanged'
+
 
     def zoomToPenData(self, pendata, lock_bounds=False):
         if len(pendata) > 0:
             penValRange = (
-            min(pendata['x'].min() - 20, pendata['y'].min() - 20, 0),
-            max(pendata['x'].max() + 20, pendata['y'].max() + 20))
-            #if lock_bounds:
+                min(pendata['x'].min() - 20, pendata['y'].min() - 20, 0),
+                max(pendata['x'].max() + 20, pendata['y'].max() + 20))
+            # if lock_bounds:
             #    self.setLimits(xMin=pendata['time'][0], xMax=pendata[
             # 'time'][-1]+0.01)
             self.setRange(xRange=(pendata['time'][0], pendata['time'][-1]),
                           yRange=penValRange, padding=None)
+
 
     def ensureSelectionIsVisible(self, timespan, pendata):
         if len(pendata) > 0:
@@ -174,11 +191,11 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
             vxlength = vxmax - vxmin
             vxborder = (vxlength - dxlength) / 2.0
             dymin, dymax = (
-            min(pendata['x'].min() - 20, pendata['y'].min() - 20, vymin),
-            max(pendata['x'].max() + 20, pendata['y'].max() + 20, vymax))
+                min(pendata['x'].min() - 20, pendata['y'].min() - 20, vymin),
+                max(pendata['x'].max() + 20, pendata['y'].max() + 20, vymax))
 
             if dxlength > vxlength:
-                ##print "dlength > vlength:",dlength, vlength
+                # #print "dlength > vlength:",dlength, vlength
                 self.setRange(xRange=(dxmin, dxmax), yRange=(dymin, dymax),
                               padding=None)
                 return
@@ -186,11 +203,11 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
             if dxmin < vxmin:
                 self.setRange(xRange=(dxmin, dxmin + vxlength),
                               yRange=(dymin, dymax), padding=0)
-                ##print 'dmin < vmin:',dmin,dmin+vlength,self.viewRange()[0]
+                # #print 'dmin < vmin:',dmin,dmin+vlength,self.viewRange()[0]
                 return
 
             if dxmax > vxmax:
                 self.setRange(xRange=(dxmax - vxlength, dxmax),
                               yRange=(dymin, dymax), padding=0)
-                ##print 'dmax > vmax:',dmax-vlength,dmax,self.viewRange()[0]
+                # #print 'dmax > vmax:',dmax-vlength,dmax,self.viewRange()[0]
                 return

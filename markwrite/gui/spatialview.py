@@ -23,24 +23,27 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         MarkWriteMainWindow.instance().sigSelectedPenDataUpdate.connect(
             self.handlePenDataSelectionChanged)
 
+    def createDefaultPenBrushForData(self, pdat):
+        pen = pg.mkPen(SETTINGS['spatialplot_default_color'],
+                       width=SETTINGS['spatialplot_default_point_size'])
+        pen2 = pg.mkPen(SETTINGS['spatialplot_default_color'].lighter(),
+                        width=SETTINGS['spatialplot_default_point_size'])
+        brush = pg.mkBrush(SETTINGS['spatialplot_default_color'])
+        brush2 = pg.mkBrush(SETTINGS['spatialplot_default_color'].lighter())
+        penarray = np.empty(pdat.shape[0], dtype=object)
+        penarray[:] = pen
+        penarray[pdat['pressure'] == 0] = pen2
+        brusharray = np.empty(pdat.shape[0], dtype=object)
+        brusharray[:] = brush
+        brusharray[pdat['pressure'] == 0] = brush2
+        return brusharray, penarray
+
     def handleResetPenData(self, project):
         #print ">> PenDataSpatialPlotWidget.handleResetPenData:",project
         pdat = project.pendata
 
         if self.allPlotDataItem is None:
-            pen = pg.mkPen(SETTINGS['spatialplot_default_color'], width=SETTINGS['spatialplot_point_size'])
-            pen2 = pg.mkPen(SETTINGS['spatialplot_default_color'].lighter(),
-                            width=SETTINGS['spatialplot_point_size'])
-            brush = pg.mkBrush(SETTINGS['spatialplot_default_color'])
-            brush2 = pg.mkBrush(SETTINGS['spatialplot_default_color'].lighter())
-
-            penarray = np.empty(pdat.shape[0], dtype=object)
-            penarray[:] = pen
-            penarray[pdat['pressure'] == 0] = pen2
-
-            brusharray = np.empty(pdat.shape[0], dtype=object)
-            brusharray[:] = brush
-            brusharray[pdat['pressure'] == 0] = brush2
+            brusharray,penarray = self.createDefaultPenBrushForData(pdat)
 
             self.allPlotDataItem = self.getPlotItem().plot(x=pdat['x'],
                                                            y=pdat['y'],
@@ -49,62 +52,77 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
                                                            symbolBrush=brusharray,
                                                            symbolPen=penarray)
 
-            pen = pg.mkPen(SETTINGS['spatialplot_validselected_color'], width=SETTINGS['spatialplot_point_size'])
-            brush = pg.mkBrush(SETTINGS['spatialplot_validselected_color'])
+            pen = pg.mkPen(SETTINGS['spatialplot_selectedvalid_color'], width=SETTINGS['spatialplot_selectedpoint_size'])
+            brush = pg.mkBrush(SETTINGS['spatialplot_selectedvalid_color'])
 
             self.selectedPlotDataItem = self.getPlotItem().plot(pen=None,
                                                                 symbol='o',
-                                                                symbolSize=SETTINGS['spatialplot_point_size'],
+                                                                symbolSize=SETTINGS['spatialplot_selectedpoint_size'],
                                                                 symbolPen=pen,
                                                                 symbolBrush=brush)
 
         else:
-            pen = pg.mkPen(SETTINGS['spatialplot_default_color'], width=SETTINGS['spatialplot_point_size'])
-            pen2 = pg.mkPen(SETTINGS['spatialplot_default_color'].lighter(),
-                            width=SETTINGS['spatialplot_point_size'])
-            brush = pg.mkBrush(SETTINGS['spatialplot_default_color'])
-            brush2 = pg.mkBrush(SETTINGS['spatialplot_default_color'].lighter())
-
-            penarray = np.empty(pdat.shape[0], dtype=object)
-            penarray[:] = pen
-            penarray[pdat['pressure'] == 0] = pen2
-
-            brusharray = np.empty(pdat.shape[0], dtype=object)
-            brusharray[:] = brush
-            brusharray[pdat['pressure'] == 0] = brush2
+            brusharray, penarray = self.createDefaultPenBrushForData(pdat)
 
             self.allPlotDataItem.setData(x=pdat['x'], y=pdat['y'],
                                          symbolBrush=brusharray,
                                          symbolPen=penarray)
+
             self.getPlotItem().setLimits(xMin=pdat['x'].min(),
                                          yMin=pdat['y'].min(),
                                          xMax=pdat['x'].max(),
                                          yMax=pdat['y'].max())
+
             self.setRange(xRange=(pdat['x'].min(), pdat['x'].max()),
                           yRange=(pdat['y'].min(), pdat['y'].max()),
                           padding=None)
             #print "<< PenDataSpatialPlotWidget.handleResetPenData"
+
+
+    def updateSelectedPenPointsGraphics(self, selectedpendata):
+        if MarkWriteMainWindow.instance().createSegmentAction.isEnabled():
+            pen = pg.mkPen(SETTINGS['spatialplot_selectedvalid_color'],
+                           width=SETTINGS['spatialplot_selectedpoint_size'])
+            brush = pg.mkBrush(SETTINGS['spatialplot_selectedvalid_color'])
+            self.selectedPlotDataItem.setData(x=selectedpendata['x'],
+                                              y=selectedpendata['y'], pen=None,
+                                              symbol='o', symbolSize=SETTINGS[
+                    'spatialplot_selectedpoint_size'],
+                                              symbolBrush=brush, symbolPen=pen)
+        else:
+            pen = pg.mkPen(SETTINGS['spatialplot_selectedinvalid_color'],
+                           width=SETTINGS['spatialplot_selectedpoint_size'])
+            brush = pg.mkBrush(SETTINGS['spatialplot_selectedinvalid_color'])
+            self.selectedPlotDataItem.setData(x=selectedpendata['x'],
+                                              y=selectedpendata['y'], pen=None,
+                                              symbol='o', symbolSize=SETTINGS[
+                    'spatialplot_selectedpoint_size'],
+                                              symbolBrush=brush, symbolPen=pen)
+
+    def handleUpdatedSettingsEvent(self, updates, settings):
+        selectedpendata = MarkWriteMainWindow.instance().project.selectedpendata
+        pdat = MarkWriteMainWindow.instance().project.pendata
+
+        for k in updates.keys():
+            if k.startswith('spatialplot_default'):
+                brusharray, penarray = self.createDefaultPenBrushForData(pdat)
+
+                self.allPlotDataItem.setData(x=pdat['x'], y=pdat['y'],
+                                             symbolBrush=brusharray,
+                                             symbolPen=penarray)
+                break
+
+        for k in updates.keys():
+            if k.startswith('spatialplot_selected'):
+                self.updateSelectedPenPointsGraphics(selectedpendata)
+            break
 
     def handlePenDataSelectionChanged(self, timeperiod, selectedpendata):
 
         if self.allPlotDataItem is None:
             self.handleResetPenData(MarkWriteMainWindow.instance().project)
 
-        if MarkWriteMainWindow.instance().createSegmentAction.isEnabled():
-            pen = pg.mkPen(SETTINGS['spatialplot_validselected_color'], width=SETTINGS['spatialplot_point_size'])
-            brush = pg.mkBrush(SETTINGS['spatialplot_validselected_color'])
-            self.selectedPlotDataItem.setData(x=selectedpendata['x'],
-                                              y=selectedpendata['y'], pen=None,
-                                              symbol='o', symbolSize=SETTINGS['spatialplot_point_size'],
-                                              symbolBrush=brush, symbolPen=pen)
-        else:
-            pen = pg.mkPen(SETTINGS['spatialplot_invalidselected_color'],
-                           width=SETTINGS['spatialplot_point_size'])
-            brush = pg.mkBrush(SETTINGS['spatialplot_invalidselected_color'])
-            self.selectedPlotDataItem.setData(x=selectedpendata['x'],
-                                              y=selectedpendata['y'], pen=None,
-                                              symbol='o', symbolSize=SETTINGS['spatialplot_point_size'],
-                                              symbolBrush=brush, symbolPen=pen)
+        self.updateSelectedPenPointsGraphics(selectedpendata)
 
         self.ensureSelectionIsVisible(timeperiod, selectedpendata)
         #print "<< PenDataSpatialPlotWidget.handlePenDataSelectionChanged"
