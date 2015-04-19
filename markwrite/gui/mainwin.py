@@ -28,7 +28,7 @@ from markwrite.file_io import loadPredefinedSegmentTagList, readPickle, writePic
 from markwrite.reports import PenSampleReportExporter, SegmentLevelReportExporter
 from markwrite.segment import PenDataSegment
 from dialogs import ExitApplication, fileOpenDlg, ErrorDialog, warnDlg, \
-    fileSaveDlg
+    fileSaveDlg,ConfirmAction
 from markwrite.project import MarkWriteProject
 
 DEFAULT_WIN_SIZE = (1200, 800)
@@ -468,8 +468,14 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             ErrorDialog().display()
 
     def removeSegment(self):
+        ConfirmAction.text = 'Delete Segment Confirmation'
+        ConfirmAction.info_text = "Are you sure you want to <b>permanently deleted</b> the currently selected segment?" \
+                                  "<br><br>" \
+                                  "Any children of this segment will also be deleted."
+        yes = ConfirmAction.display()
+        if not yes:
+            return
         segment = self.activeobject
-        print '>> removesegment:',segment
         if segment and segment.parent is not None:
             seg_ix = segment.parent.getChildIndex(segment)
             # Decrement the pendata array 'segment_id' field for elements within
