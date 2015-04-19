@@ -49,8 +49,12 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
         pg.LinearRegionItem.mouseClickEvent(self, ev)
 
     def mouseDoubleClickEvent(self, event):
-        print "TO HANDLE: SelectedTimePeriodItem.mouseDoubleClickEvent:", event
         pg.LinearRegionItem.mouseDoubleClickEvent(self, event)
+        self.project._mwapp.setActiveObject(self)
+        self.project._mwapp._penDataTimeLineWidget.zoomToPenData(
+            self.selectedpendata)
+        self.project._mwapp._penDataSpatialViewWidget.zoomToPenData(
+            self.selectedpendata)
 
     def lineMoved(self):
         if self.blockLineSignal:

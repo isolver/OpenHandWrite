@@ -285,7 +285,6 @@ class PenDataSegmentCategory(object):
 
         :return: dict of segmentcategory properties to display
         """
-
         project_properties = OrderedDict()
         project_properties['Name'] = dict(val=self.name)
         project_properties['ID'] = dict(val=self.id)
@@ -310,6 +309,9 @@ class PenDataSegment(PenDataSegmentCategory):
             self._name="Segment %d"%(self._id)
 
         self._pendata=pendata
+
+        self.tableprops = None
+
         parent.addChild(self)
 
     @property
@@ -327,12 +329,22 @@ class PenDataSegment(PenDataSegmentCategory):
 
         :return: dict of segment properties to display
         """
+        if self.tableprops is None:
+            self.tableprops = OrderedDict()
+            propnames = ['Name',
+                         'ID',
+                         'Start Time',
+                         'End Time',
+                         'Point Count',
+                         'Level',
+                         ]
+            for n in propnames:
+                self.tableprops[n]=['']
 
-        project_properties = OrderedDict()
-        project_properties['Name'] = dict(val=self.name)
-        project_properties['ID'] = dict(val=self.id)
-        project_properties['Start Time'] = dict(val=self.starttime)
-        project_properties['End Time'] = dict(val=self.endtime)
-        project_properties['Point Count'] = dict(val=self.pointcount)
-        project_properties['level'] = dict(val=self.level)
-        return project_properties
+        self.tableprops['Name'][0] = self.name
+        self.tableprops['ID'][0] = self.id
+        self.tableprops['Start Time'][0] = self.starttime
+        self.tableprops['End Time'][0] = self.endtime
+        self.tableprops['Point Count'][0] = self.pointcount
+        self.tableprops['Level'][0] = self.level
+        return self.tableprops
