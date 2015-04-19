@@ -26,7 +26,7 @@ from pyqtgraph.dockarea import DockArea, Dock
 from markwrite.util import getIconFilePath
 from markwrite.file_io import loadPredefinedSegmentTagList, readPickle, writePickle
 from markwrite.reports import PenSampleReportExporter, SegmentLevelReportExporter
-
+from markwrite.segment import PenDataSegment
 from dialogs import ExitApplication, fileOpenDlg, ErrorDialog, warnDlg, \
     fileSaveDlg
 from markwrite.project import MarkWriteProject
@@ -34,8 +34,8 @@ from markwrite.project import MarkWriteProject
 DEFAULT_WIN_SIZE = (1200, 800)
 
 DEFAULT_DOCK_PLACEMENT = {
-    u"Markup Tree": ('left', (.2, 1.0)),
-    u"Timeline": (['right', u"Markup Tree"], (.8, .35)),
+    u"Segment Tree": ('left', (.2, 1.0)),
+    u"Timeline": (['right', u"Segment Tree"], (.8, .35)),
     u"Spatial View": (['bottom', u"Timeline"], (.60, .65)),
     u"Selected Data": (['right', u"Spatial View"], (.2, .65)),
 }
@@ -96,6 +96,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                                       # segment index in list
     sigAppSettingsUpdated = QtCore.Signal(object, #dict of app settings that changed
                                           object,) #ful settings dict
+    sigActiveObjectChanged = QtCore.Signal(object, object) #new, old active objects
     _mainwin_instance=None
     _appdirs = None
     def __init__(self, qtapp):
@@ -104,7 +105,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         MarkWriteMainWindow._mainwin_instance = self
 
         self._current_project = None
-        self._activesegment = None
+        self._activeobject = None
 
         self._predefinedtags = loadPredefinedSegmentTagList(u'default.tag')
 
@@ -132,14 +133,28 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         return self._current_project
 
     @property
-    def activesegment(self):
-        return self._activesegment
+    def activeobject(self):
+        return self._activeobject
 
-    @activesegment.setter
-    def activesegment(self, s):
-        self._activesegment = s
-        self.removeSegmentAction.setEnabled(
-            s is not None and s.parent is not None)
+    def setActiveObject(self, timeperioddatatype=None):
+        prevactiveobj = self._activeobject
+
+        self._activeobject = timeperioddatatype
+        if timeperioddatatype is None:
+            self._activeobject = self.project.selectedtimeregion
+        #print "Settings active object:",self._activeobject
+        if isinstance(self._activeobject,PenDataSegment):
+            #print "**Setting region:",self._activeobject
+            self._segmenttree.doNotSetActiveObject=True
+            self.project.selectedtimeregion.setRegion(self._activeobject.timerange)
+            self._segmenttree.doNotSetActiveObject=False
+            self.removeSegmentAction.setEnabled(True)
+        else:
+            self.removeSegmentAction.setEnabled(False)
+
+        self.sigActiveObjectChanged.emit(self._activeobject,prevactiveobj)
+
+        return self._activeobject
 
     @property
     def predefinedtags(self):
@@ -338,7 +353,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         from markwrite.gui.timelineplot import PenDataTemporalPlotWidget
         from markwrite.gui.segmenttree import SegmentInfoDockArea
 
-        addDock(u"Markup Tree", SegmentInfoDockArea())
+        self._segmenttree = SegmentInfoDockArea()
+        addDock(u"Segment Tree", self._segmenttree)
         self._penDataTimeLineWidget = PenDataTemporalPlotWidget()
         self._penDataSpatialViewWidget = PenDataSpatialPlotWidget()
         addDock(u"Timeline", self._penDataTimeLineWidget)
@@ -363,10 +379,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             fileName = u''
         else:
             fileName = self._current_project.name
-
-            #if self._current_project.modified:
-            #    fileName = u'[{0}] : '.format(fileName)
-            #else:
             fileName = u'{0} : '.format(fileName)
 
         app_title = u'MarkWrite'
@@ -385,7 +397,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             file_path = file_path[0]
             if len(file_path) > 0:
                 try:
-                    wmproj = MarkWriteProject(file_path=file_path)
+                    wmproj = MarkWriteProject(file_path=file_path,mwapp=self)
                     self.createSegmentAction.setEnabled(True)
                     self.sigProjectChanged.emit(wmproj)
                     self.sigResetProjectData.emit(wmproj)
@@ -399,14 +411,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                     file_path)
                     ErrorDialog().display()
                     self.closeEvent(u'FORCE_EXIT')
-
-#    def saveProject(self, confirm_save=False):
-#        if self._current_project:
-#            self._current_project.save()
-#        self.updateAppTitle()
-#        self.saveProjectAction.setEnabled(
-#            self._current_project and self._current_project.modified)
-#        warnDlg(prompt=u"Project Saving is not Implemented Yet. Sorry.")
 
     def createPenSampleLevelReportFile(self):
         default_file_name = u"pen_samples_{0}.txt".format(self.project.name)
@@ -439,35 +443,33 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         if self.createSegmentAction.isEnabled():
             # Shrink timeline selection region to fit start and end time
             # of possible segment being created.
-            selectedtimeperiod = \
-                self._penDataTimeLineWidget.currentSelection.getRegion()
+            selectedtimeperiod = self.project.selectedtimeperiod[:]
 
 
             pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*selectedtimeperiod)
             segmenttimeperiod = self.project.pendata['time'][pendata_ix_range]
-            self._penDataTimeLineWidget.currentSelection.setRegion(
-                segmenttimeperiod)
-            self.project.updateSelectedData(segmenttimeperiod[0],segmenttimeperiod[1])
+            self.project.selectedtimeregion.setRegion(segmenttimeperiod)
 
             tag, ok = showSegmentNameDialog(self.predefinedtags)
             tag = unicode(tag).strip().replace('\t', "#")
             if len(tag) > 0 and ok:
                 psid = self.project.getSelectedDataSegmentIDs()[0]
                 new_segment = self.project.createPenDataSegment(tag, psid)
+                self.handleSelectedPenDataUpdate(None,None)
                 self.sigSegmentCreated.emit(new_segment)
+                self.setActiveObject(new_segment)
             else:
                 # If segment creation was cancelled or failed, then reset
                 # timeline selection region to original time period.
-                self._penDataTimeLineWidget.currentSelection.setRegion(
-                    selectedtimeperiod)
-                self.project.updateSelectedData(*selectedtimeperiod)
+                self.project.selectedtimeregion.setRegion(selectedtimeperiod)
         else:
             ErrorDialog.info_text = u"Segment Creation Failed.\nNo selected " \
                                     u"pen data."
             ErrorDialog().display()
 
     def removeSegment(self):
-        segment = self.activesegment
+        segment = self.activeobject
+        print '>> removesegment:',segment
         if segment and segment.parent is not None:
             seg_ix = segment.parent.getChildIndex(segment)
             # Decrement the pendata array 'segment_id' field for elements within
@@ -477,14 +479,20 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             segment_filter = (allpendata['time'] >= segment.starttime) & (
             allpendata['time'] <= segment.endtime)
             allpendata['segment_id'][segment_filter] = segment.parent.id
+            self.setActiveObject(self.project.selectedtimeregion)
+            self.handleSelectedPenDataUpdate(None,None)
             self.sigSegmentRemoved.emit(segment, seg_ix)
-            segment.parent.removeChild(segment)
 
+            segment.parent.removeChild(segment)
+        else:
+            print "   - Remove action IGNORED"
+        print "<< removeSegment"
 
     def handleProjectChange(self, project):
         if self._current_project:
             pass
         self._current_project = project
+        self.setActiveObject(self.project.selectedtimeregion)
         self.updateAppTitle()
         #self.saveProjectAction.setEnabled(project.modified)
         self.exportSampleReportAction.setEnabled(True)

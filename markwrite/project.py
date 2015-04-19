@@ -16,24 +16,122 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import division
 
-from weakref import proxy
+from weakref import proxy,ProxyType
 import time
 import os
 import glob
 import numpy as np
 import codecs
 
+import pyqtgraph as pg
 from pyqtgraph import OrderedDict
 from pyqtgraph.Qt import QtGui
+
 from file_io import EyePenDataImporter, XmlDataImporter
 from segment import PenDataSegment, PenDataSegmentCategory
 from gui.projectsettings import SETTINGS
+
+selectedtimeperiod_properties=None
+
+class SelectedTimePeriodItem(pg.LinearRegionItem):
+    def __init__(self, *args, **kwargs):
+        project = kwargs.pop('project')
+        kwargs['movable']=True
+
+        pg.LinearRegionItem.__init__(self,*args, **kwargs)
+
+        self._project = None
+        if project:
+            self.project=project
+
+    def mouseClickEvent(self, ev):
+        self.project._mwapp.setActiveObject(self)
+        pg.LinearRegionItem.mouseClickEvent(self, ev)
+
+    def mouseDoubleClickEvent(self, event):
+        print "TO HANDLE: SelectedTimePeriodItem.mouseDoubleClickEvent:", event
+        pg.LinearRegionItem.mouseDoubleClickEvent(self, event)
+
+    def lineMoved(self):
+        if self.blockLineSignal:
+            return
+        pg.LinearRegionItem.lineMoved(self)
+        if self.project._mwapp._segmenttree.doNotSetActiveObject is False:
+#            print 'lineMoved:',self.getRegion()
+            self.project._mwapp.setActiveObject(self)
+
+    def lineMoveFinished(self):
+        pg.LinearRegionItem.lineMoveFinished(self)
+        if self.project._mwapp._segmenttree.doNotSetActiveObject is False:
+#            print 'lineMoveFinished:',self.getRegion()
+            self.project._mwapp.setActiveObject(self)
+
+    @property
+    def project(self):
+        return self._project
+
+    @project.setter
+    def project(self, p):
+        if p is None:
+            self._project = p
+            self.setBounds(bounds=(0,0))
+            self.setRegion([0,0])
+        else:
+            if isinstance(p,ProxyType):
+                self._project=p
+            else:
+                self._project = proxy(p)
+            self.setBounds(bounds=(self.allpendata['time'][0], self.allpendata['time'][-1]))
+            self.setRegion([self.allpendata['time'][0], self.allpendata['time'][0] + 1.0])
+
+    @property
+    def allpendata(self):
+        return self.project.pendata
+
+    @property
+    def selectedpendata(self):
+        minT, maxT = self.getRegion()
+        allpendata = self.allpendata
+        return allpendata[(allpendata['time'] >= minT) & (allpendata['time'] <= maxT)]
+
+    @property
+    def selectedtimerangeanddata(self):
+        minT, maxT = self.getRegion()
+        allpendata = self.allpendata
+        return  minT, maxT, allpendata[(allpendata['time'] >= minT) & (allpendata['time'] <= maxT)]
+
+    def propertiesTableData(self):
+        """
+        Return a dict of segment properties to display in the Selected Project
+        Tree Node Object Properties Table.
+
+        :return: dict of segmentcategory properties to display
+        """
+        global selectedtimeperiod_properties
+        props= selectedtimeperiod_properties
+
+        if selectedtimeperiod_properties is None:
+            selectedtimeperiod_properties = OrderedDict()
+            props= selectedtimeperiod_properties
+            props['Name'] = ['']
+            props['Start Time'] = ['']
+            props['End Time'] = ['']
+            props['Point Count'] = ['']
+
+        props['Name'][0] = u"Selected Time Period"
+        stime, etime = self.getRegion()
+        props['Start Time'][0] = stime
+        props['End Time'][0] = etime
+        props['Point Count'][0] = self.selectedpendata.shape[0]
+
+        return props
 
 class MarkWriteProject(object):
     project_file_extension = u'mwp'
     input_file_loaders=dict(xml=XmlDataImporter,
                             txyp=EyePenDataImporter)
-    def __init__(self, name=u"New", file_path=None):
+    _selectedtimeregion=None
+    def __init__(self, name=u"New", file_path=None, mwapp=None):
         """
         The MarkWriteProject class represents a MarkWrite project created using
         the MarkWrite Application. Information about imported data, etc. (TBD)
@@ -52,13 +150,13 @@ class MarkWriteProject(object):
         :return: MarkWriteProject instance
         """
         self._pendata = []
-
-        self._selectedtimeperiod=[0,0]
-        self._selectedpendata=[]
         self._segmentset=None
         self.autodetected_segment_tags=[]
         self._name = u"Unknown"
         self._original_timebase_offset=0
+        self._mwapp = None
+        if mwapp:
+            self._mwapp = proxy(mwapp)
 
         if file_path and os.path.exists(file_path) and os.path.isfile(file_path):
             dir_path, file_name = os.path.split(file_path)
@@ -66,8 +164,8 @@ class MarkWriteProject(object):
             fname, fext=file_name.rsplit(u'.',1)
             fimporter = self.input_file_loaders.get(fext)
             if fimporter:
-                self.createNewProject(fname, fimporter.asarray(file_path))
                 self.autodetected_segment_tags=self.detectAssociatedSegmentTagsFile(dir_path,fname,fext)
+                self.createNewProject(fname, fimporter.asarray(file_path))
  #           elif file_name.lower().endswith(self.project_file_extension):
  #               self.openExistingProject(file_path)
             else:
@@ -106,41 +204,17 @@ class MarkWriteProject(object):
             pen_data['time']=pen_data['time']/1000.0
 
             self._pendata = pen_data
-            self._selectedtimeperiod=[0,0]
-            self._selectedpendata=[]
             self._segmentset=PenDataSegmentCategory(name=self.name,project=self)
             self._pendata['segment_id']=self._segmentset.id
-#            self._project_file_path = u''
-#            self._modified = True
-#            self._created_date = time.strftime("%c")
-#            self._modified_date = self._created_date
 
-            #self._project_tree = None
-            #self.projectTreeNode()
-
-#    def openExistingProject(self, file_path):
-#        print "Reloading a saved MarkWrite Project is not implemented."
-#        dir_path, file_name = os.path.split(file_path)
-#        self._name = file_name
-#        self._pendata = [] #TODO: Load from proj file.
-#        self._selectedtimeperiod=[0,0] #TODO: Load from proj file.
-#        self._selectedpendata=[] #TODO: Load from proj file.
-#        self._segmentset=None #TODO: Load from proj file.
-#        self._project_settings = OrderedDict() #TODO: Load from proj file.
-#        self._project_file_path = file_path
-#        self._modified = False
-#        self._created_date = u"READ FROM PROJ FILE"
-#        self._modified_date = u"READ FROM PROJ FILE"
-
-    def updateSelectedData(self,minT,maxT):
-        self._selectedtimeperiod=minT, maxT
-        pendata = self._pendata
-        self._selectedpendata = pendata[(pendata['time'] >= minT) & (pendata['time'] <= maxT)]
-        return self._selectedpendata
+            if self._selectedtimeregion is None:
+                MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)
+            else:
+                MarkWriteProject._selectedtimeregion.project = self
 
     def getSelectedDataSegmentIDs(self):
-        if len(self._selectedpendata)>0:
-            return np.unique(self._selectedpendata['segment_id'])
+        if len(self.selectedpendata)>0:
+            return np.unique(self.selectedpendata['segment_id'])
         return []
 
     def createPenDataSegment(self, tag, parent_id):
@@ -155,7 +229,7 @@ class MarkWriteProject(object):
         :return:
         """
         sparent = self._segmentset.id2obj[parent_id]
-        new_segment = PenDataSegment(name=tag, pendata=self._selectedpendata, parent=sparent)
+        new_segment = PenDataSegment(name=tag, pendata=self.selectedpendata, parent=sparent)
         pendata = self.pendata
         mask = (pendata['time'] >= new_segment.starttime) & (pendata['time'] <= new_segment.endtime)
         self.pendata['segment_id'][mask]=new_segment.id
@@ -168,36 +242,6 @@ class MarkWriteProject(object):
     @name.setter
     def name(self, n):
         self._name = n
-
-#    @property
-#    def created_date(self):
-#        """
-#        A string representing the date and time that the project was
-#        first created.
-#
-#        :return: str
-#        """
-#        return self._created_date
-
-#    @property
-#    def modified_date(self):
-#        """
-#        A string representing the last date and time that the project was
-#        modified and saved.
-#
-#        :return: str
-#        """
-#        return self._modified_date
-
-#    @property
-#    def modified(self):
-#        """
-#        True if the project has been modified since it was last saved; False
-#        otherwise.
-#
-#        :return: bool
-#        """
-#        return self._modified
 
     @property
     def pendata(self):
@@ -216,17 +260,21 @@ class MarkWriteProject(object):
         return self._pendata[self._pendata['segment_id']>0]
 
     @property
+    def selectedtimeregion(self):
+        return self._selectedtimeregion
+
+    @property
     def selectedtimeperiod(self):
-        return self._selectedtimeperiod
+        return self._selectedtimeregion.getRegion()
 
     @property
     def selecteddatatimerange(self):
-        if len(self._selectedpendata)>0:
-            return self._selectedpendata['time'][[0,-1]]
+        if len(self.selectedpendata)>0:
+            return self.selectedpendata['time'][[0,-1]]
 
     @property
     def selectedpendata(self):
-        return self._selectedpendata
+        return self._selectedtimeregion.selectedpendata
 
     def isSelectedDataValidForNewSegment(self):
         if len(self.selectedpendata)>0:
@@ -237,49 +285,10 @@ class MarkWriteProject(object):
                 if self.segmentset.id2obj[sids[0]].pointcount > self.selectedpendata.shape[0]:
                     return True
         return False
+
     @property
     def segmentset(self):
         return self._segmentset
-
-#    def save(self):
-#        """
-#        Save the this MarkWrite project to self.file_path.
-#        Return True is the project was saved, otherwise return False.
-#
-#        :return: bool
-#        """
-#        # TODO : Implement MarkWrite project saving
-#        # To Save:
-#        #    1) TBD
-#        print 'MarkWriteProject save not implemented'
-#        if self._project_file_path is None:
-#            print 'Should be calling saveas, not save.'
-#        print 'Should save project file'
-#        print '------'
-#        #self._modified=False
-#        #self._modified_date = time.strftime("%c")
-#        return False
-
-#    def saveAs(self,path):
-#        """
-#        Save a copy of this MarkWrite project to the file system absolute path given
-#        by path. Any modifications made to the project since it was last opened
-#        are not saved to the original project file and are instead saved in
-#        the new project file.
-#
-#        Return True is the project was saved, otherwise return False.
-#
-#        :param path: str
-#        :return: bool
-#        """
-#        # TODO : Implement MarkWrite project saveAs
-#        print 'MarkWriteProject saveAs not implemented'
-#        print 'Should prompt for directory to save project file'
-#        print 'Should save project file'
-#        print '------'
-#        self._modified=False
-#        self._created_date = time.strftime("%c")
-#        self._modified_date = self._created_date
 
     def close(self):
         """
@@ -288,23 +297,9 @@ class MarkWriteProject(object):
 
         :return: bool
         """
-#        self._modified = False
         self._pendata = None
+        self._selectedtimeregion = None
         return True
 
-#    def propertiesTableData(self):
-#        """
-#        Return a dict of project properties to display in the MarkWrite
-#        Application Project Properties Table.
-#
-#        :return: dict of project properties to display
-#        """
-#
-#        project_properties = OrderedDict()
-#        project_properties['Name'] = dict(val=self.name)
-#        project_properties['Pen Points Count'] = dict(val=self._pendata.shape[0])
-#        project_properties['Created On'] = dict(val=self.created_date)
-#        project_properties['Last Saved'] = dict(val=self.modified_date)
-#        project_properties['Currently Modified'] = dict(val=self.modified)
-#        return project_properties
-
+    def __del__(self):
+        self.close()

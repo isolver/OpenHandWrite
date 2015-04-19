@@ -9,7 +9,7 @@ __author__ = 'Sol'
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph import TreeWidget, TableWidget
-
+from markwrite.segment import PenDataSegmentCategory
 from markwrite.gui.mainwin import MarkWriteMainWindow
 
 class SegmentTreeWidget(TreeWidget):
@@ -82,14 +82,14 @@ class SegmentInfoDockArea(DockArea):
                                     hideTitle=True)
         self.addDock(self.properties_dock, 'bottom')
 
-        self.current_pydat_obj = None
-
         MarkWriteMainWindow.instance().sigProjectChanged.connect(
             self.handleProjectChange)
         MarkWriteMainWindow.instance().sigSegmentCreated.connect(
             self.handleSegmentCreated)
         MarkWriteMainWindow.instance().sigSegmentRemoved.connect(
             self.handleSegmentRemoved)
+        MarkWriteMainWindow.instance().sigActiveObjectChanged.connect(
+            self.handleActiveObjectChanged)
 
         self.project_tree.currentItemChanged.connect(
             self.currentTreeItemChangedEvent)
@@ -97,12 +97,21 @@ class SegmentInfoDockArea(DockArea):
             self.treeItemDoubleClickedEvent)
         self.project_tree.customContextMenuRequested.connect(
             self.rightClickTreeEvent)
+ #       self.project_tree.itemSelectionChanged.connect(self.handleItemSelectionChanged)
 
-    def updatePropertiesTableData(self, props):
-        self.properties_table.clear()
-        self.properties_table.setData(props)
-        self.properties_table.horizontalHeader().setResizeMode(
-            QtGui.QHeaderView.Stretch)
+        self.doNotSetActiveObject=False
+
+    def updatePropertiesTableData(self, objwithprops, cleartable=False):
+        if cleartable:
+            self.properties_table.clear()
+            self.properties_table.horizontalHeader().setResizeMode(
+                QtGui.QHeaderView.Stretch)
+            self.properties_table.setData(objwithprops.propertiesTableData())
+        else:
+            i=0
+            for v in objwithprops.propertiesTableData().values():
+                self.properties_table.setRow(i,v)
+                i+=1
 
     #
     # Signal Handlers
@@ -116,20 +125,10 @@ class SegmentInfoDockArea(DockArea):
         projecttreeitem._pydat = proxy(project.segmentset)
         self.segid2treenode[project.segmentset.id] = projecttreeitem
         self.project_tree.addTopLevelItem(projecttreeitem)
-        projecttreeitem.setSelected(True)
-        self.project_tree.setCurrentItem(projecttreeitem)
-        self.current_pydat_obj = project.segmentset
-        #TODO: UPDATE TO SUPPORT PROJECT REOPENNING WITH SEG. HEIRARCHY.
-        # Current code assumes list on segments only
-        #for pds in project.segmentset.children:
-        #    segtreeitem = QtGui.QTreeWidgetItem([pds.name])
-        #    segtreeitem._pydat = proxy(pds)
-        #    projecttreeitem.addChild(segtreeitem)
-
-        self.updatePropertiesTableData(project.segmentset.propertiesTableData())
 
     def handleSegmentCreated(self, segment):
         #print '>>TREE.handleSegmentCreated:',segment
+        self.doNotSetActiveObject = True
         segindex = segment.parent.getChildIndex(segment)
         parent_tree_node = self.segid2treenode[segment.parent.id]
         #parent_tree_node = self.project_tree.topLevelItem(0)
@@ -137,30 +136,48 @@ class SegmentInfoDockArea(DockArea):
         self.segid2treenode[segment.id] = segtreeitem
         segtreeitem._pydat = proxy(segment)
         parent_tree_node.insertChild(segindex, segtreeitem)
-        for i in self.project_tree.selectedItems():
-            i.setSelected(False)
-        segtreeitem.setSelected(True)
+        #for i in self.project_tree.selectedItems():
+        #    i.setSelected(False)
+        #segtreeitem.setSelected(True)
         self.project_tree.setCurrentItem(segtreeitem)
-        self.updatePropertiesTableData(segment.propertiesTableData())
-        MarkWriteMainWindow.instance().activesegment = segment
         #print '<< TREE.handleSegmentCreated'
+        self.doNotSetActiveObject = False
 
     def handleSegmentRemoved(self, segment, segment_index):
         #print '>> TREE.handleSegmentRemoved:',segment,segment_index
+        self.doNotSetActiveObject = True
         parent_tree_node = self.segid2treenode[
             segment.parent.id]  #self.project_tree.topLevelItem(0)
         segmenttreeitem = parent_tree_node.child(segment_index)
+        #segmenttreeitem.setSelected(False)
         parent_tree_node.removeChild(segmenttreeitem)
-        for i in self.project_tree.selectedItems():
-            i.setSelected(False)
-        parent_tree_node.setSelected(True)
-        self.project_tree.setCurrentItem(parent_tree_node)
-        MarkWriteMainWindow.instance().activesegment = segment.parent
+        self.project_tree.setCurrentItem(None)
+        self.project_tree.clearSelection()
+        self.doNotSetActiveObject = False
         #print '<< TREE.handleSegmentRemoved'
+
+    def handleActiveObjectChanged(self,activeobj, prevactiveobj):
+        #if activeobj != prevactiveobj:
+        #    print "Active Obj Changed:",activeobj, prevactiveobj
+        if activeobj:
+            self.updatePropertiesTableData(activeobj, activeobj!=prevactiveobj)
+
+        if activeobj != prevactiveobj:
+            if not isinstance(activeobj,PenDataSegmentCategory):
+                #print "Deselecting Tree Node.."
+                # set root node as current, otherwise if user tries to press on
+                # prev selected segment, tree change event will not fire.
+                if self.segid2treenode.has_key(0):
+                    self.project_tree.setCurrentItem(self.segid2treenode[0])
+                self.project_tree.clearSelection()
+                #self.project_tree.setCurrentItem(None)
+            else:
+                #print "Settting tree node",activeobj,self.segid2treenode[activeobj.id]
+                self.project_tree.setCurrentItem(self.segid2treenode[activeobj.id])
 
     def rightClickTreeEvent(self, *args, **kwargs):
         # Show Segment name editing dialog
-        segment = MarkWriteMainWindow.instance().activesegment
+        segment = MarkWriteMainWindow.instance().activeobject
         ##print "rightClickTreeEvent:",segment
         if segment:
             if segment.parent is not None:
@@ -170,64 +187,35 @@ class SegmentInfoDockArea(DockArea):
                     segment.name = tag
                     self.project_tree.selectedItems()[0].setText(0,
                                                                  segment.name)
-                    self.updatePropertiesTableData(
-                        segment.propertiesTableData())
             else:
                 print "TODO: SUPPORT RENAMING OF SEGMENT CATEGORY NODE."
 
 
     def currentTreeItemChangedEvent(self, *args, **kwargs):
-        new_tree_widget, old_tree_widget = args
-
+        current_tree_item, old_tree_widget = args
+        #print ">> currentTreeItemChangedEvent:",current_tree_item, old_tree_widget
+#        print "  selected items:",self.project_tree.selectedItems()
         try:
-            if new_tree_widget is None or not hasattr(new_tree_widget,
-                                                      '_pydat'):
-                self.current_pydat_obj = None
-                self.properties_table.clear()
-                MarkWriteMainWindow.instance().activesegment = None
-            else:
-                self.current_pydat_obj = new_tree_widget._pydat
-                self.updatePropertiesTableData(
-                    self.current_pydat_obj.propertiesTableData())
-                activesegment = MarkWriteMainWindow.instance().activesegment = self.current_pydat_obj
-                temporalPlotWidget = MarkWriteMainWindow.instance()._penDataTimeLineWidget
-                timelineselectionregionwidget = temporalPlotWidget.currentSelection
-                if timelineselectionregionwidget:
-                    if activesegment.parent:
-                        timelineselectionregionwidget.setRegion(
-                            activesegment.timerange)
-                        sreg = timelineselectionregionwidget.getRegion()
-                        # If region did not change since last call to
-                        # currentTreeItemChangedEvent, then calling setRegion
-                        # does not trigger the region updated handler, so we
-                        # need to force the data view widgets to check that
-                        # the region is visible in the views.
-                        if sreg == temporalPlotWidget._lastselectedtimerange:
-                            temporalPlotWidget.ensureSelectionIsVisible(
-                                activesegment.timerange, activesegment.pendata)
-                            MarkWriteMainWindow.instance()._penDataSpatialViewWidget.ensureSelectionIsVisible(
-                                activesegment.timerange, activesegment.pendata)
-                        temporalPlotWidget._lastselectedtimerange = sreg
-                    else:
-                        # The segment category tree node (the root) has been selected,
-                        # so zoom time and spatial views out to full data file,
-                        # but do not change the selected region widget in the timeline view.
-                        temporalPlotWidget.ensureSelectionIsVisible(
-                            activesegment.timerange, activesegment.pendata)
-                        MarkWriteMainWindow.instance()._penDataSpatialViewWidget.ensureSelectionIsVisible(
-                            activesegment.timerange, activesegment.pendata)
+            if current_tree_item is None:
+                #passing in not obj sets activeObject to project.selectedtimeregion
+                MarkWriteMainWindow.instance().setActiveObject()
+            elif self.doNotSetActiveObject is False:
+                self.project_tree.setCurrentItem(current_tree_item)
+                selectedsegment = current_tree_item._pydat
+                if selectedsegment.isRoot():
+                    ao=MarkWriteMainWindow.instance().setActiveObject()
+                else:
+                    ao=MarkWriteMainWindow.instance().setActiveObject(selectedsegment)
+                #print "Set active object:",ao
         except Exception, e:
             import traceback
-
             traceback.print_exc()
             self.properties_table.clear()
-            self.current_pydat_obj = None
+#        print "<< currentTreeItemChangedEvent"
 
     def treeItemDoubleClickedEvent(self, *args, **kwargs):
-        item_tree_widget = args[0]
-        if item_tree_widget and hasattr(item_tree_widget, '_pydat'):
-            segment = item_tree_widget._pydat
-            MarkWriteMainWindow.instance()._penDataTimeLineWidget.zoomToPenData(
-                segment.pendata)
-            MarkWriteMainWindow.instance()._penDataSpatialViewWidget.zoomToPenData(
-                segment.pendata)
+        selectedsegment = args[0]._pydat
+        MarkWriteMainWindow.instance()._penDataTimeLineWidget.zoomToPenData(
+            selectedsegment.pendata)
+        MarkWriteMainWindow.instance()._penDataSpatialViewWidget.zoomToPenData(
+            selectedsegment.pendata)

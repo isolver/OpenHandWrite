@@ -1,11 +1,13 @@
 import numpy as np
 import pyqtgraph as pg
-
+from pyqtgraph.Qt import QtGui
+from weakref import proxy,ProxyType
 from markwrite.gui.projectsettings import SETTINGS
-
 from markwrite.gui.mainwin import MarkWriteMainWindow
 
 __author__ = 'Sol'
+
+
 
 
 class PenDataTemporalPlotWidget(pg.PlotWidget):
@@ -42,13 +44,13 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
 
         return penarray, brusharray
 
-    def updateTraceX(self, brusharray, penarray, penpoints):
+    def updateTraceX(self, penpoints, penarray, brusharray):
         penarray, brusharray = self.getPenBrushX(penpoints, penarray,
                                                  brusharray)
         self.xPenPosTrace.setData(x=penpoints['time'], y=penpoints['x'],
                                   symbolPen=penarray,
                                   symbolBrush=brusharray)
-        return brusharray, penarray
+        return penarray, brusharray
 
     def getPenBrushY(self, penpoints, penarray=None, brusharray=None):
         if penarray is None:
@@ -68,13 +70,13 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
 
         return penarray, brusharray
 
-    def updateTraceY(self, brusharray, penarray, penpoints):
+    def updateTraceY(self, penpoints, penarray, brusharray):
         penarray, brusharray = self.getPenBrushY(penpoints, penarray,
                                                  brusharray)
         self.xPenPosTrace.setData(x=penpoints['time'], y=penpoints['y'],
                                   symbolPen=penarray,
                                   symbolBrush=brusharray)
-        return brusharray, penarray
+        return penarray, brusharray
 
     def handleResetPenData(self, project):
         '''
@@ -117,11 +119,9 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
                                                         name="Y Position")
 
             # Add a Selection Region that is used to create segments by user
-            self.currentSelection = pg.LinearRegionItem(
-                values=[penpoints['time'][0], penpoints['time'][0] + 1.0],
-                movable=True)
-            self.currentSelection.setBounds(
-                bounds=(penpoints['time'][0], penpoints['time'][-1]))
+            # The project class now creates the selection region item widget
+            self.currentSelection = project.selectedtimeregion
+
             self.addItem(self.currentSelection)
             self.sigRegionChangedProxy = pg.SignalProxy(
                 self.currentSelection.sigRegionChanged, rateLimit=30,
@@ -129,14 +129,8 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
 
         else:
             # Update DataItem objects
-            brusharray, penarray = self.updateTraceX(brusharray, penarray,
-                                                     penpoints)
+            penarray, brusharray = self.updateTraceX(penpoints, penarray, brusharray)
             self.updateTraceY(penpoints, penarray, brusharray)
-
-            self.currentSelection.setRegion(
-                [penpoints['time'][0], penpoints['time'][0] + 1.0])
-            self.currentSelection.setBounds(
-                bounds=(penpoints['time'][0], penpoints['time'][-1]))
 
         self.setRange(xRange=(penpoints['time'][0], penpoints['time'][-1]),
                       padding=None)
@@ -148,8 +142,7 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         penpoints = MarkWriteMainWindow.instance().project.pendata
         for k in updates.keys():
             if k.startswith('timeplot_xtrace'):
-                brusharray, penarray = self.updateTraceX(brusharray, penarray,
-                                                         penpoints)
+                penarray, brusharray = self.updateTraceX(penpoints, penarray, brusharray)
             break
 
         for k in updates.keys():
@@ -160,10 +153,9 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
 
     def handlePenDataSelectionChanged(self):
         self.currentSelection.setZValue(10)
-        minT, maxT = self.currentSelection.getRegion()
+        minT, maxT , selectedpendata= self.currentSelection.selectedtimerangeanddata
         # print '>> Timeline.handlePenDataSelectionChanged:',( minT, maxT)
-        selectedpendata = MarkWriteMainWindow.instance().project.updateSelectedData(
-            minT, maxT)
+
         MarkWriteMainWindow.instance().sigSelectedPenDataUpdate.emit((minT, maxT),
                                                                      selectedpendata)
 

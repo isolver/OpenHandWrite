@@ -22,6 +22,10 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             self.handleResetPenData)
         MarkWriteMainWindow.instance().sigSelectedPenDataUpdate.connect(
             self.handlePenDataSelectionChanged)
+        MarkWriteMainWindow.instance().sigSegmentRemoved.connect(
+            self.handleSegmentRemoved)
+        MarkWriteMainWindow.instance().sigSegmentCreated.connect(
+            self.handleSegmentCreated)
 
     def createDefaultPenBrushForData(self, pdat):
         pen = pg.mkPen(SETTINGS['spatialplot_default_color'],
@@ -79,8 +83,10 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             #print "<< PenDataSpatialPlotWidget.handleResetPenData"
 
 
-    def updateSelectedPenPointsGraphics(self, selectedpendata):
-        if MarkWriteMainWindow.instance().createSegmentAction.isEnabled():
+    def updateSelectedPenPointsGraphics(self, selectedpendata=None):
+        if selectedpendata is None:
+            selectedpendata = MarkWriteMainWindow.instance().project.selectedpendata
+        if MarkWriteMainWindow.instance().project.isSelectedDataValidForNewSegment():
             pen = pg.mkPen(SETTINGS['spatialplot_selectedvalid_color'],
                            width=SETTINGS['spatialplot_selectedpoint_size'])
             brush = pg.mkBrush(SETTINGS['spatialplot_selectedvalid_color'])
@@ -116,6 +122,12 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             if k.startswith('spatialplot_selected'):
                 self.updateSelectedPenPointsGraphics(selectedpendata)
             break
+
+    def handleSegmentRemoved(self,*args, **kwags):
+        self.updateSelectedPenPointsGraphics()
+
+    def handleSegmentCreated(self,*args, **kwags):
+        self.updateSelectedPenPointsGraphics()
 
     def handlePenDataSelectionChanged(self, timeperiod, selectedpendata):
 
