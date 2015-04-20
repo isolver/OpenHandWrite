@@ -180,7 +180,7 @@ class SegmentInfoDockArea(DockArea):
         segment = MarkWriteMainWindow.instance().activeobject
         ##print "rightClickTreeEvent:",segment
         if segment:
-            if segment.parent is not None:
+            if isinstance(segment, PenDataSegmentCategory):
                 tag, ok = showSegmentNameDialog(
                     MarkWriteMainWindow.instance().predefinedtags, default=segment.name)
                 if len(tag) > 0 and ok:

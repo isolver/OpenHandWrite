@@ -28,6 +28,7 @@ flattenned_settings_dict['new_segment_trim_0_pressure_points'] = {'name': 'Trim 
 flattenned_settings_dict['plotviews_background_color'] = {'name': 'Background Color', 'type': 'color', 'value': (32,32,32), 'tip': "Application Plot's background color. Change will not take effect until the application is restarted."}
 flattenned_settings_dict['plotviews_foreground_color'] =  {'name': 'Foreground Color', 'type': 'color', 'value': (224,224,224), 'tip': "Application Plot's foreground color (axis lines / labels)."}
 
+flattenned_settings_dict['timeplot_enable_ymouse'] = {'name': 'Enable Y Axis Pan / Scale with Mouse', 'type': 'bool', 'value': False}
 flattenned_settings_dict['timeplot_xtrace_color'] = {'name': 'Point Color', 'type': 'color', 'value': (170,255,127)}
 flattenned_settings_dict['timeplot_xtrace_size'] ={'name': 'Point Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
 flattenned_settings_dict['timeplot_ytrace_color'] = {'name': 'Point Color', 'type': 'color', 'value': (0,170,255)}
@@ -56,6 +57,7 @@ settings_params = [
 #            {'name': 'Sort Category Tree by Segment Time', 'type': 'bool', 'value': True},
 #
             {'name': 'TimeLine View', 'type': 'group', 'children': [
+                'timeplot_enable_ymouse',
 #                {'name': 'Selected Time Period Color', 'type': 'color', 'value': "FF0", 'tip': "Color of the time region selection bar."},
                 {'name': 'Horizontal Pen Position Trace', 'type': 'group', 'children': [
 #                    {'name': 'Point Shape', 'type': 'list', 'values': {"Dot": 'o', "Cross": "x"}, 'value': 0},
@@ -96,7 +98,7 @@ class ProjectSettingsDialog(QtGui.QDialog):
         self._settings = Parameter.create(name='params', type='group', children=settings_params)
 
         if savedstate:
-            self._settings.restoreState(savedstate, addChildren=True, removeChildren=True)
+            self._settings.restoreState(savedstate)
 
         # Holds settings keys that havve changed by the user when the
         # dialog is closed. Used to update any needed gui values..

@@ -17,9 +17,12 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
 
         self.getPlotItem().setLabel('left', "Pen Position", units='pix')
         self.getPlotItem().setLabel('bottom', "Time", units='sec')
+        self.getPlotItem().getViewBox().setMouseEnabled(y=SETTINGS['timeplot_enable_ymouse'])
         self.xPenPosTrace = None
         self.yPenPosTrace = None
         self.currentSelection = None
+        self.fullPenValRange=[0,1]
+        self.maxTime=1
         self._lastselectedtimerange = None
         self.sigRegionChangedProxy = None
         MarkWriteMainWindow.instance().sigResetProjectData.connect(
@@ -86,9 +89,10 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         :return:
         '''
         penpoints = project.pendata
-        penValRange = (min(penpoints['x'].min(), penpoints['y'].min()),
+        self.fullPenValRange = (min(penpoints['x'].min(), penpoints['y'].min()),
                        max(penpoints['x'].max(), penpoints['y'].max()))
-        self.getPlotItem().setLimits(yMin=penValRange[0], yMax=penValRange[1],
+        self.maxTime=penpoints['time'][-1]
+        self.getPlotItem().setLimits(yMin=self.fullPenValRange[0], yMax=self.fullPenValRange[1],
                                      xMin=penpoints['time'][0],
                                      xMax=penpoints['time'][-1])
 
@@ -150,6 +154,9 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
                 self.updateTraceY(penpoints, penarray, brusharray)
                 break
 
+        self.getPlotItem().getViewBox().setMouseEnabled(y=SETTINGS['timeplot_enable_ymouse'])
+        if SETTINGS['timeplot_enable_ymouse'] is False:
+            self.setRange(yRange=self.fullPenValRange)
 
     def handlePenDataSelectionChanged(self):
         self.currentSelection.setZValue(10)
@@ -165,9 +172,11 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
 
     def zoomToPenData(self, pendata, lock_bounds=False):
         if len(pendata) > 0:
-            penValRange = (
-                min(pendata['x'].min() - 20, pendata['y'].min() - 20, 0),
-                max(pendata['x'].max() + 20, pendata['y'].max() + 20))
+            if SETTINGS['timeplot_enable_ymouse']:
+                penValRange = (min(pendata['x'].min() - 20, pendata['y'].min() - 20, 0),
+                    max(pendata['x'].max() + 20, pendata['y'].max() + 20))
+            else:
+                penValRange = self.fullPenValRange
             # if lock_bounds:
             #    self.setLimits(xMin=pendata['time'][0], xMax=pendata[
             # 'time'][-1]+0.01)
@@ -182,24 +191,31 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
             (vxmin, vxmax), (vymin, vymax) = self.viewRange()
             vxlength = vxmax - vxmin
             vxborder = (vxlength - dxlength) / 2.0
-            dymin, dymax = (
-                min(pendata['x'].min() - 20, pendata['y'].min() - 20, vymin),
-                max(pendata['x'].max() + 20, pendata['y'].max() + 20, vymax))
+
+            kwargs={}
+            if SETTINGS['timeplot_enable_ymouse']:
+                kwargs['yRange'] = (
+                    min(pendata['x'].min() - 20, pendata['y'].min() - 20, vymin),
+                    max(pendata['x'].max() + 20, pendata['y'].max() + 20, vymax))
+            else:
+                kwargs['yRange'] = self.fullPenValRange
 
             if dxlength > vxlength:
                 # #print "dlength > vlength:",dlength, vlength
-                self.setRange(xRange=(dxmin, dxmax), yRange=(dymin, dymax),
-                              padding=None)
+                kwargs['xRange']=(dxmin, dxmax)
+                self.setRange(**kwargs)
                 return
 
             if dxmin < vxmin:
-                self.setRange(xRange=(dxmin, dxmin + vxlength),
-                              yRange=(dymin, dymax), padding=0)
+                kwargs['xRange']=(dxmin, dxmin + vxlength)
+                kwargs['padding']=0
+                self.setRange(**kwargs)
                 # #print 'dmin < vmin:',dmin,dmin+vlength,self.viewRange()[0]
                 return
 
             if dxmax > vxmax:
-                self.setRange(xRange=(dxmax - vxlength, dxmax),
-                              yRange=(dymin, dymax), padding=0)
+                kwargs['xRange']=(dxmax - vxlength, dxmax)
+                kwargs['padding']=0
+                self.setRange(**kwargs)
                 # #print 'dmax > vmax:',dmax-vlength,dmax,self.viewRange()[0]
                 return

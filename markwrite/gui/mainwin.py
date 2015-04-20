@@ -18,7 +18,7 @@ from __future__ import division
 
 import pyqtgraph as pg
 
-from markwrite.gui import ProjectSettingsDialog
+from markwrite.gui import ProjectSettingsDialog, SETTINGS
 
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.dockarea import DockArea, Dock
@@ -149,9 +149,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             self.project.selectedtimeregion.setRegion(self._activeobject.timerange)
             self._segmenttree.doNotSetActiveObject=False
             self.removeSegmentAction.setEnabled(True)
+            self.forwardSelectionAction.setEnabled(True)
         else:
             self.removeSegmentAction.setEnabled(False)
-
+            self.forwardSelectionAction.setEnabled(False)
         self.sigActiveObjectChanged.emit(self._activeobject,prevactiveobj)
 
         return self._activeobject
@@ -171,7 +172,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'folder&32.png'
         self.openFileAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Open',
+            '&Open',
             self)
         self.openFileAction.setShortcut('Ctrl+O')
         self.openFileAction.setEnabled(True)
@@ -219,9 +220,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'settings&32.png'
         self.showProjectSettingsDialogAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Settings',
+            '&Settings',
             self)
-        self.showProjectSettingsDialogAction.setShortcut('Ctrl+ALT+S')
+        self.showProjectSettingsDialogAction.setShortcut('Alt+S')
         self.showProjectSettingsDialogAction.setEnabled(True)
         self.showProjectSettingsDialogAction.setStatusTip(atext)
         self.showProjectSettingsDialogAction.triggered.connect(
@@ -233,33 +234,92 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             QtGui.QIcon(getIconFilePath(aicon)),
             'Exit',
             self)
+        self.exitAction.setShortcut('Ctrl+Alt+Q')
         self.exitAction.setEnabled(True)
         self.exitAction.setStatusTip(atext)
         self.exitAction.triggered.connect(self.closeEvent)
 
         #
-        # Segment Menu / Toolbar Related Actions
+        # Selection Menu / Toolbar Related Actions
         #
 
         atext = 'Create a Segment Using Currently Selected Pen Data.'
         aicon = 'accept&32.png'
         self.createSegmentAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Create',
+            'Create &New',
             self)
+        self.createSegmentAction.setShortcut('Ctrl+N')
         self.createSegmentAction.setEnabled(False)
         self.createSegmentAction.setStatusTip(atext)
         self.createSegmentAction.triggered.connect(self.createSegment)
 
-        atext = 'Remove the Active Segment.'
+        atext = 'Delete the Active Segment.'
         aicon = 'delete&32.png'
         self.removeSegmentAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Remove',
+            '&Delete',
             self)
+        self.removeSegmentAction.setShortcut('Ctrl+D')
         self.removeSegmentAction.setEnabled(False)
         self.removeSegmentAction.setStatusTip(atext)
         self.removeSegmentAction.triggered.connect(self.removeSegment)
+
+        #
+        # Timeline Plot Zoom Related Actions
+        #
+
+        atext = 'Increase Timeplot Horizontal Magnification 2x'
+        aicon = 'zoom_in&32.png'
+        self.zoomInTimelineAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            'Zoom In 2x',
+            self)
+        self.zoomInTimelineAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.zoomInTimelineAction.setEnabled(False)
+        self.zoomInTimelineAction.setStatusTip(atext)
+        self.zoomInTimelineAction.triggered.connect(self.zoomInTimeline)
+
+        atext = 'Decrease Timeplot Horizontal Magnification 2x'
+        aicon = 'zoom_out&32.png'
+        self.zoomOutTimelineAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            'Zoom Out 2x',
+            self)
+        self.zoomOutTimelineAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Minus)
+        self.zoomOutTimelineAction.setEnabled(False)
+        self.zoomOutTimelineAction.setStatusTip(atext)
+        self.zoomOutTimelineAction.triggered.connect(self.zoomOutTimeline)
+
+        self.exportSampleReportAction.enableActionsList.append(self.zoomInTimelineAction)
+        self.exportSampleReportAction.enableActionsList.append(self.zoomOutTimelineAction)
+
+        atext = 'Reposition Views around Selected Time Period'
+        aicon = 'target&32.png'
+        self.gotoSelectedTimePeriodAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            'Go To Selected Time Period',
+            self)
+        self.gotoSelectedTimePeriodAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Home)
+        self.gotoSelectedTimePeriodAction.setEnabled(False)
+        self.gotoSelectedTimePeriodAction.setStatusTip(atext)
+        self.gotoSelectedTimePeriodAction.triggered.connect(self.gotoSelectTimelinePeriod)
+
+        atext = 'Forward Selection'
+        aicon = 'skip_forward&32.png'
+        self.forwardSelectionAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            'Forward Selection',
+            self)
+        self.forwardSelectionAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Right)
+        self.forwardSelectionAction.setEnabled(False)
+        self.forwardSelectionAction.setStatusTip(atext)
+        self.forwardSelectionAction.triggered.connect(self.forwardSelection)
+
+
+        self.exportSampleReportAction.enableActionsList.append(self.zoomInTimelineAction)
+        self.exportSampleReportAction.enableActionsList.append(self.zoomOutTimelineAction)
+        self.exportSampleReportAction.enableActionsList.append(self.gotoSelectedTimePeriodAction)
 
         #
         # Help Menu / Toolbar Related Actions
@@ -309,15 +369,19 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.toolbarFile.addAction(self.openFileAction)
         #self.toolbarFile.addAction(self.saveProjectAction)
         self.toolbarFile.addAction(self.showProjectSettingsDialogAction)
-
-        self.toolbarExport = self.addToolBar('Export')
-        self.toolbarExport.addAction(self.exportSampleReportAction)
-        self.toolbarExport.addAction(self.exportSegmentReportAction)
+        self.toolbarFile.addAction(self.exportSampleReportAction)
+        self.toolbarFile.addAction(self.exportSegmentReportAction)
 
 
         self.toolbarsegment = self.addToolBar('Segment')
         self.toolbarsegment.addAction(self.createSegmentAction)
         self.toolbarsegment.addAction(self.removeSegmentAction)
+
+        self.toolbarsegment = self.addToolBar('View')
+        self.toolbarsegment.addAction(self.gotoSelectedTimePeriodAction)
+        self.toolbarsegment.addAction(self.zoomInTimelineAction)
+        self.toolbarsegment.addAction(self.zoomOutTimelineAction)
+        self.toolbarsegment.addAction(self.forwardSelectionAction)
 
         self.toolbarHelp = self.addToolBar('Help')
         self.toolbarHelp.addAction(self.aboutAction)
@@ -502,6 +566,40 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.updateAppTitle()
         #self.saveProjectAction.setEnabled(project.modified)
         self.exportSampleReportAction.setEnabled(True)
+
+    def zoomInTimeline(self):
+        # TODO: Move method to _penDataTimeLineWidget
+        self._penDataTimeLineWidget.getPlotItem().getViewBox().scaleBy(x=0.5)
+
+    def zoomOutTimeline(self):
+        # TODO: Move method to _penDataTimeLineWidget
+        self._penDataTimeLineWidget.getPlotItem().getViewBox().scaleBy(x=2.0)#,center=(xmin+xmax)/2)
+
+    def gotoSelectTimelinePeriod(self):
+        # TODO: Move method to _penDataTimeLineWidget
+        xmin, xmax , selpendat= self._penDataTimeLineWidget.currentSelection.selectedtimerangeanddata
+        xpad = (xmax-xmin)/2
+        pdat=self.project.pendata
+        rx=(max(0,xmin-xpad),min(xmax+xpad,self._penDataTimeLineWidget.maxTime))
+        if SETTINGS['timeplot_enable_ymouse']:
+            ry = (
+                    min(selpendat['x'].min(), selpendat['y'].min()),
+                    max(selpendat['x'].max(), selpendat['y'].max()))
+        else:
+            ry = (0, max(pdat['x'].max(),pdat['y'].max()))
+        self._penDataTimeLineWidget.getPlotItem().setRange(xRange=rx, yRange=ry)
+
+    def forwardSelection(self):
+        # TODO: Move method to _penDataTimeLineWidget
+        xmin, xmax = self._penDataTimeLineWidget.currentSelection.getRegion()
+        six,eix=self.activeobject.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
+        nxmin = self.project.pendata['time'][eix+1]
+        nxmax = min(xmax+(xmax-xmin),self._penDataTimeLineWidget.maxTime)
+        self._penDataTimeLineWidget.currentSelection.setRegion((nxmin, nxmax))
+
+        (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getPlotItem().getViewBox().viewRange()
+        if nxmax >= vmax:
+            self._penDataTimeLineWidget.getPlotItem().getViewBox().translateBy(x=(nxmax-vmax)*1.25)
 
     def handleSelectedPenDataUpdate(self, timeperiod, pendata):
         #print '>> App.handleSelectedPenDataUpdate:',timeperiod
