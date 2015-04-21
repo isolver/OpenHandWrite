@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import division
-
+import numpy as np
 import pyqtgraph as pg
 
 from markwrite.gui import ProjectSettingsDialog, SETTINGS
@@ -149,10 +149,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             self.project.selectedtimeregion.setRegion(self._activeobject.timerange)
             self._segmenttree.doNotSetActiveObject=False
             self.removeSegmentAction.setEnabled(True)
-            self.forwardSelectionAction.setEnabled(True)
         else:
             self.removeSegmentAction.setEnabled(False)
-            self.forwardSelectionAction.setEnabled(False)
         self.sigActiveObjectChanged.emit(self._activeobject,prevactiveobj)
 
         return self._activeobject
@@ -167,8 +165,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         #
         # File Menu / Toolbar Related Actions
         #
-        atext = 'Open an Existing MarkWrite Project or Digitized Pen Position ' \
-                'File'
+        atext = 'Open a supported digitized pen position ' \
+                'file format.'
         aicon = 'folder&32.png'
         self.openFileAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
@@ -190,11 +188,11 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         #self.saveProjectAction.setStatusTip(atext)
         #self.saveProjectAction.triggered.connect(self.saveProject)
 
-        atext = 'Export Pen Sample Report File.'
+        atext = 'Export Pen Sample Level Report to a File.'
         aicon = 'sample_report&32.png'
         self.exportSampleReportAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Export Pen Sample Report',
+            'Export Sample Report',
             self)
         #self.exportSampleReportAction.setShortcut('Ctrl+S')
         self.exportSampleReportAction.setEnabled(False)
@@ -202,11 +200,11 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.exportSampleReportAction.triggered.connect(
             self.createPenSampleLevelReportFile)
 
-        atext = 'Export Segment Level Report File.'
+        atext = 'Export Segment Level Report to a File.'
         aicon = 'segment_report&32.png'
         self.exportSegmentReportAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Export Segment Level Report',
+            'Export Segment Report',
             self)
         #self.exportSampleReportAction.setShortcut('Ctrl+S')
         self.exportSegmentReportAction.setEnabled(False)
@@ -216,7 +214,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         self.exportSampleReportAction.enableActionsList.append(self.exportSegmentReportAction)
 
-        atext = 'Open Application & Project Settings Dialog.'
+        atext = 'Open the Application Settings Dialog.'
         aicon = 'settings&32.png'
         self.showProjectSettingsDialogAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
@@ -228,7 +226,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.showProjectSettingsDialogAction.triggered.connect(
             self.handleDisplayAppSettingsDialogEvent)
 
-        atext = 'Exit Application'
+        atext = 'Close the MarkWrite Application. Any data segmention will be lost!'
         aicon = 'shut_down&32.png'
         self.exitAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
@@ -254,7 +252,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.createSegmentAction.setStatusTip(atext)
         self.createSegmentAction.triggered.connect(self.createSegment)
 
-        atext = 'Delete the Active Segment.'
+        atext = 'Delete the Selected Segment and any of the segments children.'
         aicon = 'delete&32.png'
         self.removeSegmentAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
@@ -305,21 +303,46 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.gotoSelectedTimePeriodAction.setStatusTip(atext)
         self.gotoSelectedTimePeriodAction.triggered.connect(self.gotoSelectTimelinePeriod)
 
-        atext = 'Forward Selection'
-        aicon = 'skip_forward&32.png'
+        atext = 'Move selected time period to end of currently selected segment'
+        aicon = 'move_selection_segend&32.png'
         self.forwardSelectionAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Forward Selection',
+            'Advance Selection',
             self)
         self.forwardSelectionAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Right)
         self.forwardSelectionAction.setEnabled(False)
         self.forwardSelectionAction.setStatusTip(atext)
         self.forwardSelectionAction.triggered.connect(self.forwardSelection)
 
+        atext = 'Increase Timeline Selection End Time'
+        aicon = 'increase_select_endtime&32.png'
+        self.extendSelectionAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            'Increase Selection End',
+            self)
+        self.extendSelectionAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Up)
+        self.extendSelectionAction.setEnabled(False)
+        self.extendSelectionAction.setStatusTip(atext)
+        self.extendSelectionAction.triggered.connect(self.extendSelectedTimePeriod)
+
+        atext = 'Decrease Timeline Selection End Time'
+        aicon = 'descrease_select_endtime&32.png'
+        self.shrinkSelectionAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            'Decrease Selection End',
+            self)
+        self.shrinkSelectionAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Down)
+        self.shrinkSelectionAction.setEnabled(False)
+        self.shrinkSelectionAction.setStatusTip(atext)
+        self.shrinkSelectionAction.triggered.connect(self.shrinkSelectedTimePeriod)
+
 
         self.exportSampleReportAction.enableActionsList.append(self.zoomInTimelineAction)
         self.exportSampleReportAction.enableActionsList.append(self.zoomOutTimelineAction)
         self.exportSampleReportAction.enableActionsList.append(self.gotoSelectedTimePeriodAction)
+        self.exportSampleReportAction.enableActionsList.append(self.shrinkSelectionAction)
+        self.exportSampleReportAction.enableActionsList.append(self.extendSelectionAction)
+        self.exportSampleReportAction.enableActionsList.append(self.forwardSelectionAction)
 
         #
         # Help Menu / Toolbar Related Actions
@@ -377,10 +400,14 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.toolbarsegment.addAction(self.createSegmentAction)
         self.toolbarsegment.addAction(self.removeSegmentAction)
 
-        self.toolbarsegment = self.addToolBar('View')
+        self.toolbartimelineview = self.addToolBar('Timeline View')
+        self.toolbartimelineview.addAction(self.zoomInTimelineAction)
+        self.toolbartimelineview.addAction(self.zoomOutTimelineAction)
+
+        self.toolbarsegment = self.addToolBar('Timeline Selection')
         self.toolbarsegment.addAction(self.gotoSelectedTimePeriodAction)
-        self.toolbarsegment.addAction(self.zoomInTimelineAction)
-        self.toolbarsegment.addAction(self.zoomOutTimelineAction)
+        self.toolbarsegment.addAction(self.shrinkSelectionAction)
+        self.toolbarsegment.addAction(self.extendSelectionAction)
         self.toolbarsegment.addAction(self.forwardSelectionAction)
 
         self.toolbarHelp = self.addToolBar('Help')
@@ -431,7 +458,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         self.setWindowIcon(QtGui.QIcon(getIconFilePath('edit&32.png')))
 
+        self.statusBar().showMessage('Ready')
         self.updateAppTitle()
+
         self.resize(*DEFAULT_WIN_SIZE)
 
     @property
@@ -511,21 +540,22 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
 
             pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*selectedtimeperiod)
-            segmenttimeperiod = self.project.pendata['time'][pendata_ix_range]
-            self.project.selectedtimeregion.setRegion(segmenttimeperiod)
+            if len(pendata_ix_range)>0:
+                segmenttimeperiod = self.project.pendata['time'][pendata_ix_range]
+                self.project.selectedtimeregion.setRegion(segmenttimeperiod)
 
-            tag, ok = showSegmentNameDialog(self.predefinedtags)
-            tag = unicode(tag).strip().replace('\t', "#")
-            if len(tag) > 0 and ok:
-                psid = self.project.getSelectedDataSegmentIDs()[0]
-                new_segment = self.project.createPenDataSegment(tag, psid)
-                self.handleSelectedPenDataUpdate(None,None)
-                self.sigSegmentCreated.emit(new_segment)
-                self.setActiveObject(new_segment)
-            else:
-                # If segment creation was cancelled or failed, then reset
-                # timeline selection region to original time period.
-                self.project.selectedtimeregion.setRegion(selectedtimeperiod)
+                tag, ok = showSegmentNameDialog(self.predefinedtags)
+                tag = unicode(tag).strip().replace('\t', "#")
+                if len(tag) > 0 and ok:
+                    psid = self.project.getSelectedDataSegmentIDs()[0]
+                    new_segment = self.project.createPenDataSegment(tag, psid)
+                    self.handleSelectedPenDataUpdate(None,None)
+                    self.sigSegmentCreated.emit(new_segment)
+                    self.setActiveObject(new_segment)
+                else:
+                    # If segment creation was cancelled or failed, then reset
+                    # timeline selection region to original time period.
+                    self.project.selectedtimeregion.setRegion(selectedtimeperiod)
         else:
             ErrorDialog.info_text = u"Segment Creation Failed.\nNo selected " \
                                     u"pen data."
@@ -591,15 +621,49 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
     def forwardSelection(self):
         # TODO: Move method to _penDataTimeLineWidget
-        xmin, xmax = self._penDataTimeLineWidget.currentSelection.getRegion()
-        six,eix=self.activeobject.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
-        nxmin = self.project.pendata['time'][eix+1]
-        nxmax = min(xmax+(xmax-xmin),self._penDataTimeLineWidget.maxTime)
-        self._penDataTimeLineWidget.currentSelection.setRegion((nxmin, nxmax))
+        xmin, xmax = self.project.selectedtimeregion.getRegion()
+        nxmin =xmax+0.001
+        nxmax = min(nxmin+(xmax-xmin),self._penDataTimeLineWidget.maxTime)
+        pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(nxmin,nxmax)
+        if len(pendata_ix_range):
+            segmenttimeperiod = self.project.pendata['time'][pendata_ix_range]
+            self.project.selectedtimeregion.setRegion(segmenttimeperiod)
 
-        (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getPlotItem().getViewBox().viewRange()
-        if nxmax >= vmax:
-            self._penDataTimeLineWidget.getPlotItem().getViewBox().translateBy(x=(nxmax-vmax)*1.25)
+            (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getPlotItem().getViewBox().viewRange()
+            if nxmax >= vmax:
+                self._penDataTimeLineWidget.getPlotItem().getViewBox().translateBy(x=(nxmax-vmax)*1.25)
+
+    def extendSelectedTimePeriod(self):
+        # TODO: Move method to _penDataTimeLineWidget
+        xmin, xmax = self.project.selectedtimeregion.getRegion()
+        ix_bounds = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
+        if len(ix_bounds)>0:
+            min_ix, max_ix = ix_bounds
+            start_ixs,stop_ixs,lengths=self.project.nonzero_region_ix
+            next_max_ix = stop_ixs[stop_ixs>(max_ix+1)][0]
+            #print "org_max_ix, new_max_ix",max_ix,next_max_ix
+            #print 'new start , end samples: ',self.project.pendata[[min_ix, next_max_ix]]
+            segmenttimeperiod = self.project.pendata['time'][[min_ix, next_max_ix]]
+            self.project.selectedtimeregion.setRegion(segmenttimeperiod)
+            _,nxmax=segmenttimeperiod
+            (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getPlotItem().getViewBox().viewRange()
+            if nxmax >= vmax:
+                self._penDataTimeLineWidget.getPlotItem().getViewBox().translateBy(x=(nxmax-vmax)*1.25)
+
+    def shrinkSelectedTimePeriod(self):
+        # TODO: Move method to _penDataTimeLineWidget
+        xmin, xmax = self.project.selectedtimeregion.getRegion()
+        ix_bounds = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
+        if len(ix_bounds)>0:
+            min_ix, max_ix = ix_bounds
+            start_ixs, stop_ixs, lengths=self.project.nonzero_region_ix
+            prev_maxs = stop_ixs[stop_ixs<max_ix]
+            if prev_maxs.shape[0]>0 and prev_maxs[-1] > min_ix:
+                prev_max_ix = prev_maxs[-1]
+                #print "org_max_ix, new_max_ix",max_ix,next_max_ix
+                #print 'new start , end samples: ',self.project.pendata[[min_ix, next_max_ix]]
+                segmenttimeperiod = self.project.pendata['time'][[min_ix, prev_max_ix]]
+                self.project.selectedtimeregion.setRegion(segmenttimeperiod)
 
     def handleSelectedPenDataUpdate(self, timeperiod, pendata):
         #print '>> App.handleSelectedPenDataUpdate:',timeperiod
@@ -611,9 +675,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         usersettings = readPickle(self._appdirs.user_config_dir,u'usersettings.pkl')
 
         updatedsettings, allsettings, savestate, ok = ProjectSettingsDialog.getProjectSettings(self, usersettings)
-        if ok is True and len(updatedsettings)>0:
+        if ok is True:
             writePickle(self._appdirs.user_config_dir,u'usersettings.pkl', savestate)
-            if self.project:
+            if self.project and len(updatedsettings)>0:
                 self.sigAppSettingsUpdated.emit(updatedsettings, allsettings)
 
     def closeEvent(self, event):

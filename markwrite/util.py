@@ -21,6 +21,7 @@ import os, inspect
 # time
 from timeit import default_timer
 import sys
+import numpy as np
 
 def getTime():
     return default_timer()
@@ -55,3 +56,28 @@ def getIconFile(iname,size=32,itype='png'):
 
 def getSegmentTagsFilePath(tags_file_name=u'default.tag'):
     return os.path.join(get_resource_folder_path(),'tags',tags_file_name)
+
+# numpy array manipulation related
+
+def contiguous_regions(condition):
+    """Finds contiguous True regions of the boolean array "condition". Returns
+    three 1d arrays:  start indicies, stop indicies and lengths of contigous regions
+    """
+
+    d = np.diff(condition)
+    idx, = d.nonzero()
+    idx += 1 # need to shift indices because of diff
+
+    if condition[0]:
+        # If the start of condition is True prepend a 0
+        idx = np.r_[0, idx]
+
+    if condition[-1]:
+        # If the end of condition is True, append the length of the array
+        idx = np.r_[idx, condition.size] # Edit
+
+    starts = idx[0::2]
+    stops = idx[1::2]
+    lengths = stops - starts
+
+    return starts, stops, lengths

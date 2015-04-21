@@ -29,6 +29,7 @@ from pyqtgraph.Qt import QtGui
 
 from file_io import EyePenDataImporter, XmlDataImporter
 from segment import PenDataSegment, PenDataSegmentCategory
+from util import contiguous_regions
 from gui.projectsettings import SETTINGS
 
 selectedtimeperiod_properties=None
@@ -154,6 +155,8 @@ class MarkWriteProject(object):
         :return: MarkWriteProject instance
         """
         self._pendata = []
+        self.nonzero_pressure_mask = []
+        self.nonzero_region_ix=[]
         self._segmentset=None
         self.autodetected_segment_tags=[]
         self._name = u"Unknown"
@@ -208,6 +211,11 @@ class MarkWriteProject(object):
             pen_data['time']=pen_data['time']/1000.0
 
             self._pendata = pen_data
+            #self.nonzero_pressure_ixs = np.nonzero(self._pendata['pressure'])[0]
+            self.nonzero_pressure_mask=self._pendata['pressure']>0
+            # nonzero_regions_ix will be a tuple of (starts, stops, lengths) arrays
+            self.nonzero_region_ix=contiguous_regions(self.nonzero_pressure_mask)
+            #self.zero_pressure_ixs = np.nonzero(self._pendata['pressure']==0)[0]
             self._segmentset=PenDataSegmentCategory(name=self.name,project=self)
             self._pendata['segment_id']=self._segmentset.id
 

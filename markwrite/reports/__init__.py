@@ -59,18 +59,34 @@ class ReportExporter(object):
 
     @classmethod
     def columnnames(cls):
+        """
+
+        :return:
+        """
         return []
 
     @classmethod
     def datarowcount(cls):
+        """
+
+        :return:
+        """
         return 0
 
     @classmethod
     def datarows(cls):
+        """
+
+        :return:
+        """
         return []
 
     @classmethod
     def preamble(cls):
+        """
+
+        :return:
+        """
         return ''
 
     @classmethod

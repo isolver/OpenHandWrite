@@ -85,7 +85,6 @@ settings_params = [
 
 
 SETTINGS=dict()
-
 class ProjectSettingsDialog(QtGui.QDialog):
     path2key=dict()
     def __init__(self, parent = None, savedstate=None):
@@ -98,7 +97,7 @@ class ProjectSettingsDialog(QtGui.QDialog):
         self._settings = Parameter.create(name='params', type='group', children=settings_params)
 
         if savedstate:
-            self._settings.restoreState(savedstate)
+            self._settings.restoreState(savedstate, removeChildren=True)
 
         # Holds settings keys that havve changed by the user when the
         # dialog is closed. Used to update any needed gui values..
@@ -107,7 +106,6 @@ class ProjectSettingsDialog(QtGui.QDialog):
         self._settings.sigTreeStateChanged.connect(self.handleSettingChange)
 
         self.initSettingsValues()
-        #print 'settings_state:',self.settings_state
 
         self.ptree = ParameterTree()
         self.ptree.setParameters(self._settings, showTop=False)
@@ -150,7 +148,8 @@ class ProjectSettingsDialog(QtGui.QDialog):
                     childName = '.'.join(path)
                 else:
                     childName = child.name()
-                SETTINGS[self.path2key[childName]]=child.value()
+                if self.path2key.has_key(childName):
+                    SETTINGS[self.path2key[childName]]=child.value()
 
     ## If anything changes in the tree, print a message
     def handleSettingChange(self, param, changes):

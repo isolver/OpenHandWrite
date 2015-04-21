@@ -276,7 +276,10 @@ class PenDataSegmentCategory(object):
             mask = (pendata['time'] >= starttime) & (pendata['time'] <=endtime) & (pendata['pressure'] > 0)
         else:
             mask = (pendata['time'] >= starttime) & (pendata['time'] <= endtime)
-        return np.nonzero(mask)[0][[0,-1]]
+        nonzero_ixs=np.nonzero(mask)[0]
+        if nonzero_ixs.shape[0]>0:
+            return nonzero_ixs[[0,-1]]
+        return []
 
     def propertiesTableData(self):
         """
