@@ -52,7 +52,10 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
                                                  brusharray)
         self.xPenPosTrace.setData(x=penpoints['time'], y=penpoints['x'],
                                   symbolPen=penarray,
-                                  symbolBrush=brusharray)
+                                  symbolBrush=brusharray,
+                                  pen=None, symbol='o',
+                                    symbolSize=SETTINGS[
+                                        'timeplot_xtrace_size'])
         return penarray, brusharray
 
     def getPenBrushY(self, penpoints, penarray=None, brusharray=None):
@@ -76,9 +79,13 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
     def updateTraceY(self, penpoints, penarray, brusharray):
         penarray, brusharray = self.getPenBrushY(penpoints, penarray,
                                                  brusharray)
-        self.xPenPosTrace.setData(x=penpoints['time'], y=penpoints['y'],
+        self.yPenPosTrace.setData(x=penpoints['time'], y=penpoints['y'],
                                   symbolPen=penarray,
-                                  symbolBrush=brusharray)
+                                  symbolBrush=brusharray,
+                                    pen=None, symbol='o',
+                                    symbolSize=SETTINGS[
+                                        'timeplot_ytrace_size'],
+                                    name="Y Position")
         return penarray, brusharray
 
     def handleResetPenData(self, project):
@@ -89,6 +96,7 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         :return:
         '''
         penpoints = project.pendata
+
         self.fullPenValRange = (min(penpoints['x'].min(), penpoints['y'].min()),
                        max(penpoints['x'].max(), penpoints['y'].max()))
         self.maxTime=penpoints['time'][-1]
@@ -132,11 +140,13 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
                 slot=self.handlePenDataSelectionChanged)
 
         else:
+            self.getPlotItem().getViewBox().setMouseEnabled(y=SETTINGS['timeplot_enable_ymouse'])
             # Update DataItem objects
             penarray, brusharray = self.updateTraceX(penpoints, penarray, brusharray)
             self.updateTraceY(penpoints, penarray, brusharray)
 
         self.setRange(xRange=(penpoints['time'][0], penpoints['time'][-1]),
+                      yRange=self.fullPenValRange,
                       padding=None)
         self.handlePenDataSelectionChanged()
 

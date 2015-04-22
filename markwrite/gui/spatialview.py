@@ -69,6 +69,8 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             brusharray, penarray = self.createDefaultPenBrushForData(pdat)
 
             self.allPlotDataItem.setData(x=pdat['x'], y=pdat['y'],
+                                         pen=None, symbol='o',
+                                         symbolSize=1,
                                          symbolBrush=brusharray,
                                          symbolPen=penarray)
 

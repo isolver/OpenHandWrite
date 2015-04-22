@@ -86,8 +86,6 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
                 self._project=p
             else:
                 self._project = proxy(p)
-            self.setBounds(bounds=(self.allpendata['time'][0], self.allpendata['time'][-1]))
-            self.setRegion([self.allpendata['time'][0], self.allpendata['time'][0] + 1.0])
 
     @property
     def allpendata(self):
@@ -223,6 +221,10 @@ class MarkWriteProject(object):
                 MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)
             else:
                 MarkWriteProject._selectedtimeregion.project = self
+
+            MarkWriteProject._selectedtimeregion.setBounds(bounds=(self.pendata['time'][0], self.pendata['time'][-1]))
+            MarkWriteProject._selectedtimeregion.setRegion([self.pendata['time'][0], self.pendata['time'][0] + 1.0])
+
 
     def getSelectedDataSegmentIDs(self):
         if len(self.selectedpendata)>0:
