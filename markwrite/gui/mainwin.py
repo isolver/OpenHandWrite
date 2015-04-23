@@ -25,7 +25,7 @@ from pyqtgraph.dockarea import DockArea, Dock
 
 from markwrite.util import getIconFilePath
 from markwrite.file_io import loadPredefinedSegmentTagList, readPickle, writePickle
-from markwrite.reports import PenSampleReportExporter, SegmentLevelReportExporter
+from markwrite.reports import PenSampleReportExporter, SegmentLevelReportExporter, custom_report_classes
 from markwrite.segment import PenDataSegment
 from dialogs import ExitApplication, fileOpenDlg, ErrorDialog, warnDlg, \
     fileSaveDlg,ConfirmAction
@@ -192,7 +192,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'sample_report&32.png'
         self.exportSampleReportAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Export Sample Report',
+            'Sample Report',
             self)
         #self.exportSampleReportAction.setShortcut('Ctrl+S')
         self.exportSampleReportAction.setEnabled(False)
@@ -204,7 +204,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'segment_report&32.png'
         self.exportSegmentReportAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Export Segment Report',
+            'Segment Report',
             self)
         #self.exportSampleReportAction.setShortcut('Ctrl+S')
         self.exportSegmentReportAction.setEnabled(False)
@@ -378,6 +378,14 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         exportMenu = fileMenu.addMenu("&Export")
         exportMenu.addAction(self.exportSampleReportAction)
         exportMenu.addAction(self.exportSegmentReportAction)
+        exportMenu.addSeparator()
+        self.customReportActions=[]
+        for custom_report in custom_report_classes:
+            a = exportMenu.addAction(custom_report.reportlabel(), lambda: self.exportCustomReport(custom_report))
+            a.setEnabled(False)
+            self.customReportActions.append(a)
+            self.exportSampleReportAction.enableActionsList.append(a)
+
         fileMenu.addSeparator()
         fileMenu.addAction(self.exitAction)
 
@@ -518,6 +526,13 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                                 prompt="Export Segment Level Report")
         if file_path:
             SegmentLevelReportExporter().export(file_path, self.project)
+
+    def exportCustomReport(self,reportcls):
+        default_file_name = u"{}_{}.txt".format(reportcls.outputfileprefix(),self.project.name)
+        file_path = fileSaveDlg(initFileName=default_file_name,
+                                prompt="Export %s"%(reportcls.reportlabel()))
+        if file_path:
+            reportcls().export(file_path, self.project)
 
     def createSegment(self):
         """

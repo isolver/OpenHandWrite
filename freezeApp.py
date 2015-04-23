@@ -16,7 +16,7 @@ excludes = ['cvxopt','_gtkagg', '_tkagg', 'bsddb', 'curses', 'email', 'pywin.deb
     'pywin.debugger.dbgcon', 'pywin.dialogs', 'tcl','tables',
     'Tkconstants', 'Tkinter', 'zmq','PySide','pysideuic','scipy','matplotlib']
 
-includefiles =['markwrite/resources','test_data']
+includefiles =['markwrite/resources','test_data', 'customreports.py']
 if sys.version[0] == '2':
     # causes syntax error on py2
     excludes.append('PyQt4.uic.port_v3')

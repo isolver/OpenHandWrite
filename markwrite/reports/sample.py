@@ -22,6 +22,7 @@ from markwrite.reports import ReportExporter
 class PenSampleReportExporter(ReportExporter):
     progress_dialog_title = "Saving Pen Point Sample Level Report .."
     progress_update_rate=10
+    formating=dict(time=u'{:.3f}')
     def __init__(self):
         ReportExporter.__init__(self)
 
@@ -60,15 +61,15 @@ class PenSampleReportExporter(ReportExporter):
             # current data point. Use '' for levels where no seg matched
             # data point time, otherwise use segment name.
             for l in lvls:
-                dpsegname=''
+                dpsegname=cls.missingval
                 for seg in segs_by_lvl[l]:
                     if seg.contains(time=dp['time']):
                         dpsegname=seg.name
                         break
                 # If no seg was found at this level, none will exist at lower
-                # levels for this point, so fill in remaining levels with ''
-                if len(dpsegname)==0:
-                    rowdata.extend([dpsegname,]*len(lvls[l-1:]))
+                # levels for this point, so break the loop. Remaining col vals
+                # will automatically be filled in by ReportExporter
+                if dpsegname == cls.missingval:
                     break
                 rowdata.append(dpsegname)
 
