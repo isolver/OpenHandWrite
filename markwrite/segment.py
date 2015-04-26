@@ -62,7 +62,7 @@ class PenDataSegmentCategory(object):
     def clearSegmentCache(cls):
         cls._id=0
         cls.id2obj.clear()
-        cls.project=None
+        cls._project=None
         PenDataSegmentCategory.totalsegmentcount=0
 
     @property
@@ -252,13 +252,24 @@ class PenDataSegmentCategory(object):
         return self.pendata['time'][-1]
 
     @property
+    def duration(self):
+        return self.pendata['time'][-1] - self.pendata['time'][0]
+
+    @property
     def timerange(self):
         return self.pendata['time'][[0,-1]]
-
 
     @property
     def pointcount(self):
         return self.pendata.shape[0]
+
+    @property
+    def nonzeropressurependata(self):
+        return self.pendata[self.pendata['pressure']>0]
+
+    @property
+    def zeropressurependata(self):
+        return self.pendata[self.pendata['pressure']==0]
 
     @classmethod
     def calculateTrimmedSegmentIndexBoundsFromTimeRange(cls, starttime, endtime):
@@ -289,12 +300,18 @@ class PenDataSegmentCategory(object):
         :return: dict of segmentcategory properties to display
         """
         project_properties = OrderedDict()
-        project_properties['Name'] = dict(val=self.name)
-        project_properties['ID'] = dict(val=self.id)
-        project_properties['Start Time'] = dict(val=self.starttime)
-        project_properties['End Time'] = dict(val=self.endtime)
-        project_properties['Point Count'] = dict(val=self.pointcount)
-        project_properties['level'] = dict(val=self.level)
+        project_properties['Name'] = [self.name,]
+        project_properties['ID'] = [self.id,]
+        project_properties['Start Time'] = [self.starttime,]
+        project_properties['End Time'] = [self.endtime,]
+        project_properties['Duration'] = [self.duration,]
+        project_properties['# Total Samples'] = [self.pointcount,]
+        project_properties['# No Pressure Samples'] = [self.zeropressurependata.shape[0],]
+        project_properties['# Runs'] = ['TODO',]
+        project_properties['Preceding Pen-Lift Duration'] = ['TODO',]
+        project_properties['Hierarchy Path'] = [self.path,]
+        project_properties['Hierarchy Level'] = [self.level,]
+        project_properties['Child Count'] = [len(self.children),]
         return project_properties
 
 class PenDataSegment(PenDataSegmentCategory):
@@ -327,27 +344,31 @@ class PenDataSegment(PenDataSegmentCategory):
 
     def propertiesTableData(self):
         """
-        Return a dict of segment properties to display in the MarkWrite
-        Application Project Properties Table.
+        Return a dict of segment properties to display in the Selected Project
+        Tree Node Object Properties Table.
 
-        :return: dict of segment properties to display
+        :return: dict of segmentcategory properties to display
         """
-        if self.tableprops is None:
-            self.tableprops = OrderedDict()
-            propnames = ['Name',
-                         'ID',
-                         'Start Time',
-                         'End Time',
-                         'Point Count',
-                         'Level',
-                         ]
-            for n in propnames:
-                self.tableprops[n]=['']
-
-        self.tableprops['Name'][0] = self.name
-        self.tableprops['ID'][0] = self.id
-        self.tableprops['Start Time'][0] = self.starttime
-        self.tableprops['End Time'][0] = self.endtime
-        self.tableprops['Point Count'][0] = self.pointcount
-        self.tableprops['Level'][0] = self.level
-        return self.tableprops
+        ix_bounds = self.calculateTrimmedSegmentIndexBoundsFromTimeRange(self.starttime, self.endtime)
+        min_ix, max_ix = 'N/A','N/A'
+        period_count = 0
+        print "self.getRoot():",self.getRoot(),self.getRoot().parent
+        if len(ix_bounds)>0:
+            min_ix, max_ix = ix_bounds
+            start_ixs,stop_ixs,lengths=PenDataSegmentCategory._project.nonzero_region_ix
+            period_count = np.nonzero(np.logical_and(start_ixs<max_ix,start_ixs>=min_ix))[0].shape[0]
+        project_properties = OrderedDict()
+        project_properties['Name'] = [self.name,]
+        project_properties['ID'] = [self.id,]
+        project_properties['Start Time'] = [self.starttime,]
+        project_properties['End Time'] = [self.endtime,]
+        project_properties['Duration'] = [self.duration,]
+        project_properties['Start / End Index'] = [(min_ix,max_ix)]
+        project_properties['# Total Samples'] = [self.pointcount,]
+        project_properties['# No Pressure Samples'] = [self.zeropressurependata.shape[0],]
+        project_properties['# Runs'] = [period_count,]
+        project_properties['Last Pen-Lift Duration'] = ['TODO',]
+        project_properties['Hierarchy Path'] = [u"->".join(self.path[1:]),]
+        project_properties['Hierarchy Level'] = [self.level,]
+        project_properties['Child Count'] = [len(self.children),]
+        return project_properties
