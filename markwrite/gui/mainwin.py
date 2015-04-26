@@ -28,7 +28,7 @@ from markwrite.file_io import loadPredefinedSegmentTagList, readPickle, writePic
 from markwrite.reports import PenSampleReportExporter, SegmentLevelReportExporter, custom_report_classes
 from markwrite.segment import PenDataSegment
 from dialogs import ExitApplication, fileOpenDlg, ErrorDialog, warnDlg, \
-    fileSaveDlg,ConfirmAction
+    fileSaveDlg,ConfirmAction,infoDlg
 from markwrite.project import MarkWriteProject
 
 DEFAULT_WIN_SIZE = (1200, 800)
@@ -658,12 +658,16 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             next_max_ix = stop_ixs[stop_ixs>(max_ix+1)][0]
             #print "org_max_ix, new_max_ix",max_ix,next_max_ix
             #print 'new start , end samples: ',self.project.pendata[[min_ix, next_max_ix]]
-            segmenttimeperiod = self.project.pendata['time'][[min_ix, next_max_ix]]
-            self.project.selectedtimeregion.setRegion(segmenttimeperiod)
-            _,nxmax=segmenttimeperiod
-            (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getPlotItem().getViewBox().viewRange()
-            if nxmax >= vmax:
-                self._penDataTimeLineWidget.getPlotItem().getViewBox().translateBy(x=(nxmax-vmax)*1.25)
+            if next_max_ix < self.project.pendata.shape[0]:
+                segmenttimeperiod = self.project.pendata['time'][[min_ix, next_max_ix]]
+                self.project.selectedtimeregion.setRegion(segmenttimeperiod)
+                _,nxmax=segmenttimeperiod
+                (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getPlotItem().getViewBox().viewRange()
+                if nxmax >= vmax:
+                    self._penDataTimeLineWidget.getPlotItem().getViewBox().translateBy(x=(nxmax-vmax)*1.25)
+            else:
+                 infoDlg(title=u"Action Aborted", prompt=u"The selected time period can not be extended<br>as it is at the end of the data samples.")
+
 
     def shrinkSelectedTimePeriod(self):
         # TODO: Move method to _penDataTimeLineWidget
