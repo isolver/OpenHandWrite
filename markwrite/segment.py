@@ -367,7 +367,7 @@ class PenDataSegment(PenDataSegmentCategory):
         project_properties['# Total Samples'] = [self.pointcount,]
         project_properties['# No Pressure Samples'] = [self.zeropressurependata.shape[0],]
         project_properties['# Runs'] = [period_count,]
-        project_properties['Last Pen-Lift Duration'] = ['TODO',]
+        #project_properties['Last Pen-Lift Duration'] = ['TODO',]
         project_properties['Hierarchy Path'] = [u"->".join(self.path[1:]),]
         project_properties['Hierarchy Level'] = [self.level,]
         project_properties['Child Count'] = [len(self.children),]

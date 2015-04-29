@@ -660,7 +660,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             #print 'new start , end samples: ',self.project.pendata[[min_ix, next_max_ix]]
             if next_max_ix < self.project.pendata.shape[0]:
                 segmenttimeperiod = self.project.pendata['time'][[min_ix, next_max_ix]]
-                self.project.selectedtimeregion.setRegion(segmenttimeperiod)
+                min_ix, next_max_ix = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
+                self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, next_max_ix]])
                 _,nxmax=segmenttimeperiod
                 (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getPlotItem().getViewBox().viewRange()
                 if nxmax >= vmax:
@@ -682,7 +683,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 #print "org_max_ix, new_max_ix",max_ix,next_max_ix
                 #print 'new start , end samples: ',self.project.pendata[[min_ix, next_max_ix]]
                 segmenttimeperiod = self.project.pendata['time'][[min_ix, prev_max_ix]]
-                self.project.selectedtimeregion.setRegion(segmenttimeperiod)
+                min_ix, max_ix = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
+                self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
 
     def handleSelectedPenDataUpdate(self, timeperiod, pendata):
         #print '>> App.handleSelectedPenDataUpdate:',timeperiod
