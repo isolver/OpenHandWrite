@@ -309,7 +309,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             QtGui.QIcon(getIconFilePath(aicon)),
             'Jump Forward',
             self)
-        self.forwardSelectionAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Right)
+        self.forwardSelectionAction.setShortcut(QtCore.Qt.Key_Right)
         self.forwardSelectionAction.setEnabled(False)
         self.forwardSelectionAction.setStatusTip(atext)
         self.forwardSelectionAction.triggered.connect(self.jumpTimeSelectionForward)
@@ -320,18 +320,19 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             QtGui.QIcon(getIconFilePath(aicon)),
             'Jump Backward',
             self)
-        self.backwardSelectionAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Left)
+        self.backwardSelectionAction.setShortcut(QtCore.Qt.Key_Left)
         self.backwardSelectionAction.setEnabled(False)
         self.backwardSelectionAction.setStatusTip(atext)
         self.backwardSelectionAction.triggered.connect(self.jumpTimeSelectionBackward)
-        #======================================
+
+
         atext = 'Increase Timeline Selection End Time'
         aicon = 'increase_select_endtime&32.png'
         self.increaseSelectionEndPointAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             'Increase Selection End',
             self)
-        self.increaseSelectionEndPointAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Up)
+        self.increaseSelectionEndPointAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Right)
         self.increaseSelectionEndPointAction.setEnabled(False)
         self.increaseSelectionEndPointAction.setStatusTip(atext)
         self.increaseSelectionEndPointAction.triggered.connect(self.increaseSelectionEndPointTime)
@@ -342,7 +343,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             QtGui.QIcon(getIconFilePath(aicon)),
             'Decrease Selection End',
             self)
-        self.decreaseSelectionEndPointAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Down)
+        self.decreaseSelectionEndPointAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Left)
         self.decreaseSelectionEndPointAction.setEnabled(False)
         self.decreaseSelectionEndPointAction.setStatusTip(atext)
         self.decreaseSelectionEndPointAction.triggered.connect(self.decreaseSelectionEndPointTime)
@@ -354,7 +355,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             QtGui.QIcon(getIconFilePath(aicon)),
             'Increase Selection Start',
             self)
-        #self.increaseSelectionStartPointAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Up)
+        self.increaseSelectionStartPointAction.setShortcut(QtCore.Qt.ALT + QtCore.Qt.Key_Right)
         self.increaseSelectionStartPointAction.setEnabled(False)
         self.increaseSelectionStartPointAction.setStatusTip(atext)
         self.increaseSelectionStartPointAction.triggered.connect(self.increaseSelectionStartPointTime)
@@ -365,7 +366,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             QtGui.QIcon(getIconFilePath(aicon)),
             'Decrease Selection Start',
             self)
-        #self.decreaseSelectionStartPointAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Down)
+        self.decreaseSelectionStartPointAction.setShortcut(QtCore.Qt.ALT + QtCore.Qt.Key_Left)
         self.decreaseSelectionStartPointAction.setEnabled(False)
         self.decreaseSelectionStartPointAction.setStatusTip(atext)
         self.decreaseSelectionStartPointAction.triggered.connect(self.decreaseSelectionStartPointTime)
