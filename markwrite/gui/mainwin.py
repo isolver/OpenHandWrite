@@ -677,12 +677,20 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     def jumpTimeSelectionForward(self):
         # TODO: Move method to _penDataTimeLineWidget
         xmin, xmax = self.project.selectedtimeregion.getRegion()
-        nxmin =xmax+0.001
-        nxmax = min(nxmin+(xmax-xmin),self._penDataTimeLineWidget.maxTime)
-        pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(nxmin,nxmax)
+        pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
         if len(pendata_ix_range):
-            segmenttimeperiod = self.project.pendata['time'][pendata_ix_range]
-            self.project.selectedtimeregion.setRegion(segmenttimeperiod)
+            nix_min = pendata_ix_range[1]+1
+            if self.project.pendata['pressure'][nix_min]==0.0:
+                start_ixs,stop_ixs,lengths=self.project.nonzero_region_ix
+                next_starts = start_ixs[start_ixs>nix_min]
+                if len(next_starts)>0:
+                    nix_min=next_starts[0]
+                else:
+                    infoDlg(title=u"Action Aborted", prompt=u"The selected time period can not be moved forward.<br>Reason: NTs index not available.")
+                    return
+            nxmin = self.project.pendata['time'][nix_min]
+            nxmax = min(nxmin +(xmax-xmin), self.project.pendata['time'][-1])
+            self.project.selectedtimeregion.setRegion([nxmin,nxmax])
 
             (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getPlotItem().getViewBox().viewRange()
             if nxmax >= vmax:

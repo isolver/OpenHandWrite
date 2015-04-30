@@ -352,7 +352,6 @@ class PenDataSegment(PenDataSegmentCategory):
         ix_bounds = self.calculateTrimmedSegmentIndexBoundsFromTimeRange(self.starttime, self.endtime)
         min_ix, max_ix = 'N/A','N/A'
         period_count = 0
-        print "self.getRoot():",self.getRoot(),self.getRoot().parent
         if len(ix_bounds)>0:
             min_ix, max_ix = ix_bounds
             start_ixs,stop_ixs,lengths=PenDataSegmentCategory._project.nonzero_region_ix
