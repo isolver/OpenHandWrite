@@ -769,6 +769,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         ix_bounds = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
         if len(ix_bounds)>0:
             min_ix, max_ix = ix_bounds
+            if np.all(self.project.nonzero_pressure_mask[min_ix:max_ix]):
+                self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
+                return
             start_ixs, stop_ixs, lengths=self.project.nonzero_region_ix
             prev_maxs = stop_ixs[stop_ixs<max_ix]
             if prev_maxs.shape[0]>0:
@@ -786,6 +789,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         ix_bounds = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
         if len(ix_bounds)>0:
             min_ix, max_ix = ix_bounds
+            if np.all(self.project.nonzero_pressure_mask[min_ix:max_ix]):
+                self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
+                return
             start_ixs,stop_ixs,lengths=self.project.nonzero_region_ix
             higher_starts=start_ixs[start_ixs>(min_ix)]
             if len(higher_starts)==0:
