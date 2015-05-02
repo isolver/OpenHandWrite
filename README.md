@@ -11,6 +11,8 @@ to people wanting to segment digitized pen data into sentences, words, letters,
 Documentation is pretty thin at this point, hopefully the user interface is
 somewhat straight forward.
 
+![MarkWrite screenshot](http://www.github.com/isolver/MarkWrite/MarkWriteApp_sm.png)
+
 # Installation / Running
 Currently only Windows 7 / 8 have been tested with the app; 
 other environments may work but who knows.
@@ -39,7 +41,7 @@ is also available. In this case Python does not need to be installed
 on the computer being used; it is included in the MarkWrite program folder. 
 
 The executable was built against the MarkWrite 0.1 source using cx_freeze. 
-To use the exe, download the "MarkWrite 0.1 64 bit" program folder, 
+To use the exe, [download the "MarkWrite 0.1 64 bit" program folder](http://goo.gl/rFlWzk), 
 uncompress it, and then launch MarkWrite.exe in the folder.
 
 # License
