@@ -1,12 +1,24 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of the open-source MarkWrite application.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from _weakref import proxy
 from weakref import WeakValueDictionary
-from PyQt4 import QtGui
 from pyqtgraph.dockarea import DockArea, Dock
-from markwrite.gui.mainwin import showSegmentNameDialog, MarkWriteMainWindow
-
-__author__ = 'Sol'
-
-import pyqtgraph as pg
+from markwrite.gui.mainwin import showSegmentNameDialog
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph import TreeWidget, TableWidget
 from markwrite.segment import PenDataSegmentCategory
@@ -19,16 +31,6 @@ class SegmentTreeWidget(TreeWidget):
         self.setHeaderHidden(True)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
-#        self.setWindowTitle('MarkWrite Project')
-
-#        self.itemActivated.connect(self.handleItemActivatedEvent)
-#        self.itemChanged.connect(self.handleItemChangedEvent)
-#        self.itemCollapsed.connect(self.handleItemCollapsedEvent)
-#        self.itemEntered.connect(self.handleItemEnteredEvent)
-#        self.itemExpanded.connect(self.handleItemExpandedEvent)
-#        self.itemPressed.connect(self.handleItemPressedEvent)
-#        self.itemSelectionChanged.connect(self.handleItemSelectionChangedEvent)
-#        self.itemClicked.connect(self.handleItemClickedEvent)
 
     def itemMoving(self, item, parent, index):
         """Called when item has been dropped elsewhere in the tree.

@@ -171,8 +171,6 @@ class MarkWriteProject(object):
             if fimporter:
                 self.autodetected_segment_tags=self.detectAssociatedSegmentTagsFile(dir_path,fname,fext)
                 self.createNewProject(fname, fimporter.asarray(file_path))
- #           elif file_name.lower().endswith(self.project_file_extension):
- #               self.openExistingProject(file_path)
             else:
                 print "Unsupported file type:",file_path
         else:
@@ -196,7 +194,6 @@ class MarkWriteProject(object):
         return tag_list
 
     def createNewProject(self, file_name, pen_data):
-            # TODO : Define MarkWrite project setting and implement GUI for editing
             PenDataSegmentCategory.clearSegmentCache()
 
             self._project_settings = None
@@ -209,11 +206,9 @@ class MarkWriteProject(object):
             pen_data['time']=pen_data['time']/1000.0
 
             self._pendata = pen_data
-            #self.nonzero_pressure_ixs = np.nonzero(self._pendata['pressure'])[0]
             self.nonzero_pressure_mask=self._pendata['pressure']>0
             # nonzero_regions_ix will be a tuple of (starts, stops, lengths) arrays
             self.nonzero_region_ix=contiguous_regions(self.nonzero_pressure_mask)
-            #self.zero_pressure_ixs = np.nonzero(self._pendata['pressure']==0)[0]
             self._segmentset=PenDataSegmentCategory(name=self.name,project=self)
             self._pendata['segment_id']=self._segmentset.id
 

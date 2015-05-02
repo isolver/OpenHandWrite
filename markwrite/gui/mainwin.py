@@ -41,8 +41,7 @@ DEFAULT_DOCK_PLACEMENT = {
 }
 
 ABOUT_DIALOG_TEXT = """
-<b> MarkWrite</b> <br>
-Copywrite 2015 COPYRIGHT_HOLDER_NAME<br>
+<b> MarkWrite v0.1</b> <br>
 This software is GLP v3 licensed.<br>
 <br>
 See licence.txt for license details.
@@ -114,10 +113,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         # init GUI related stuff
         self.setupGUI(qtapp)
-
-        # create a temp ProjectSettingsDialog so that settings are loaded
-        # even if ProjectSettingsDialog is not displayed
-
 
         self.sigProjectChanged.connect(self.handleProjectChange)
         self.sigSelectedPenDataUpdate.connect(self.handleSelectedPenDataUpdate)

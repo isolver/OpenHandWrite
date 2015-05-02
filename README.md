@@ -3,9 +3,44 @@ A tool for the inspection and segmentation of digitized writing data
 from pen tablet type devices.
 
 # Status
-The tool is currently in the initial development stage and is 
-functionally incomplete. At this time MarkWrite would not be of much use to anyone 
-but the project collaborators.
+MarkWrite 0.1 was released on May 2nd, 2015. Although these is a large 
+'wish list' of unimplemented functionality, the application should be of use
+to people wanting to segment digitized pen data into sentences, words, letters,
+...
+
+Documentation is pretty thin at this point, hopefully the user interface is
+somewhat straight forward.
+
+# Installation / Running
+Currently only Windows 7 / 8 have been tested with the app; 
+other environments may work but who knows.
+
+## Running from Source
+The source code can be downloaded and MarkWrite can be run from a 
+Python 2.7 32 or 64 bit environment. 
+
+The following Python packages must be installed for MarkWrite to run:
+
+1. numpy 1.9
+2. pyqtgraph 0.9.10
+3. PyQt 4.9
+
+There is no need to install a 'markwrite' package, simply start the runapp.py 
+script.
+
+Note: Ensure the directory runapp.py is in is included in your 
+python path. If the runapp.py script is run from it's folder, then most python 
+env's will include the './' folder in the path by default.
+
+## Windows 7 / 8 Executable
+
+A self contained MarkWrite program folder with a MarkWrite.exe for Windows
+is also available. In this case Python does not need to be installed
+on the computer being used; it is included in the MarkWrite program folder. 
+
+The executable was built against the MarkWrite 0.1 source using cx_freeze. 
+To use the exe, download the "MarkWrite 0.1 64 bit" program folder, 
+uncompress it, and then launch MarkWrite.exe in the folder.
 
 # License
 

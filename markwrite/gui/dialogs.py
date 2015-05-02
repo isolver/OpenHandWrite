@@ -135,15 +135,6 @@ def criticalDlg(title=u"Critical",
                                title,
                                prompt)
 
-
-def aboutDlg(title=u"About App",
-             prompt=u"No details provided. ('prompt' value not set)."):
-
-    QtGui.QMessageBox.about(None,
-                            title,
-                            prompt)
-
-
 class ConfirmAction(object):
     instance = None
     text = 'Action Confirmation Request'
@@ -195,8 +186,3 @@ class ExitApplication(ConfirmAction):
     instance = None
     text = 'Exit Application'
     info_text = "Are you sure you want to quit the application?"
-
-#class SaveProjectChanges(ConfirmAction):
-#    instance = None
-#    text = 'Save Modified Project'
-#    info_text = "Save the current project's changes?"

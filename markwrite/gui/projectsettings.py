@@ -41,31 +41,19 @@ flattenned_settings_dict['spatialplot_selectedinvalid_color'] ={'name': 'Invalid
 flattenned_settings_dict['spatialplot_selectedpoint_size'] = {'name': 'Size', 'type': 'int', 'value': 2, 'limits': (1, 5)}
 
 settings_params = [
-#       {'name': 'markwrite_version', 'type': 'float', 'value': 0.1, 'visible':False},
         {'name': 'Segment Creation', 'type': 'group', 'children': [
             'new_segment_trim_0_pressure_points',
-#            {'name': 'Suggest Default Segment Name', 'type': 'bool', 'value': False},
-#            {'name': 'Autocomplete Segment Name', 'type': 'bool', 'value': True},
-#            {'name': 'Allow Sibling Segments Temporal Overlap', 'type': 'bool', 'value': False},
-#            {'name': 'Parent Segments Must Temporally Wrap Children', 'type': 'bool', 'value': True}
-
         ]},
         {'name': 'GUI Options', 'type': 'group', 'children': [
             'plotviews_background_color',
             'plotviews_foreground_color',
-#            {'name': 'Auto Focus Selected Segment', 'type': 'bool', 'value': True, 'tip': "Timeline and Spatial Views automatically pan / zoom\nso pen data for a selected segment tree node is fully visible."},
-#            {'name': 'Sort Category Tree by Segment Time', 'type': 'bool', 'value': True},
-#
             {'name': 'TimeLine View', 'type': 'group', 'children': [
                 'timeplot_enable_ymouse',
-#                {'name': 'Selected Time Period Color', 'type': 'color', 'value': "FF0", 'tip': "Color of the time region selection bar."},
                 {'name': 'Horizontal Pen Position Trace', 'type': 'group', 'children': [
-#                    {'name': 'Point Shape', 'type': 'list', 'values': {"Dot": 'o', "Cross": "x"}, 'value': 0},
                     'timeplot_xtrace_color',
                     'timeplot_xtrace_size',
                 ]},
                {'name': 'Vertical Pen Position Trace', 'type': 'group', 'children': [
-#                    {'name': 'Point Shape', 'type': 'list', 'values': {"Dot": 'o', "Cross": "x"}, 'value': 0},
                     'timeplot_ytrace_color',
                     'timeplot_ytrace_size',
                  ]},
@@ -74,7 +62,6 @@ settings_params = [
                 'spatialplot_default_color',
                 'spatialplot_default_point_size',
                  {'name': 'Selected Pen Points', 'type': 'group', 'children': [
-                    #{'name': 'Shape', 'type': 'list', 'values': {"Dot": 'o', "Cross": "x"}, 'value': 0},
                     'spatialplot_selectedvalid_color',
                     'spatialplot_selectedinvalid_color',
                     'spatialplot_selectedpoint_size',
@@ -160,11 +147,6 @@ class ProjectSettingsDialog(QtGui.QDialog):
                 childName = '.'.join(path)
             else:
                 childName = param.name()
-            #print('  parameter: %s'% childName)
-            #print('  key: %s'% self.path2key[childName])
-            #print('  change:    %s'% change)
-            #print('  data:      %s'% str(data))
-            #print('  ----------')
             if change == 'value':
                 setting_key = self.path2key[childName]
                 SETTINGS[setting_key]=data
@@ -178,13 +160,3 @@ class ProjectSettingsDialog(QtGui.QDialog):
         result = dialog.exec_()
         usersettings=dialog._settings.saveState()
         return dialog._updated_settings,SETTINGS, usersettings, result == QtGui.QDialog.Accepted
-
-############### Unimplemented
-
-
-if __name__ == '__main__':
-    app = QtGui.QApplication([])
-    updatedsettings, allsettings, usersettings, ok = ProjectSettingsDialog.getProjectSettings()
-    print("UPDATES:\n{}\n\nALL:\n{}\n\n{}".format(updatedsettings, usersettings, ok))
-    print type(usersettings)
-    app.exec_()
