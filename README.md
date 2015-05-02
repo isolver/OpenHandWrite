@@ -1,17 +1,16 @@
-# MarkWrite
+# MarkWrite 0.1
 A tool for the inspection and segmentation of digitized writing data 
 from pen tablet type devices.
 
+![MarkWrite screenshot](https://github.com/isolver/MarkWrite/blob/master/MarkWriteApp_sm.png)
+
 # Status
-MarkWrite 0.1 was released on May 2nd, 2015. Although these is a large 
+MarkWrite 0.1 was released on May 2nd, 2015. Although there is a large 
 'wish list' of unimplemented functionality, the application should be of use
 to people wanting to segment digitized pen data into sentences, words, letters,
-...
+... 
 
-Documentation is pretty thin at this point, hopefully the user interface is
-somewhat straight forward.
-
-![MarkWrite screenshot](https://github.com/isolver/MarkWrite/blob/master/MarkWriteApp_sm.png)
+[Documentation](https://github.com/isolver/MarkWrite/blob/master/docs/MarkWrite 0.1 User Manual.pdf) is currently available in PDF format.
 
 # Installation / Running
 Currently only Windows 7 / 8 have been tested with the app; 
