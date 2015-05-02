@@ -11,7 +11,7 @@ to people wanting to segment digitized pen data into sentences, words, letters,
 Documentation is pretty thin at this point, hopefully the user interface is
 somewhat straight forward.
 
-![MarkWrite screenshot](https://github.com/isolver/MarkWrite/blob/MarkWriteApp_sm.png)
+![MarkWrite screenshot](https://github.com/isolver/MarkWrite/blob/master/MarkWriteApp_sm.png)
 
 # Installation / Running
 Currently only Windows 7 / 8 have been tested with the app; 
