@@ -43,6 +43,10 @@ The executable was built against the MarkWrite 0.1 source using cx_freeze.
 To use the exe, [download the "MarkWrite 0.1 64 bit" program folder](http://goo.gl/rFlWzk), 
 uncompress it, and then launch MarkWrite.exe in the folder.
 
+# Credits
+
+Initial development was funded by School of Social Sciences, Nottingham Trent University, UK.
+
 # License
 
 GNU General Public License (GPL) Version 3
