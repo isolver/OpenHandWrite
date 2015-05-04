@@ -10,11 +10,19 @@ MarkWrite 0.1 was released on May 2nd, 2015. Although there is a large
 to people wanting to segment digitized pen data into sentences, words, letters,
 ... 
 
-[Documentation](https://github.com/isolver/MarkWrite/blob/master/docs/MarkWrite 0.1 User Manual.pdf) is currently available in PDF format.
+[Documentation](https://github.com/isolver/MarkWrite/blob/master/docs/MarkWrite 0.1 User Guide.pdf) is currently available in PDF format.
 
 # Installation / Running
 Currently only Windows 7 / 8 have been tested with the app; 
 other environments may work but who knows.
+
+## Windows 7 / 8 Executable
+
+Standalone versions of MarkWrite for Windows 7/8 32bit and [64bit](https://github.com/isolver/MarkWrite/releases/download/v0.1.0/MarkWrite.0.1.64bit.zip)
+are available. In this case Python does not need to be installed
+on the computer being used; it is included in the MarkWrite program folder. 
+To use the exe, download one of the .zip archived MarkWrite program folders, 
+uncompress it, and then launch MarkWrite.exe in the folder.
 
 ## Running from Source
 The source code can be downloaded and MarkWrite can be run from a 
@@ -32,16 +40,6 @@ script.
 Note: Ensure the directory runapp.py is in is included in your 
 python path. If the runapp.py script is run from it's folder, then most python 
 env's will include the './' folder in the path by default.
-
-## Windows 7 / 8 Executable
-
-A self contained MarkWrite program folder with a MarkWrite.exe for Windows
-is also available. In this case Python does not need to be installed
-on the computer being used; it is included in the MarkWrite program folder. 
-
-The executable was built against the MarkWrite 0.1 source using cx_freeze. 
-To use the exe, [download the "MarkWrite 0.1 64 bit" program folder](http://goo.gl/rFlWzk), 
-uncompress it, and then launch MarkWrite.exe in the folder.
 
 # Credits
 
