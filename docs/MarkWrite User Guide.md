@@ -116,7 +116,7 @@ Typical coding session
     View (and also appears in the Selected Data window).
 
 -   Click the tick in the tool bar or press ENTER and type a name for the tag
-    (e.g., "Sentence 1". Sentence 1 now appears in the Tag Tree.
+    (e.g., "Sentence 1"). Sentence 1 now appears in the Tag Tree.
 
 -   Double-click on Sentence 1 in the Tag Tree to zoom in on just this part of
     the text.
@@ -137,7 +137,7 @@ Typical coding session
 -   You may (just possibly) want to isolate individual strokes within some or
     all of the letters. Repeat the process to create stroke tags at Level 4.
 
--   When you are finally finished output both a by-sample data file, and a
+-   When you are finally finished, output both a by-sample data file and a
     by-segment data file.
 
  
