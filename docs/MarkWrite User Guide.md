@@ -87,7 +87,7 @@ Shortcut keys
 -------------
 
 In situations where the segments that you want to tag are bounded by pen lifts
-(e.g., if you want to tag sentences and words) then then the following keys make
+(e.g., if you want to tag sentences and words) then the following keys make
 segment selection must quicker (right and left refer to cursor keys).
 
 Name                    | Description                                   
