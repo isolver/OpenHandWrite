@@ -17,8 +17,10 @@ digitizing tablet, Anoto pen, or similar. It does not support capture of these
 data. It is open source and can be modified and distributed under the terms of
 the GNU General Public License. We think you'll find it useful, but it is
 distributed without any warranty and without even the implied warranty of
-merchantability (whatever that is) or fitness for purpose. Initial programming
-was by Sol Simpson and funded by School of Social Science, Nottingham Trent
+merchantability (whatever that is) or fitness for purpose. 
+
+Initial application design requirments where defined by Mark Torrance
+and implemented by Sol Simpson; funded by School of Social Science, Nottingham Trent
 University, UK.
 
 Download and requirements
