@@ -1,17 +1,13 @@
 **MarkWrite 0.1 Brief User Guide**
 ==================================
 
- 
-
 This version...
 ---------------
 
 ...is being distributed for beta testing and use. Feel free to pass on to other
 potential users, but please do not mass-advertise at this stage. Comments,
 suggestions and bug reports to both Sol Simpson (sol@isolver-software.com) and
-[Mark Torrance](mark.torrance@ntu.ac.uk).
-
- 
+Mark Torrance (mark.torrance@ntu.ac.uk).
 
 Preamble
 --------
@@ -25,16 +21,11 @@ merchantability (whatever that is) or fitness for purpose. Initial programming
 was by Sol Simpson and funded by School of Social Science, Nottingham Trent
 University, UK.
 
- 
-
 Download and requirements
 -------------------------
 
-MarkWrite code and standalone executables (32 and 64 bit) can be found here
-<https://github.com/isolver/MarkWrite/releases>. It requires Windows 7 or later
-and may run slowly on older or lower power machines.
-
- 
+MarkWrite v0.1.0 code and standalone executables (32 and 64 bit) can be found [here](https://github.com/isolver/MarkWrite/releases). The software requires 
+Windows 7 or later and may run slowly on older or lower power machines.
 
 Input
 -----
@@ -59,19 +50,13 @@ for example, transcribe the text in advance and include all of the words in the
 text in the taglist. This then (possibly) speeds up the tagging process. The
 taglist is not essential.
 
- 
-
 Orientation
 -----------
 
 The program has several windows, all of which can be resized, moved, and
 tabified. See image below.
 
- 
-
-![](https://github.com/isolver/MarkWrite/blob/master/docs/markwrite_app_window.png)
-
- 
+![MarkWrite Main Application Window](https://github.com/isolver/MarkWrite/blob/master/docs/markwrite_app_window.png)
 
 **Timeline** (top horizontal window) gives separate y and x plots against time.
 This is used to segment the text into periods for tagging. The blue region
@@ -96,8 +81,6 @@ form of a hierarchy. Single left click on a tag label selects that segment
 associated with that tag. Double clicking zooms to it. Right clicking allows tag
 editing.
 
- 
-
 Shortcut keys
 -------------
 
@@ -105,19 +88,12 @@ In situations where the segments that you want to tag are bounded by pen lifts
 (e.g., if you want to tag sentences and words) then then the following keys make
 segment selection must quicker (right and left refer to cursor keys).
 
-+------------------------+------------------------------------------+
-| right / left           | Jump selection forward or backwards      |
-+------------------------+------------------------------------------+
-| CTRL+left / CTRL+right | Move selection end time forwards or      |
-|                        | backwards                                |
-+------------------------+------------------------------------------+
-| ALT+left / ALT+right   | Move selection start time forwards or    |
-|                        | backwards                                |
-+------------------------+------------------------------------------+
-| ENTER                  | Bring up tagging dialogue                |
-+------------------------+------------------------------------------+
-
- 
+Name                    | Description                                   
+------------------------|--------------
+right / left            | Jump selection forward or backwards
+CTRL+left / CTRL+right  | Move selection end time forwards or  backwards
+ALT+left / ALT+right    | Move selection start time forwards or backwards
+ENTER                   | Bring up tagging dialogue
 
 Output
 ------
@@ -126,8 +102,6 @@ File \> export (and toolbar buttons) allows creation of both by-sample (large)
 and by-segment output files. The by-segment file can they be processed in, for
 example, Excel to give segment duration and the duration of pen-lift ("pause")
 time prior to segment onset.
-
- 
 
 Typical coding session
 ----------------------
