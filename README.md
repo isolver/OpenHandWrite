@@ -18,7 +18,7 @@ other environments may work but who knows.
 
 ## Windows 7 / 8 Executable
 
-Standalone versions of MarkWrite for Windows 7/8 32bit and [64bit](https://github.com/isolver/MarkWrite/releases/download/v0.1.0/MarkWrite.0.1.64bit.zip)
+Standalone versions of MarkWrite for Windows 7/8 [32bit](https://github.com/isolver/MarkWrite/releases/download/v0.1.0/MarkWrite.0.1.32bit.zip) and [64bit](https://github.com/isolver/MarkWrite/releases/download/v0.1.0/MarkWrite.0.1.64bit.zip)
 are available. In this case Python does not need to be installed
 on the computer being used; it is included in the MarkWrite program folder. 
 To use the exe, download one of the .zip archived MarkWrite program folders, 
