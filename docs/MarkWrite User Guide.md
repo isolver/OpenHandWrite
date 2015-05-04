@@ -101,7 +101,7 @@ Output
 ------
 
 File \> export (and toolbar buttons) allows creation of both by-sample (large)
-and by-segment output files. The by-segment file can they be processed in, for
+and by-segment output files. The by-segment file can then be processed in, for
 example, Excel to give segment duration and the duration of pen-lift ("pause")
 time prior to segment onset.
 
