@@ -127,7 +127,7 @@ Typical coding session
 -   Tag this with the name of the first word ("The" perhaps). "The" will appear
     as a Level 2 tag in the Tag Tree.
 
--   Repeat for all words in the sentence.
+-   Repeat for all words in the sentence, using shortcut keys to substanially speed the process.
 
 -   You may (or may not) want to tag letters within each word. Repeat the
     process above, but this time double click on "The" to make that the focus.
