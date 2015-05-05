@@ -19,8 +19,7 @@ the GNU General Public License. We think you'll find it useful, but it is
 distributed without any warranty and without even the implied warranty of
 merchantability (whatever that is) or fitness for purpose. 
 
-Initial application design requirments where defined by Mark Torrance
-and implemented by Sol Simpson with funding from the School of Social Sciences, Nottingham Trent
+Initial application design requirments where defined by Mark Torrance (Psychology Division, Nottingham Trent University, UK) and implemented by Sol Simpson with funding from the School of Social Sciences, Nottingham Trent
 University, UK.
 
 Download and requirements
