@@ -20,7 +20,7 @@ distributed without any warranty and without even the implied warranty of
 merchantability (whatever that is) or fitness for purpose. 
 
 Initial application design requirments where defined by Mark Torrance
-and implemented by Sol Simpson; funded by School of Social Science, Nottingham Trent
+and implemented by Sol Simpson with funding from the School of Social Sciences, Nottingham Trent
 University, UK.
 
 Download and requirements
