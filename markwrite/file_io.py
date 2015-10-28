@@ -91,6 +91,9 @@ class DataImporter(object):
             raise IOError("File could not be imported. Invalid format for DataImporter.")
         return np.asarray(cls.parse(file_path), numpy_pendata_format)
 
+#
+# Tab Delimited File Importer
+#
 
 class EyePenDataImporter(DataImporter):
     TIME_COLUMN_IX = 0
@@ -132,7 +135,78 @@ class EyePenDataImporter(DataImporter):
                     print("Note: Skipping Line {0}. Contains {1} Tokens.".format(len(list_result), len(line_tokens)))
 
         return list_result
+#
+# ioHub HDF5 File Importer
+#
+from psychopy.iohub.datastore.util import ExperimentDataAccessUtility
+from psychopy.iohub import EventConstants
 
+class HubDatastoreImporter(DataImporter):
+    hubdata = None
+    def __init__(self):
+        DataImporter.__init__(self)
+
+    @classmethod
+    def _load(cls, file_path):
+        try:
+            if cls.hubdata:
+                cls.hubdata.close()
+                cls.hubdata = None
+            dpath, dfile=os.path.split(file_path)
+            cls.hubdata = ExperimentDataAccessUtility(dpath, dfile,
+                                                      experimentCode=None,
+                                                      sessionCodes=[])
+            return cls.hubdata
+        except:
+            print "Error openning ioHub HDF5 file."
+            import traceback
+            traceback.print_exc()
+        return None
+
+    @classmethod
+    def validate(cls, file_path):
+        exp_data_util = cls._load(file_path)
+        file_valid = False
+        if exp_data_util:
+            evt_table_mappings = cls.hubdata.getEventsByType()
+            file_valid = evt_table_mappings.get(EventConstants.WINTAB_TABLET_SAMPLE,False)
+
+        if cls.hubdata:
+            cls.hubdata.close()
+            cls.hubdata = None
+
+        return file_valid
+
+    @classmethod
+    def parse(cls, file_path):
+        exp_data_util = cls._load(file_path)
+        if exp_data_util is None:
+            return []
+
+        wintab_samples = exp_data_util.getEventsByType().get(
+                                EventConstants.WINTAB_TABLET_SAMPLE,None)
+        list_result = []
+        if wintab_samples:
+            for r in wintab_samples:
+                list_result.append((r['time'],
+                                     r['x'],
+                                     r['y'],
+                                     r['pressure_normal'],
+                                     0)
+                                    )
+
+        if cls.hubdata:
+            cls.hubdata.close()
+            cls.hubdata = None
+
+        return list_result
+
+    def __del__(self):
+        if self.hubdata:
+            self.hubdata.close()
+#
+# XML Format Importer
+#
 
 import xml.etree.ElementTree as ET
 

@@ -27,7 +27,7 @@ import pyqtgraph as pg
 from pyqtgraph import OrderedDict
 from pyqtgraph.Qt import QtGui
 
-from file_io import EyePenDataImporter, XmlDataImporter
+from file_io import EyePenDataImporter, XmlDataImporter, HubDatastoreImporter
 from segment import PenDataSegment, PenDataSegmentCategory
 from util import contiguous_regions
 from gui.projectsettings import SETTINGS
@@ -132,7 +132,8 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
 class MarkWriteProject(object):
     project_file_extension = u'mwp'
     input_file_loaders=dict(xml=XmlDataImporter,
-                            txyp=EyePenDataImporter)
+                            txyp=EyePenDataImporter,
+                            hdf5=HubDatastoreImporter)
     _selectedtimeregion=None
     def __init__(self, name=u"New", file_path=None, mwapp=None):
         """

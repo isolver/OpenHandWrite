@@ -24,6 +24,10 @@ if sys.platform == 'win32':
     myappid = u'isolver.markwrite.editor.version' # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
+# Need to import pyTables module before pyqt imports pyh5 or error occurs when
+# openning an iohub datastore file.
+import tables
+
 import pyqtgraph as pg
 # # Switch to using white background and black foreground
 
