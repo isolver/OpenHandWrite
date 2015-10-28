@@ -23,7 +23,7 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
     def __init__(self):
         pg.PlotWidget.__init__(self, enableMenu=False)
 
-        self.getPlotItem().invertY(True)
+        self.getPlotItem().invertY(SETTINGS['spatialplot_invert_y_axis'])
         self.getPlotItem().setAspectLocked(True, 1)
 
         self.allPlotDataItem = None  #self.getPlotItem().plot(pen=None,
@@ -138,6 +138,9 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             if k.startswith('spatialplot_selected'):
                 self.updateSelectedPenPointsGraphics(selectedpendata)
             break
+
+        if 'spatialplot_invert_y_axis' in updates.keys():
+            self.getPlotItem().invertY(SETTINGS['spatialplot_invert_y_axis'])
 
     def handleSegmentRemoved(self,*args, **kwags):
         self.updateSelectedPenPointsGraphics()

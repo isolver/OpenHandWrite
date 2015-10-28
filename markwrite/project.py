@@ -206,6 +206,14 @@ class MarkWriteProject(object):
             pen_data['time']-=self._original_timebase_offset
             pen_data['time']=pen_data['time']/1000.0
 
+            # to flip data vertically by changing y pos values...
+            # Maybe better to see if pyqtgraph has a built in option
+            # to flip a plot vertically.
+            #
+            # pmax = pen_data['y'].max()
+            # pmin = pen_data['y'].min()
+            # pen_data['y'] = pmax-pen_data['y']+pmin
+
             self._pendata = pen_data
             self.nonzero_pressure_mask=self._pendata['pressure']>0
             # nonzero_regions_ix will be a tuple of (starts, stops, lengths) arrays

@@ -34,6 +34,7 @@ flattenned_settings_dict['timeplot_xtrace_size'] ={'name': 'Point Size', 'type':
 flattenned_settings_dict['timeplot_ytrace_color'] = {'name': 'Point Color', 'type': 'color', 'value': (0,170,255)}
 flattenned_settings_dict['timeplot_ytrace_size'] ={'name': 'Point Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
 
+flattenned_settings_dict['spatialplot_invert_y_axis'] = {'name': 'Invert Y Axis', 'type': 'bool', 'value': True}
 flattenned_settings_dict['spatialplot_default_color'] = {'name':'Default Point Color', 'type': 'color', 'value':(224,224,224)}
 flattenned_settings_dict['spatialplot_default_point_size'] = {'name': 'Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
 flattenned_settings_dict['spatialplot_selectedvalid_color'] = {'name': 'Valid Segment Color', 'type': 'color', 'value':(0,160,0)}
@@ -59,6 +60,7 @@ settings_params = [
                  ]},
            ]},
             {'name': 'Spatial View', 'type': 'group', 'children': [
+                'spatialplot_invert_y_axis',
                 'spatialplot_default_color',
                 'spatialplot_default_point_size',
                  {'name': 'Selected Pen Points', 'type': 'group', 'children': [
@@ -86,7 +88,7 @@ class ProjectSettingsDialog(QtGui.QDialog):
         if savedstate:
             self._settings.restoreState(savedstate, removeChildren=True)
 
-        # Holds settings keys that havve changed by the user when the
+        # Holds settings keys that have changed by the user when the
         # dialog is closed. Used to update any needed gui values..
         self._updated_settings={}
 

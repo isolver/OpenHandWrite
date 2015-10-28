@@ -118,6 +118,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.sigSelectedPenDataUpdate.connect(self.handleSelectedPenDataUpdate)
         self.sigAppSettingsUpdated.connect(self._penDataTimeLineWidget.handleUpdatedSettingsEvent)
         self.sigAppSettingsUpdated.connect(self._penDataSpatialViewWidget.handleUpdatedSettingsEvent)
+        self.sigAppSettingsUpdated.connect(self._selectedPenDataViewWidget.handleUpdatedSettingsEvent)
 
     @staticmethod
     def instance():
@@ -494,7 +495,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self._penDataSpatialViewWidget = PenDataSpatialPlotWidget()
         addDock(u"Timeline", self._penDataTimeLineWidget)
         addDock(u"Spatial View", self._penDataSpatialViewWidget)
-        addDock(u"Selected Data", SelectedPointsPlotWidget())
+        self._selectedPenDataViewWidget = SelectedPointsPlotWidget()
+        addDock(u"Selected Data", self._selectedPenDataViewWidget)
 
         #
         ## Do Misc. GUI setup.
