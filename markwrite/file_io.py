@@ -191,7 +191,7 @@ class HubDatastoreImporter(DataImporter):
                 list_result.append((r['time'],
                                      r['x'],
                                      r['y'],
-                                     r['pressure_normal'],
+                                     r['pressure'],
                                      0)
                                     )
 
