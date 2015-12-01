@@ -35,15 +35,27 @@ cd %~dp0
 echo.
 REM <<<
 
-REM >>> Copy latest OpenHW Programs files to .\OpenHandWrite\Programs
-echo Copying OpenHW Program Files...
-xcopy %OPENHW_SRC_DIR%\Programs %~dp0OpenHandWrite\Programs /v /y /s /e /q /i
+REM >>> Copy latest OpenHW getwrite files to .\OpenHandWrite\getwrite
+echo Copying OpenHW getwrite Files...
+xcopy %OPENHW_SRC_DIR%\getwrite %~dp0OpenHandWrite\getwrite /v /y /s /e /q /i
+echo.
+REM <<<
+
+REM >>> Copy latest OpenHW wintab test script to .\OpenHandWrite\getwrite
+echo Copying latest OpenHW psychopy.iohub wintab test script...
+xcopy %PSYCHOPY_SRC_DIR%\psychopy\demos\coder\iohub\wintab\*.py %~dp0OpenHandWrite\getwrite\wintabtest /v /y /s /e /q /i
+echo.
+REM <<<
+
+REM >>> Copy latest OpenHW markwrite files to .\OpenHandWrite\markwrite
+echo Copying OpenHW markwrite Files...
+xcopy %OPENHW_SRC_DIR%\markwrite %~dp0OpenHandWrite\markwrite /v /y /s /e /q /i
 echo.
 REM <<<
 
 REM >>> Copy .bat launcher files to .\OpenHandWrite
 echo Copying .bat launcher files...
-copy %OPENHW_SRC_DIR%\*.bat %~dp0OpenHandWrite  /v /y
+copy %OPENHW_SRC_DIR%\distribution\launchers\*.bat %~dp0OpenHandWrite  /v /y
 echo.
 REM <<<
 

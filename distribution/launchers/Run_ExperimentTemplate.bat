@@ -25,8 +25,8 @@ set PATH=%WINPYDIR%\Lib\site-packages\PyQt5;%WINPYDIR%\Lib\site-packages\PyQt4;%
 rem force default Qt kit for Spyder
 set QT_API=pyqt
 
-cd "%~dp0Programs\BuilderExample"
+cd "%~dp0getwrite\experiments\ExperimentTemplate"
 
-python.exe "%WINPYDIR%\Lib\site-packages\PsychoPy-1.83.1-py2.7.egg\psychopy\app\psychopyApp.py" -b %*
+python.exe run.py %*
 
 PAUSE

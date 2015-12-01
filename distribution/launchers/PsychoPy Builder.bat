@@ -23,10 +23,10 @@ set JULIA_PKGDIR=%WINPYDIR%\..\settings\.julia
 set PATH=%WINPYDIR%\Lib\site-packages\PyQt5;%WINPYDIR%\Lib\site-packages\PyQt4;%WINPYDIR%\;%WINPYDIR%\DLLs;%WINPYDIR%\Scripts;%WINPYDIR%\..\tools;%WINPYDIR%\..\tools\mingw32\bin;%WINPYDIR%\..\tools\R\bin\x64;%WINPYDIR%\..\tools\Julia\bin;%PATH%;
 
 rem force default Qt kit for Spyder
-set QT_API=pyqt
+REM set QT_API=pyqt
 
-cd "%~dp0Programs\ExperimentTemplate"
+cd "%~dp0getwrite\experiments\BuilderExample"
 
-python.exe run.py %*
+python.exe "%WINPYDIR%\Lib\site-packages\PsychoPy-1.83.1-py2.7.egg\psychopy\app\psychopyApp.py" -b %*
 
 PAUSE
