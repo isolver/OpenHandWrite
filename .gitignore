@@ -1,8 +1,14 @@
 #################
-## Project 
+## Programs 
 #################
 
-test_reports/
+.iohpid
+markwrite/test_reports/
+
+collectwrite/experiments/ExperimentTemplate/results
+collectwrite/experiments/ExperimentTemplate/temp
+collectwrite/experiments/BuilderExample/data
+
 
 #################
 ## PyCharm
@@ -11,7 +17,7 @@ test_reports/
 *.tmp
 *.bak
 .idea
-
+.
 #############
 ## Windows detritus
 #############

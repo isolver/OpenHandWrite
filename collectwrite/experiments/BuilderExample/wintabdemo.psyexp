@@ -1,0 +1,297 @@
+<PsychoPy2experiment version="1.83.01" encoding="utf-8">
+  <Settings>
+    <Param name="Show mouse" val="False" valType="bool" updates="None"/>
+    <Param name="Data filename" val="u'data' + os.sep + expInfo[u'Session Code']" valType="code" updates="None"/>
+    <Param name="Monitor" val="testMonitor" valType="str" updates="None"/>
+    <Param name="Enable Escape" val="True" valType="bool" updates="None"/>
+    <Param name="color" val="$[0.506,0.506,0.506]" valType="str" updates="None"/>
+    <Param name="Window size (pixels)" val="[1920, 1080]" valType="code" updates="None"/>
+    <Param name="Full-screen window" val="True" valType="bool" updates="None"/>
+    <Param name="colorSpace" val="rgb" valType="str" updates="None"/>
+    <Param name="Experiment info" val="{u'Session Code': u''}" valType="code" updates="None"/>
+    <Param name="Save csv file" val="False" valType="bool" updates="None"/>
+    <Param name="Show info dlg" val="True" valType="bool" updates="None"/>
+    <Param name="Save wide csv file" val="False" valType="bool" updates="None"/>
+    <Param name="Save psydat file" val="True" valType="bool" updates="None"/>
+    <Param name="expName" val="iohub wintab demo" valType="str" updates="None"/>
+    <Param name="logging level" val="warning" valType="code" updates="None"/>
+    <Param name="blendMode" val="avg" valType="str" updates="None"/>
+    <Param name="Save excel file" val="False" valType="bool" updates="None"/>
+    <Param name="Units" val="norm" valType="str" updates="None"/>
+    <Param name="Save log file" val="True" valType="bool" updates="None"/>
+    <Param name="Screen" val="1" valType="num" updates="None"/>
+  </Settings>
+  <Routines>
+    <Routine name="trial">
+      <TextComponent name="trial_question_txt">
+        <Param name="opacity" val="1" valType="code" updates="constant"/>
+        <Param name="colorSpace" val="rgb" valType="str" updates="constant"/>
+        <Param name="name" val="trial_question_txt" valType="code" updates="constant"/>
+        <Param name="color" val="$[-1.000,-1.000,-1.000]" valType="str" updates="constant"/>
+        <Param name="wrapWidth" val="" valType="code" updates="constant"/>
+        <Param name="stopVal" val="" valType="code" updates="constant"/>
+        <Param name="durationEstim" val="" valType="code" updates="None"/>
+        <Param name="pos" val="[0, 0.9]" valType="code" updates="constant"/>
+        <Param name="flip" val="" valType="str" updates="constant"/>
+        <Param name="startEstim" val="" valType="code" updates="None"/>
+        <Param name="units" val="from exp settings" valType="str" updates="None"/>
+        <Param name="text" val="$T_TEXT" valType="str" updates="set every repeat"/>
+        <Param name="startType" val="time (s)" valType="str" updates="None"/>
+        <Param name="ori" val="0" valType="code" updates="constant"/>
+        <Param name="stopType" val="duration (s)" valType="str" updates="None"/>
+        <Param name="startVal" val="0" valType="code" updates="None"/>
+        <Param name="font" val="Arial" valType="str" updates="constant"/>
+        <Param name="letterHeight" val="0.05" valType="code" updates="constant"/>
+      </TextComponent>
+      <ImageComponent name="trial_image">
+        <Param name="opacity" val="1" valType="code" updates="constant"/>
+        <Param name="flipVert" val="False" valType="bool" updates="constant"/>
+        <Param name="colorSpace" val="rgb" valType="str" updates="constant"/>
+        <Param name="name" val="trial_image" valType="code" updates="None"/>
+        <Param name="color" val="$[1,1,1]" valType="str" updates="constant"/>
+        <Param name="stopVal" val="" valType="code" updates="constant"/>
+        <Param name="durationEstim" val="" valType="code" updates="None"/>
+        <Param name="mask" val="None" valType="str" updates="constant"/>
+        <Param name="pos" val="[0, 0]" valType="code" updates="constant"/>
+        <Param name="interpolate" val="linear" valType="str" updates="constant"/>
+        <Param name="startEstim" val="" valType="code" updates="None"/>
+        <Param name="units" val="norm" valType="str" updates="None"/>
+        <Param name="texture resolution" val="128" valType="code" updates="constant"/>
+        <Param name="startType" val="time (s)" valType="str" updates="None"/>
+        <Param name="ori" val="0" valType="code" updates="constant"/>
+        <Param name="stopType" val="duration (s)" valType="str" updates="None"/>
+        <Param name="startVal" val="0.0" valType="code" updates="None"/>
+        <Param name="image" val="$T_IMG" valType="str" updates="set every repeat"/>
+        <Param name="flipHoriz" val="False" valType="bool" updates="constant"/>
+        <Param name="size" val="" valType="code" updates="constant"/>
+      </ImageComponent>
+      <ImageComponent name="trial_end_image">
+        <Param name="opacity" val="1" valType="code" updates="constant"/>
+        <Param name="flipVert" val="False" valType="bool" updates="constant"/>
+        <Param name="colorSpace" val="rgb" valType="str" updates="constant"/>
+        <Param name="name" val="trial_end_image" valType="code" updates="None"/>
+        <Param name="color" val="$[1,1,1]" valType="str" updates="constant"/>
+        <Param name="stopVal" val="" valType="code" updates="constant"/>
+        <Param name="durationEstim" val="" valType="code" updates="None"/>
+        <Param name="mask" val="None" valType="str" updates="constant"/>
+        <Param name="pos" val="[.8, -0.8]" valType="code" updates="constant"/>
+        <Param name="interpolate" val="linear" valType="str" updates="constant"/>
+        <Param name="startEstim" val="" valType="code" updates="None"/>
+        <Param name="units" val="from exp settings" valType="str" updates="None"/>
+        <Param name="texture resolution" val="128" valType="code" updates="constant"/>
+        <Param name="startType" val="time (s)" valType="str" updates="None"/>
+        <Param name="ori" val="0" valType="code" updates="constant"/>
+        <Param name="stopType" val="duration (s)" valType="str" updates="None"/>
+        <Param name="startVal" val="0.0" valType="code" updates="None"/>
+        <Param name="image" val="but_stop.bmp" valType="str" updates="set every repeat"/>
+        <Param name="flipHoriz" val="False" valType="bool" updates="constant"/>
+        <Param name="size" val="" valType="code" updates="constant"/>
+      </ImageComponent>
+      <CodeComponent name="trial_custom_code">
+        <Param name="Begin Experiment" val="&#10;" valType="extendedCode" updates="constant"/>
+        <Param name="name" val="trial_custom_code" valType="code" updates="None"/>
+        <Param name="Each Frame" val="&#10;# &gt;&gt;&gt; iohub Custom Code&#10;&#10;# *pen_traces_stim* updates&#10;if t &gt;= 0.0 and pen_traces_stim.status == NOT_STARTED:&#10;    # keep track of start time/frame for later&#10;    pen_traces_stim.tStart = globalClock.getTime()  # underestimates by a little under one frame&#10;    pen_traces_stim.frameNStart = frameN  # exact frame index&#10;    pen_traces_stim.setAutoDraw(True)&#10;&#10;&#10;pen_samples = tablet.getSamples()&#10;if pen_samples:&#10;    pen_traces_stim.updateFromEvents(pen_samples)&#10;&#10;    for ps in pen_samples:&#10;        if 'FIRST_ENTER' in ps.status:&#10;            penPosInExit=0&#10;        &#10;        if ps.pressure &gt; 0 and trial_end_image.contains(ps.getNormPos()):&#10;            penPosInExit=penPosInExit+1&#10;        else:&#10;            penPosInExit=max(0,penPosInExit-1)&#10;        &#10;        if penPosInExit&gt;=penPosInExitStimThresh:&#10;            pen_traces_stim.tEnd=globalClock.getTime()&#10;            continueRoutine = False&#10;            break&#10;&#10;    lsample = pen_samples[-1]&#10;    lspos = lsample.getNormPos()&#10;    penDotOpacity = 0.75&#10;    penDotPosition = lspos&#10;    if lsample.pressure &gt; 0:&#10;        penDotColor = [0,1,0]&#10;    else:&#10;        penDotColor = [1,0,0]&#10;# &lt;&lt;&lt; iohub Custom Code&#10;&#10;" valType="extendedCode" updates="constant"/>
+        <Param name="Begin Routine" val="&#10;# &gt;&gt;&gt; iohub Custom Code&#10;pen_traces_stim.clear()&#10;pen_traces_stim.setAutoDraw(False)&#10;pen_traces_stim.status = NOT_STARTED&#10;&#10;io.clearEvents()&#10;&#10;penDotOpacity = 0&#10;penDotPosition = [0,0]&#10;penDotColor = [1,0,0]&#10;&#10;penPosInExitStimThresh = 20&#10;penPosInExit = 0&#10;&#10;tablet.reporting = True&#10;# &lt;&lt;&lt; iohub Custom Code&#10;&#10;" valType="extendedCode" updates="constant"/>
+        <Param name="End Routine" val="&#10;# &gt;&gt;&gt; iohub Custom Code&#10;tablet.reporting = False&#10;io.clearEvents()&#10;&#10;thisTrial['DV_TRIAL_START']=pen_traces_stim.tStart&#10;thisTrial['DV_TRIAL_END']=pen_traces_stim.tEnd&#10;&#10;io.addTrialHandlerRecord(thisTrial)&#10;&#10;pen_traces_stim.clear()&#10;pen_traces_stim.setAutoDraw(False)&#10;pen_traces_stim.status = NOT_STARTED&#10;&#10;penDotOpacity = 0&#10;# &lt;&lt;&lt; iohub Custom Code&#10;&#10;" valType="extendedCode" updates="constant"/>
+        <Param name="End Experiment" val="" valType="extendedCode" updates="constant"/>
+      </CodeComponent>
+      <PolygonComponent name="penDotStim">
+        <Param name="opacity" val="0.9" valType="code" updates="constant"/>
+        <Param name="lineColorSpace" val="rgb" valType="str" updates="constant"/>
+        <Param name="name" val="penDotStim" valType="code" updates="None"/>
+        <Param name="startType" val="time (s)" valType="str" updates="None"/>
+        <Param name="stopVal" val="" valType="code" updates="constant"/>
+        <Param name="durationEstim" val="" valType="code" updates="None"/>
+        <Param name="lineColor" val="$penDotColor" valType="str" updates="set every frame"/>
+        <Param name="pos" val="$penDotPosition" valType="code" updates="set every frame"/>
+        <Param name="interpolate" val="linear" valType="str" updates="constant"/>
+        <Param name="startEstim" val="" valType="code" updates="None"/>
+        <Param name="units" val="norm" valType="str" updates="None"/>
+        <Param name="fillColor" val="$penDotColor" valType="str" updates="set every frame"/>
+        <Param name="fillColorSpace" val="rgb" valType="str" updates="constant"/>
+        <Param name="ori" val="0" valType="code" updates="constant"/>
+        <Param name="stopType" val="duration (s)" valType="str" updates="None"/>
+        <Param name="startVal" val="0.0" valType="code" updates="None"/>
+        <Param name="lineWidth" val="1" valType="code" updates="constant"/>
+        <Param name="nVertices" val="90" valType="int" updates="constant"/>
+        <Param name="size" val="[0.01, 0.01]" valType="code" updates="constant"/>
+      </PolygonComponent>
+    </Routine>
+    <Routine name="instruct">
+      <TextComponent name="instrText">
+        <Param name="opacity" val="1" valType="code" updates="constant"/>
+        <Param name="colorSpace" val="rgb" valType="str" updates="constant"/>
+        <Param name="name" val="instrText" valType="code" updates="constant"/>
+        <Param name="color" val="$[-1.000,-1.000,-1.000]" valType="str" updates="constant"/>
+        <Param name="wrapWidth" val="800" valType="code" updates="constant"/>
+        <Param name="stopVal" val="" valType="code" updates="constant"/>
+        <Param name="durationEstim" val="" valType="code" updates="None"/>
+        <Param name="pos" val="[0, 0]" valType="code" updates="constant"/>
+        <Param name="flip" val="" valType="str" updates="constant"/>
+        <Param name="startEstim" val="" valType="code" updates="None"/>
+        <Param name="units" val="norm" valType="str" updates="None"/>
+        <Param name="text" val="Press Any Key To Start Experiment." valType="str" updates="constant"/>
+        <Param name="startType" val="time (s)" valType="str" updates="None"/>
+        <Param name="ori" val="0" valType="code" updates="constant"/>
+        <Param name="stopType" val="duration (s)" valType="str" updates="None"/>
+        <Param name="startVal" val="0" valType="code" updates="None"/>
+        <Param name="font" val="Arial" valType="str" updates="constant"/>
+        <Param name="letterHeight" val=".05" valType="code" updates="constant"/>
+      </TextComponent>
+      <KeyboardComponent name="ready">
+        <Param name="correctAns" val="thisTrial.corrAns" valType="str" updates="constant"/>
+        <Param name="storeCorrect" val="False" valType="bool" updates="constant"/>
+        <Param name="name" val="ready" valType="code" updates="None"/>
+        <Param name="stopVal" val="" valType="code" updates="constant"/>
+        <Param name="durationEstim" val="" valType="code" updates="None"/>
+        <Param name="forceEndRoutine" val="True" valType="bool" updates="constant"/>
+        <Param name="startEstim" val="" valType="code" updates="None"/>
+        <Param name="discard previous" val="True" valType="bool" updates="constant"/>
+        <Param name="startType" val="time (s)" valType="str" updates="None"/>
+        <Param name="allowedKeys" val="" valType="code" updates="constant"/>
+        <Param name="stopType" val="duration (s)" valType="str" updates="None"/>
+        <Param name="startVal" val="0" valType="code" updates="None"/>
+        <Param name="store" val="nothing" valType="str" updates="constant"/>
+        <Param name="syncScreenRefresh" val="True" valType="bool" updates="constant"/>
+      </KeyboardComponent>
+      <CodeComponent name="init_iohub_wintab">
+        <Param name="Begin Experiment" val="&#10;# &gt;&gt;&gt; iohub Custom Code&#10;try:&#10;    from ccutil import *&#10;    io = start_iohub(expInfo[u'Session Code'], expName)&#10;    tablet = io.devices.tablet&#10;&#10;    # Check that the tablet device was created without any errors&#10;    if tablet.getInterfaceStatus() != &quot;HW_OK&quot;:&#10;        print(&quot;Error creating Wintab device:&quot;, tablet.getInterfaceStatus())&#10;        print(&quot;TABLET INIT ERROR:&quot;, tablet.getLastInterfaceErrorString())&#10;        io.quit()&#10;        core.quit()&#10;        sys.exit(1)&#10;&#10;    from psychopy.iohub.client.wintabtablet import PenPositionStim, PenTracesStim&#10;    pen_pos_stim= PenPositionStim(win)&#10;    pen_traces_stim= PenTracesStim(win)&#10;    &#10;    pen_pos_stim.autoDraw = False&#10;    pen_traces_stim.autoDraw = False&#10;    pen_pos_stim.status = NOT_STARTED&#10;    pen_traces_stim.status = NOT_STARTED&#10;&#10;    # Create the iohub datstore condition variables table.&#10;    # The following 2 lines of code is a hack, as it does not appear &#10;    # that you can get the order of the column names as found in the&#10;    # condition file using any of the Builder generated python code. &#10;    temp_exp_conds, temp_ecnames = data.importConditions('conditions\\trial_conditions.xlsx',returnFieldNames=True)&#10;    temptrials = data.TrialHandler(temp_exp_conds,1)&#10;    io.createTrialHandlerRecordTable(temptrials, temp_ecnames)&#10;    temp_exp_conds =None&#10;    temptrials=None&#10;    &#10;except Exception, e:&#10;    import sys&#10;    print &quot;!! Error starting ioHub: &quot;,e,&quot; Exiting...&quot;&#10;    core.quit()&#10;    sys.exit(1)&#10;# &lt;&lt;&lt; iohub Custom Code" valType="extendedCode" updates="constant"/>
+        <Param name="name" val="init_iohub_wintab" valType="code" updates="None"/>
+        <Param name="Each Frame" val="" valType="extendedCode" updates="constant"/>
+        <Param name="Begin Routine" val="" valType="extendedCode" updates="constant"/>
+        <Param name="End Routine" val="" valType="extendedCode" updates="constant"/>
+        <Param name="End Experiment" val="&#10;# &gt;&gt;&gt; iohub Custom Code&#10;io.quit()&#10;# &lt;&lt;&lt; iohub Custom Code&#10;&#10;" valType="extendedCode" updates="constant"/>
+      </CodeComponent>
+    </Routine>
+    <Routine name="practice">
+      <TextComponent name="use_pen_instruct_txt_2">
+        <Param name="opacity" val="1" valType="code" updates="constant"/>
+        <Param name="colorSpace" val="rgb" valType="str" updates="constant"/>
+        <Param name="name" val="use_pen_instruct_txt_2" valType="code" updates="None"/>
+        <Param name="color" val="$[-1.000,-1.000,-1.000]" valType="str" updates="constant"/>
+        <Param name="wrapWidth" val="" valType="code" updates="constant"/>
+        <Param name="stopVal" val="" valType="code" updates="constant"/>
+        <Param name="durationEstim" val="" valType="code" updates="None"/>
+        <Param name="pos" val="[0, 0.9]" valType="code" updates="constant"/>
+        <Param name="flip" val="" valType="str" updates="constant"/>
+        <Param name="startEstim" val="" valType="code" updates="None"/>
+        <Param name="units" val="from exp settings" valType="str" updates="None"/>
+        <Param name="text" val="Use this screen to practice using the Tablet Sylus / Pen." valType="str" updates="constant"/>
+        <Param name="startType" val="time (s)" valType="str" updates="None"/>
+        <Param name="ori" val="0" valType="code" updates="constant"/>
+        <Param name="stopType" val="duration (s)" valType="str" updates="None"/>
+        <Param name="startVal" val="0.0" valType="code" updates="None"/>
+        <Param name="font" val="Arial" valType="str" updates="constant"/>
+        <Param name="letterHeight" val="0.075" valType="code" updates="constant"/>
+      </TextComponent>
+      <ImageComponent name="practice_image">
+        <Param name="opacity" val="1" valType="code" updates="constant"/>
+        <Param name="flipVert" val="False" valType="bool" updates="constant"/>
+        <Param name="colorSpace" val="rgb" valType="str" updates="constant"/>
+        <Param name="name" val="practice_image" valType="code" updates="None"/>
+        <Param name="color" val="$[1,1,1]" valType="str" updates="constant"/>
+        <Param name="stopVal" val="" valType="code" updates="constant"/>
+        <Param name="durationEstim" val="" valType="code" updates="None"/>
+        <Param name="mask" val="None" valType="str" updates="constant"/>
+        <Param name="pos" val="[0, 0]" valType="code" updates="constant"/>
+        <Param name="interpolate" val="linear" valType="str" updates="constant"/>
+        <Param name="startEstim" val="" valType="code" updates="None"/>
+        <Param name="units" val="from exp settings" valType="str" updates="None"/>
+        <Param name="texture resolution" val="128" valType="code" updates="constant"/>
+        <Param name="startType" val="time (s)" valType="str" updates="None"/>
+        <Param name="ori" val="0" valType="code" updates="constant"/>
+        <Param name="stopType" val="duration (s)" valType="str" updates="None"/>
+        <Param name="startVal" val="0.0" valType="code" updates="None"/>
+        <Param name="image" val="3Lines.png" valType="str" updates="constant"/>
+        <Param name="flipHoriz" val="False" valType="bool" updates="constant"/>
+        <Param name="size" val="" valType="code" updates="constant"/>
+      </ImageComponent>
+      <ImageComponent name="practice_end_image">
+        <Param name="opacity" val="1" valType="code" updates="constant"/>
+        <Param name="flipVert" val="False" valType="bool" updates="constant"/>
+        <Param name="colorSpace" val="rgb" valType="str" updates="constant"/>
+        <Param name="name" val="practice_end_image" valType="code" updates="None"/>
+        <Param name="color" val="$[1,1,1]" valType="str" updates="constant"/>
+        <Param name="stopVal" val="" valType="code" updates="constant"/>
+        <Param name="durationEstim" val="" valType="code" updates="None"/>
+        <Param name="mask" val="None" valType="str" updates="constant"/>
+        <Param name="pos" val="[.8, -.8]" valType="code" updates="constant"/>
+        <Param name="interpolate" val="linear" valType="str" updates="constant"/>
+        <Param name="startEstim" val="" valType="code" updates="None"/>
+        <Param name="units" val="from exp settings" valType="str" updates="None"/>
+        <Param name="texture resolution" val="128" valType="code" updates="constant"/>
+        <Param name="startType" val="time (s)" valType="str" updates="None"/>
+        <Param name="ori" val="0" valType="code" updates="constant"/>
+        <Param name="stopType" val="duration (s)" valType="str" updates="None"/>
+        <Param name="startVal" val="0.0" valType="code" updates="None"/>
+        <Param name="image" val="but_stop.bmp" valType="str" updates="constant"/>
+        <Param name="flipHoriz" val="False" valType="bool" updates="constant"/>
+        <Param name="size" val="" valType="code" updates="constant"/>
+      </ImageComponent>
+      <CodeComponent name="draw_pos_and_traces">
+        <Param name="Begin Experiment" val="&#10;" valType="extendedCode" updates="constant"/>
+        <Param name="name" val="draw_pos_and_traces" valType="code" updates="None"/>
+        <Param name="Each Frame" val="&#10;# &gt;&gt;&gt; iohub Custom Code&#10;&#10;# *pen_traces_stim* updates&#10;if t &gt;= 0.0 and pen_traces_stim.status == NOT_STARTED:&#10;    # keep track of start time/frame for later&#10;    pen_traces_stim.tStart = t  # underestimates by a little under one frame&#10;    pen_traces_stim.frameNStart = frameN  # exact frame index&#10;    pen_traces_stim.setAutoDraw(True)&#10;&#10;# *pen_pos_stim* updates&#10;if t &gt;= 0.0 and pen_pos_stim.status == NOT_STARTED:&#10;    # keep track of start time/frame for later&#10;    pen_pos_stim.tStart = t  # underestimates by a little under one frame&#10;    pen_pos_stim.frameNStart = frameN  # exact frame index&#10;    pen_pos_stim.setAutoDraw(True)&#10;&#10;pen_samples = tablet.getSamples()&#10;if pen_samples:&#10;    pen_traces_stim.updateFromEvents(pen_samples)&#10;    pen_pos_stim.updateFromEvent(pen_samples[-1])&#10;&#10;    for ps in pen_samples:&#10;        if 'FIRST_ENTER' in ps.status:&#10;            penPosInExit=0&#10;        if ps.pressure &gt; 0 and practice_end_image.contains(ps.getNormPos()):&#10;            penPosInExit=penPosInExit+1&#10;        else:&#10;            penPosInExit=max(0,penPosInExit-1)&#10;        if penPosInExit&gt;=penPosInExitStimThresh:&#10;            continueRoutine = False&#10;            break&#10;&#10;# &lt;&lt;&lt; iohub Custom Code&#10;&#10;" valType="extendedCode" updates="constant"/>
+        <Param name="Begin Routine" val="&#10;# &gt;&gt;&gt; iohub Custom Code&#10;&#10;pen_traces_stim.setAutoDraw(False)&#10;pen_pos_stim.setAutoDraw(False)&#10;pen_traces_stim.status = NOT_STARTED&#10;pen_pos_stim.status = NOT_STARTED&#10;&#10;io.clearEvents()&#10;io.sendMessageEvent(&quot;Started Pen Practice Period&quot;)&#10;&#10;penPosInExitStimThresh = 20&#10;penPosInExit = 0&#10;&#10;tablet.reporting = True&#10;&#10;# &lt;&lt;&lt; iohub Custom Code&#10;&#10;" valType="extendedCode" updates="constant"/>
+        <Param name="End Routine" val="&#10;# &gt;&gt;&gt; iohub Custom Code&#10;tablet.reporting = False&#10;io.clearEvents()&#10;io.sendMessageEvent(&quot;End Pen Practice Period&quot;)&#10;&#10;pen_pos_stim.clear()&#10;pen_traces_stim.clear()&#10;pen_traces_stim.setAutoDraw(False)&#10;pen_pos_stim.setAutoDraw(False)&#10;pen_traces_stim.status = NOT_STARTED&#10;pen_pos_stim.status = NOT_STARTED&#10;&#10;# &lt;&lt;&lt; iohub Custom Code&#10;&#10;" valType="extendedCode" updates="constant"/>
+        <Param name="End Experiment" val="" valType="extendedCode" updates="constant"/>
+      </CodeComponent>
+    </Routine>
+    <Routine name="thanks">
+      <TextComponent name="thanksText">
+        <Param name="opacity" val="1" valType="code" updates="constant"/>
+        <Param name="colorSpace" val="rgb" valType="str" updates="constant"/>
+        <Param name="name" val="thanksText" valType="code" updates="constant"/>
+        <Param name="color" val="$[0.004,-0.498,-0.498]" valType="str" updates="constant"/>
+        <Param name="wrapWidth" val="800" valType="code" updates="constant"/>
+        <Param name="stopVal" val="" valType="code" updates="constant"/>
+        <Param name="durationEstim" val="" valType="code" updates="None"/>
+        <Param name="pos" val="[0, 0]" valType="code" updates="constant"/>
+        <Param name="flip" val="" valType="str" updates="constant"/>
+        <Param name="startEstim" val="" valType="code" updates="None"/>
+        <Param name="units" val="norm" valType="str" updates="None"/>
+        <Param name="text" val="This is the end of the experiment.&#10;&#10;Press any key to exit." valType="str" updates="constant"/>
+        <Param name="startType" val="time (s)" valType="str" updates="None"/>
+        <Param name="ori" val="0" valType="code" updates="constant"/>
+        <Param name="stopType" val="duration (s)" valType="str" updates="None"/>
+        <Param name="startVal" val="0" valType="code" updates="None"/>
+        <Param name="font" val="arial" valType="str" updates="constant"/>
+        <Param name="letterHeight" val="0.050" valType="code" updates="constant"/>
+      </TextComponent>
+      <KeyboardComponent name="goodbye">
+        <Param name="correctAns" val="" valType="str" updates="constant"/>
+        <Param name="storeCorrect" val="False" valType="bool" updates="constant"/>
+        <Param name="name" val="goodbye" valType="code" updates="None"/>
+        <Param name="stopVal" val="" valType="code" updates="constant"/>
+        <Param name="durationEstim" val="" valType="code" updates="None"/>
+        <Param name="forceEndRoutine" val="True" valType="bool" updates="constant"/>
+        <Param name="startEstim" val="" valType="code" updates="None"/>
+        <Param name="discard previous" val="True" valType="bool" updates="constant"/>
+        <Param name="startType" val="time (s)" valType="str" updates="None"/>
+        <Param name="allowedKeys" val="" valType="code" updates="constant"/>
+        <Param name="stopType" val="duration (s)" valType="str" updates="None"/>
+        <Param name="startVal" val="0" valType="code" updates="None"/>
+        <Param name="store" val="nothing" valType="str" updates="constant"/>
+        <Param name="syncScreenRefresh" val="True" valType="bool" updates="constant"/>
+      </KeyboardComponent>
+    </Routine>
+  </Routines>
+  <Flow>
+    <Routine name="instruct"/>
+    <Routine name="practice"/>
+    <LoopInitiator loopType="TrialHandler" name="trials">
+      <Param name="conditionsFile" val="conditions\trial_conditions.xlsx" valType="str" updates="None"/>
+      <Param name="name" val="trials" valType="code" updates="None"/>
+      <Param name="isTrials" val="True" valType="bool" updates="None"/>
+      <Param name="random seed" val="" valType="code" updates="None"/>
+      <Param name="loopType" val="random" valType="str" updates="None"/>
+      <Param name="nReps" val="1" valType="num" updates="None"/>
+      <Param name="endPoints" val="[1, 2]" valType="num" updates="None"/>
+      <Param name="conditions" val="[{u'DV_TRIAL_START': None, u'T_IMG': u'3Lines.png', u'ITI': 0.5, u'DV_TRIAL_END': None, u'ROW_INDEX': 1, u'T_START_SND': u'go.wav', u'T_TEXT': u'Write your full name:', u'DV_TRIAL_ID': -1}, {u'DV_TRIAL_START': None, u'T_IMG': u'3Lines.png', u'ITI': 0.5, u'DV_TRIAL_END': None, u'ROW_INDEX': 2, u'T_START_SND': u'go.wav', u'T_TEXT': u'Write the name of the city you live in:', u'DV_TRIAL_ID': -1}, {u'DV_TRIAL_START': None, u'T_IMG': u'3Lines.png', u'ITI': 0.5, u'DV_TRIAL_END': None, u'ROW_INDEX': 3, u'T_START_SND': u'go.wav', u'T_TEXT': u'Write all letters of the alphabet from A to Z, using upper case letters:', u'DV_TRIAL_ID': -1}, {u'DV_TRIAL_START': None, u'T_IMG': u'3Lines.png', u'ITI': 0.5, u'DV_TRIAL_END': None, u'ROW_INDEX': 4, u'T_START_SND': u'go.wav', u'T_TEXT': u'Write all letters of the alphabet from A to Z, using lower case letters:', u'DV_TRIAL_ID': -1}]" valType="str" updates="None"/>
+      <Param name="Selected rows" val="" valType="str" updates="None"/>
+    </LoopInitiator>
+    <Routine name="trial"/>
+    <LoopTerminator name="trials"/>
+    <Routine name="thanks"/>
+  </Flow>
+</PsychoPy2experiment>
