@@ -1,10 +1,31 @@
 # OpenHandWrite
+[TODO: Project overview to be added]
 
-__PROJECT REFACTOR IN PROGRESS. PLEASE COME BACK IN 24 HOURS.__
+OpenHandWrite consists of GetWrite and MarkWrite.
+
+# GetWrite
+GetWrite is the set of software tools and examples used for capturing pen data from within an experiment. 
+
+[TODO: GetWrite overview to be added]
+
+## Required Software and Hardware
+[TODO: List of needed software and hardware to be added]
+
+## Test Script
+[TODO: Overview to be added]
+
+## Experiment Examples
+[TODO: Overview to be added]
+
+## HDF2TXT Tool 
+[TODO: Overview to be added]
+
+---
 
 # MarkWrite
-A tool for the inspection and segmentation of digitized writing data 
-from pen tablet type devices.
+
+MarkWrite is a tool for the inspection and segmentation of digitized writing data 
+from pen tablet type devices. MarkWrite is part of the OpenHandWrite Project.
 
 ![MarkWrite screenshot](https://github.com/isolver/OpenHandWrite/blob/master/markwrite/MarkWriteApp_sm.png)
 
