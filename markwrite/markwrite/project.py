@@ -154,6 +154,7 @@ class MarkWriteProject(object):
         :return: MarkWriteProject instance
         """
         self._pendata = []
+        self._expcondvars = []
         self.nonzero_pressure_mask = []
         self.nonzero_region_ix=[]
         self._segmentset=None
@@ -171,7 +172,17 @@ class MarkWriteProject(object):
             fimporter = self.input_file_loaders.get(fext)
             if fimporter:
                 self.autodetected_segment_tags=self.detectAssociatedSegmentTagsFile(dir_path,fname,fext)
-                self.createNewProject(fname, fimporter.asarray(file_path))
+                pdata = fimporter.asarray(file_path)
+
+                # If file opened was an iohub hdf5 file, and had a
+                # cond var table, get the cond var table as a ndarray.
+                expcondvars = None
+                try:
+                    expcondvars = fimporter.exp_condvars
+                except:
+                    pass
+
+                self.createNewProject(fname, pdata, expcondvars)
             else:
                 print "Unsupported file type:",file_path
         else:
@@ -194,7 +205,7 @@ class MarkWriteProject(object):
                     tag_list.append(seg_line)
         return tag_list
 
-    def createNewProject(self, file_name, pen_data):
+    def createNewProject(self, file_name, pen_data, condvars=None):
             PenDataSegmentCategory.clearSegmentCache()
 
             self._project_settings = None
@@ -205,14 +216,6 @@ class MarkWriteProject(object):
             self._original_timebase_offset=pen_data[0]['time']
             pen_data['time']-=self._original_timebase_offset
             pen_data['time']=pen_data['time']/1000.0
-
-            # to flip data vertically by changing y pos values...
-            # Maybe better to see if pyqtgraph has a built in option
-            # to flip a plot vertically.
-            #
-            # pmax = pen_data['y'].max()
-            # pmin = pen_data['y'].min()
-            # pen_data['y'] = pmax-pen_data['y']+pmin
 
             self._pendata = pen_data
             self.nonzero_pressure_mask=self._pendata['pressure']>0

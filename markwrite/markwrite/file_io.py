@@ -20,7 +20,7 @@ from util import getSegmentTagsFilePath
 import codecs
 import os
 
-numpy_pendata_format = [('time', np.float64),
+markwrite_pendata_format = [('time', np.float64),
                     ('x', np.int32),
                     ('y', np.int32),
                     ('pressure', np.int16),
@@ -89,7 +89,7 @@ class DataImporter(object):
         '''
         if cls.validate(file_path) is False:
             raise IOError("File could not be imported. Invalid format for DataImporter.")
-        return np.asarray(cls.parse(file_path), numpy_pendata_format)
+        return np.asarray(cls.parse(file_path), markwrite_pendata_format)
 
 #
 # Tab Delimited File Importer
@@ -143,6 +143,8 @@ from psychopy.iohub import EventConstants
 
 class HubDatastoreImporter(DataImporter):
     hubdata = None
+    exp_condvars = None
+    condvars_names = None
     def __init__(self):
         DataImporter.__init__(self)
 
@@ -194,6 +196,13 @@ class HubDatastoreImporter(DataImporter):
                                      r['pressure'],
                                      0)
                                     )
+
+            try:
+                cls.exp_condvars = exp_data_util.getConditionVariablesTable().read()
+                cls.condvars_names = cls.exp_condvars.dtype.names
+            except:
+                cls.exp_condvars = None
+                cls.condvars_names = None
 
         if cls.hubdata:
             cls.hubdata.close()
@@ -268,3 +277,23 @@ def writePickle(file_path, file_name, dictobj):
         os.makedirs(file_path)
     with open(abs_file_path, 'wb') as f:
         cPickle.dump(dictobj, f, cPickle.HIGHEST_PROTOCOL)
+
+################################################################################
+
+# Read condition variables table from iohub hdf5 file
+
+# TODO: Update to use pyqtgraph QT
+def displayTimeRangeVariableSelectionDialog(dataAccessUtil):
+    cv_names = [cvname for cvname in dataAccessUtil.getConditionVariableNames()
+                if cvname.startswith('DV_')]
+    dlg_info =  OrderedDict()
+    dlg_info["Start Trial Time"] = [cvname for cvname in cv_names
+                                    if cvname.endswith('START')]
+    dlg_info["End Trial Time"] = [cvname for cvname in cv_names
+                                  if cvname.endswith('END')]
+    infoDlg = gui.DlgFromDict(dictionary=dlg_info,
+                                       title="Trial Event Time Range Variables",
+                                       order=dlg_info.keys())
+    if not infoDlg.OK:
+        return None
+    return dlg_info.values()
