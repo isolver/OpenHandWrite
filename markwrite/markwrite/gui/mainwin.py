@@ -144,7 +144,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             self._segmenttree.doNotSetActiveObject=True
             self.project.selectedtimeregion.setRegion(self._activeobject.timerange)
             self._segmenttree.doNotSetActiveObject=False
-            self.removeSegmentAction.setEnabled(True)
+            self.removeSegmentAction.setEnabled(not self._activeobject.locked)
         else:
             self.removeSegmentAction.setEnabled(False)
         self.sigActiveObjectChanged.emit(self._activeobject,prevactiveobj)
@@ -550,7 +550,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                             #print "Create Segment for Trial%d"%(i+1), tstart, tend
                             self.createSegmentAction.setEnabled(True)
                             self.project.selectedtimeregion.setRegion((tstart, tend))
-                            self.createSegment("Trial%d"%(i+1))
+                            seg = self.createSegment("Trial%d"%(i+1))
+                            seg.locked = True
                         self.setActiveObject(self.project.segmentset.children[0])
                     else:
                         wmproj.selectedtimeregion.setRegion([wmproj.pendata['time'][0], wmproj.pendata['time'][0] + 1.0])

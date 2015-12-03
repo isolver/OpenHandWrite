@@ -52,6 +52,9 @@ class PenDataSegmentCategory(object):
         self._childsegments = []
         self._childsegment_ids=[]
 
+        # If a segment is locked, it can not be deleted or modified.
+        self._locked=False
+
         if project:
             if isinstance(project,ProxyType):
                 PenDataSegmentCategory._project = project
@@ -97,6 +100,14 @@ class PenDataSegmentCategory(object):
     @name.setter
     def name(self, n):
         self._name = n
+
+    @property
+    def locked(self):
+        return self._locked
+
+    @locked.setter
+    def locked(self, n):
+        self._locked = n
 
     @property
     def children(self):
@@ -301,6 +312,7 @@ class PenDataSegmentCategory(object):
         """
         project_properties = OrderedDict()
         project_properties['Name'] = [self.name,]
+        project_properties['Locked'] = [self.locked,]
         project_properties['ID'] = [self.id,]
         project_properties['Start Time'] = [self.starttime,]
         project_properties['End Time'] = [self.endtime,]
@@ -358,6 +370,7 @@ class PenDataSegment(PenDataSegmentCategory):
             period_count = np.nonzero(np.logical_and(start_ixs<max_ix,start_ixs>=min_ix))[0].shape[0]
         project_properties = OrderedDict()
         project_properties['Name'] = [self.name,]
+        project_properties['Locked'] = [self.locked,]
         project_properties['ID'] = [self.id,]
         project_properties['Start Time'] = [self.starttime,]
         project_properties['End Time'] = [self.endtime,]
