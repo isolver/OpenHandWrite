@@ -154,6 +154,7 @@ class MarkWriteProject(object):
         :return: MarkWriteProject instance
         """
         self._pendata = []
+        self._trialtimes = None
         self._expcondvars = []
         self.nonzero_pressure_mask = []
         self.nonzero_region_ix=[]
@@ -198,7 +199,7 @@ class MarkWriteProject(object):
                         tstartvar = tvarlists["Start Time Variable"]
                         tendvar = tvarlists["End Time Variable"]
 
-                self.createNewProject(fname, pdata, expcondvars, tstartvar, tendvar)
+                self.createNewProject(fname, pdata, expcondvars, tstartvar, tendvar, fext)
             else:
                 print "Unsupported file type:",file_path
         else:
@@ -221,12 +222,13 @@ class MarkWriteProject(object):
                     tag_list.append(seg_line)
         return tag_list
 
-    def createNewProject(self, file_name, pen_data, condvars=None, stime_var=None, etime_var=None):
+    def createNewProject(self, file_name, pen_data, condvars=None, stime_var=None, etime_var=None, file_type=None):
             PenDataSegmentCategory.clearSegmentCache()
 
             self._project_settings = None
 
             self._name = file_name
+            self._filetype = file_type
 
             self._expcondvars = condvars
             self._stimevar = stime_var
@@ -240,9 +242,6 @@ class MarkWriteProject(object):
             if self._expcondvars is not None and self._stimevar is not None and self._etimevar is not None:
                 trial_times = []
                 for t in self._expcondvars:
-                    trialstart = None
-                    trialend = None
-
                     try:
                         trialstart = float(t[self._stimevar])
                         trialend = float(t[self._etimevar])
@@ -267,13 +266,15 @@ class MarkWriteProject(object):
             pen_data['time']-=self._original_timebase_offset
             if trial_times is not None:
                 trial_times-=self._original_timebase_offset
+                self._trialtimes = trial_times
 
             # Change time stamps to sec.msec format, if needed
-            if self._expcondvars is None:
+            if file_type != 'hdf5':
                 # data from iohub hdf5 file is already in sec.msec format
                 pen_data['time']=pen_data['time']/1000.0
 
             self._pendata = pen_data
+
             self.nonzero_pressure_mask=self._pendata['pressure']>0
             # nonzero_regions_ix will be a tuple of (starts, stops, lengths) arrays
             self.nonzero_region_ix=contiguous_regions(self.nonzero_pressure_mask)
@@ -285,57 +286,10 @@ class MarkWriteProject(object):
             else:
                 MarkWriteProject._selectedtimeregion.project = self
 
-            if trial_times is not None:
-                for i, (tstart, tend) in enumerate(trial_times):
-                    self._createTrialSegment("Trial %d"%(i+1), tstart, tend)
-
-            MarkWriteProject._selectedtimeregion.setBounds(bounds=(self.pendata['time'][0], self.pendata['time'][-1]))
-            MarkWriteProject._selectedtimeregion.setRegion([self.pendata['time'][0], self.pendata['time'][0] + 1.0])
-
-
     def getSelectedDataSegmentIDs(self):
         if len(self.selectedpendata)>0:
             return np.unique(self.selectedpendata['segment_id'])
         return []
-
-
-    def _createTrialSegment(self, seg_name, start_time, end_time):
-        """
-        Note: Only used when data is loaded from an iohub HDF5 file that
-        includes a condition variable table.
-
-        Create a default segment that includes all pen data within a
-        trial period.
-        :return:
-        """
-
-        print "TODO: Implement _createTrialSegment:",seg_name, start_time, end_time
-
-        """
-        if self.createSegmentAction.isEnabled():
-            # Shrink timeline selection region to fit start and end time
-            # of possible segment being created.
-            selectedtimeperiod = self.project.selectedtimeperiod[:]
-
-
-            pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*selectedtimeperiod)
-            if len(pendata_ix_range)>0:
-                segmenttimeperiod = self.project.pendata['time'][pendata_ix_range]
-                self.project.selectedtimeregion.setRegion(segmenttimeperiod)
-
-                tag, ok = showSegmentNameDialog(self.predefinedtags)
-                tag = unicode(tag).strip().replace('\t', "#")
-                if len(tag) > 0 and ok:
-                    psid = self.project.getSelectedDataSegmentIDs()[0]
-                    new_segment = self.project.createSegmentFromSelectedPenData(tag, psid)
-                    self.handleSelectedPenDataUpdate(None,None)
-                    self.sigSegmentCreated.emit(new_segment)
-                    self.setActiveObject(new_segment)
-                else:
-                    # If segment creation was cancelled or failed, then reset
-                    # timeline selection region to original time period.
-                    self.project.selectedtimeregion.setRegion(selectedtimeperiod)
-        """
 
     def createSegmentFromSelectedPenData(self, tag, parent_id):
         """

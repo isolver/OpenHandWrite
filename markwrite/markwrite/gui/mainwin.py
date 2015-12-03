@@ -537,9 +537,23 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             if len(file_path) > 0:
                 try:
                     wmproj = MarkWriteProject(file_path=file_path,mwapp=self)
-                    self.createSegmentAction.setEnabled(True)
+
+                    wmproj.selectedtimeregion.setBounds(bounds=(wmproj.pendata['time'][0], wmproj.pendata['time'][-1]))
+
+
                     self.sigProjectChanged.emit(wmproj)
                     self.sigResetProjectData.emit(wmproj)
+
+                    if wmproj._trialtimes is not None:
+                        for i, (tstart, tend) in enumerate(wmproj._trialtimes):
+                            #print "Create Segment for Trial%d"%(i+1), tstart, tend
+                            self.createSegmentAction.setEnabled(True)
+                            self.project.selectedtimeregion.setRegion((tstart, tend))
+                            self.createSegment("Trial%d"%(i+1))
+                        self.setActiveObject(self.project.segmentset.children[0])
+                    else:
+                        wmproj.selectedtimeregion.setRegion([wmproj.pendata['time'][0], wmproj.pendata['time'][0] + 1.0])
+
                 except:
                     import traceback
 
@@ -572,7 +586,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         if file_path:
             reportcls().export(file_path, self.project)
 
-    def createSegment(self):
+    def createSegment(self, name=None):
         """
         Displays the Create Segment dialog. If dialog is not cancelled and
         segment name length >0, then create a new segment and add to the
@@ -582,26 +596,32 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         if self.createSegmentAction.isEnabled():
             # Shrink timeline selection region to fit start and end time
             # of possible segment being created.
-            selectedtimeperiod = self.project.selectedtimeperiod[:]
 
-
-            pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*selectedtimeperiod)
+            timeperiod = self.project.selectedtimeperiod[:]
+            pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*timeperiod)
             if len(pendata_ix_range)>0:
                 segmenttimeperiod = self.project.pendata['time'][pendata_ix_range]
                 self.project.selectedtimeregion.setRegion(segmenttimeperiod)
 
-                tag, ok = showSegmentNameDialog(self.predefinedtags)
-                tag = unicode(tag).strip().replace('\t', "#")
-                if len(tag) > 0 and ok:
+                ok = True
+                if not name:
+                    name, ok = showSegmentNameDialog(self.predefinedtags)
+                name = unicode(name).strip().replace('\t', "#")
+
+                new_segment = None
+                if len(name) > 0 and ok:
                     psid = self.project.getSelectedDataSegmentIDs()[0]
-                    new_segment = self.project.createSegmentFromSelectedPenData(tag, psid)
+                    new_segment = self.project.createSegmentFromSelectedPenData(name, psid)
                     self.handleSelectedPenDataUpdate(None,None)
                     self.sigSegmentCreated.emit(new_segment)
                     self.setActiveObject(new_segment)
                 else:
                     # If segment creation was cancelled or failed, then reset
                     # timeline selection region to original time period.
-                    self.project.selectedtimeregion.setRegion(selectedtimeperiod)
+                    self.project.selectedtimeregion.setRegion(timeperiod)
+
+                return new_segment
+
         else:
             ErrorDialog.info_text = u"Segment Creation Failed.\nNo selected " \
                                     u"pen data."
