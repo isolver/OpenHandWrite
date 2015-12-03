@@ -187,13 +187,40 @@ class MarkWriteProject(object):
                 # a start and end time variable column to be used to
                 # split data into trial segments and remove any between trial
                 # data.
+
                 tstartvar = None
                 tendvar = None
-                if expcondvars is not None:
+                create_trial_segments = SETTINGS['hdf5_create_trial_segments']
+                trial_start_var_select_filter = SETTINGS['hdf5_trial_start_var_select_filter'].strip()
+                trial_end_var_select_filter = SETTINGS['hdf5_trial_end_var_select_filter'].strip()
+
+                def getFilteredVarList(vlist,fstr):
+                    filter_tokens = fstr.split('*')
+                    if len(filter_tokens) == 2:
+                        vlist = [v for v in vlist if v.startswith(filter_tokens[0]) and v.endswith(filter_tokens[1])]
+                    elif len(filter_tokens) == 1:
+                        if fstr[0] == '*':
+                            vlist = [v for v in vlist if v.endswith(filter_tokens[1])]
+                        elif fstr[-1] == '*':
+                            vlist = [v for v in vlist if v.startswith(filter_tokens[0])]
+                        else:
+                            print "WARNING: UNHANDLED FILTER TOKENS:",filter_tokens
+                    elif len(filter_tokens) > 2:
+                        print "ERROR: FILTER CAN HAVE MAX 2 TOKENS:",filter_tokens
+                    return vlist
+
+                if create_trial_segments and expcondvars is not None:
                     from gui.dialogs import DlgFromDict
                     tvarlists=OrderedDict()
+
                     tvarlists["Start Time Variable"]=list(expcondvars.dtype.names)
+                    if trial_start_var_select_filter:
+                        tvarlists["Start Time Variable"] = getFilteredVarList(tvarlists["Start Time Variable"], trial_start_var_select_filter)
+
                     tvarlists["End Time Variable"]=list(expcondvars.dtype.names)
+                    if trial_end_var_select_filter:
+                         tvarlists["End Time Variable"] = getFilteredVarList(tvarlists["End Time Variable"], trial_end_var_select_filter)
+
                     dictDlg = DlgFromDict(dictionary=tvarlists, title='Select Trial Time Conditions')
                     if dictDlg.OK:
                         tstartvar = tvarlists["Start Time Variable"]

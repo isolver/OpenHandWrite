@@ -24,6 +24,11 @@ from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, reg
 
 
 flattenned_settings_dict = OrderedDict()
+
+flattenned_settings_dict['hdf5_create_trial_segments'] = {'name': 'Enable', 'type': 'bool', 'value': True}
+flattenned_settings_dict['hdf5_trial_start_var_select_filter'] = {'name': 'Start Time Options Filter', 'type': 'str', 'value': "DV_*_START"}
+flattenned_settings_dict['hdf5_trial_end_var_select_filter'] = {'name': 'End Time Options Filter', 'type': 'str', 'value':  "DV_*_END"}
+
 flattenned_settings_dict['new_segment_trim_0_pressure_points'] = {'name': 'Trim 0 Pressure Points', 'type': 'bool', 'value': True}
 flattenned_settings_dict['plotviews_background_color'] = {'name': 'Background Color', 'type': 'color', 'value': (32,32,32), 'tip': "Application Plot's background color. Change will not take effect until the application is restarted."}
 flattenned_settings_dict['plotviews_foreground_color'] =  {'name': 'Foreground Color', 'type': 'color', 'value': (224,224,224), 'tip': "Application Plot's foreground color (axis lines / labels)."}
@@ -42,6 +47,13 @@ flattenned_settings_dict['spatialplot_selectedinvalid_color'] ={'name': 'Invalid
 flattenned_settings_dict['spatialplot_selectedpoint_size'] = {'name': 'Size', 'type': 'int', 'value': 2, 'limits': (1, 5)}
 
 settings_params = [
+        {'name': 'Loading Source Data', 'type': 'group', 'children': [
+               {'name': 'ioHub HDF5 Trial Segmentation', 'type': 'group', 'children': [
+                    'hdf5_create_trial_segments',
+                    'hdf5_trial_start_var_select_filter',
+                    'hdf5_trial_end_var_select_filter',
+                 ]},
+        ]},
         {'name': 'Segment Creation', 'type': 'group', 'children': [
             'new_segment_trim_0_pressure_points',
         ]},
@@ -82,11 +94,10 @@ class ProjectSettingsDialog(QtGui.QDialog):
         layout = QtGui.QVBoxLayout(self)
 
         self.initKeyParamMapping()
-
         self._settings = Parameter.create(name='params', type='group', children=settings_params)
 
         if savedstate:
-            self._settings.restoreState(savedstate, removeChildren=True)
+            self._settings.restoreState(savedstate)
 
         # Holds settings keys that have changed by the user when the
         # dialog is closed. Used to update any needed gui values..
