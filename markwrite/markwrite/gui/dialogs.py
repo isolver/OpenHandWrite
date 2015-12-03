@@ -17,6 +17,7 @@
 from __future__ import division
 
 import pyqtgraph as pg
+from collections import OrderedDict
 from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
 import string, os, sys, json
@@ -186,3 +187,279 @@ class ExitApplication(ConfirmAction):
     instance = None
     text = 'Exit Application'
     info_text = "Are you sure you want to quit the application?"
+
+
+class Dlg(QtGui.QDialog):
+    """A simple dialogue box. You can add text or input boxes
+    (sequentially) and then retrieve the values.
+    """
+
+    def __init__(self, title='MarkWrite Dialog',
+                 pos=None, size=None, style=None,
+                 labelButtonOK="OK",
+                 labelButtonCancel="Cancel",
+                 screen=-1):
+
+        QtGui.QDialog.__init__(self, None, QtCore.Qt.WindowTitleHint)
+
+        self.inputFields = []
+        self.inputFieldTypes = []
+        self.inputFieldNames = []
+        self.data = []
+        self.irow = 0
+
+        #QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 10))
+
+        #add buttons for OK and Cancel
+        self.buttonBox = QtGui.QDialogButtonBox(QtCore.Qt.Horizontal, parent=self)
+        self.okbutton = QtGui.QPushButton(labelButtonOK, parent=self)
+        self.cancelbutton = QtGui.QPushButton(labelButtonCancel, parent=self)
+        self.buttonBox.addButton(self.okbutton,
+                                 QtGui.QDialogButtonBox.ActionRole)
+        self.buttonBox.addButton(self.cancelbutton,
+                                 QtGui.QDialogButtonBox.ActionRole)
+        self.okbutton.clicked.connect(self.accept)
+        self.cancelbutton.clicked.connect(self.reject)
+
+        if style:
+            raise RuntimeWarning(
+                "Dlg does not currently support the stype kwarg.")
+
+        self.pos = pos
+        self.size = size
+        self.screen = screen
+        #self.labelButtonOK = labelButtonOK
+        #self.labelButtonCancel = labelButtonCancel
+
+        self.layout = QtGui.QGridLayout()
+        self.layout.setColumnStretch(1, 1)
+        self.layout.setSpacing(10)
+        self.layout.setColumnMinimumWidth(1, 250)
+
+        self.setLayout(self.layout)
+
+        self.setWindowTitle(title)
+
+
+    def addText(self, text, color='', isFieldLabel=False):
+        textLabel = QtGui.QLabel(text, parent=self)
+
+        if len(color):
+            palette = QtGui.QPalette()
+            palette.setColor(QtGui.QPalette.Foreground, QtGui.QColor(color))
+            textLabel.setPalette(palette)
+
+        if isFieldLabel is True:
+            self.layout.addWidget(textLabel, self.irow, 0, 1, 1)
+        else:
+            self.layout.addWidget(textLabel, self.irow, 0, 1, 2)
+            self.irow += 1
+
+        return textLabel
+
+
+    def addField(self, label='', initial='', color='', choices=None, tip='',
+                 enabled=True):
+        """
+        Adds a (labelled) input field to the dialogue box, optional text color
+        and tooltip.
+
+        If 'initial' is a bool, a checkbox will be created.
+        If 'choices' is a list or tuple, a dropdown selector is created.
+        Otherwise, a text line entry box is created.
+
+        Returns a handle to the field (but not to the label).
+        """
+        self.inputFieldNames.append(label)
+        if choices:
+            self.inputFieldTypes.append(str)
+        else:
+            self.inputFieldTypes.append(type(initial))
+        if type(initial) == np.ndarray:
+            initial = initial.tolist()  #convert numpy arrays to lists
+
+        #create label
+        inputLabel = self.addText(label, color, isFieldLabel=True)
+
+        #create input control
+        if type(initial) == bool and not choices:
+            self.data.append(initial)
+            inputBox = QtGui.QCheckBox(parent=self)
+            inputBox.setChecked(initial)
+
+            def handleCheckboxChange(new_state):
+                ix = self.inputFields.index(inputBox)
+                self.data[ix] = inputBox.isChecked()
+
+            inputBox.stateChanged.connect(handleCheckboxChange)
+        elif not choices:
+            self.data.append(initial)
+            inputBox = QtGui.QLineEdit(unicode(initial), parent=self)
+
+            def handleLineEditChange(new_text):
+                ix = self.inputFields.index(inputBox)
+                thisType = self.inputFieldTypes[ix]
+
+                try:
+                    if thisType in (str, unicode):
+                        self.data[ix] = unicode(new_text)
+                    elif thisType == tuple:
+                        jtext = "[" + unicode(new_text) + "]"
+                        self.data[ix] = json.loads(jtext)[0]
+                    elif thisType == list:
+                        jtext = "[" + unicode(new_text) + "]"
+                        self.data[ix] = json.loads(jtext)[0]
+                    elif thisType == float:
+                        self.data[ix] = string.atof(str(new_text))
+                    elif thisType == int:
+                        self.data[ix] = string.atoi(str(new_text))
+                    elif thisType == long:
+                        self.data[ix] = string.atol(str(new_text))
+                    elif thisType == dict:
+                        jtext = "[" + unicode(new_text) + "]"
+                        self.data[ix] = json.loads(jtext)[0]
+                    elif thisType == np.ndarray:
+                        self.data[ix] = np.array(
+                            json.loads("[" + unicode(new_text) + "]")[0])
+                    else:
+                        self.data[ix] = new_text
+
+                except Exception as e:
+                    self.data[ix] = unicode(new_text)
+            inputBox.textEdited.connect(handleLineEditChange)
+        else:
+            inputBox = QtGui.QComboBox(parent=self)
+            choices = list(choices)
+            for i, option in enumerate(choices):
+                inputBox.addItem(unicode(option))
+                #inputBox.addItems([unicode(option) for option in choices])
+                inputBox.setItemData(i, (option,))
+
+            if isinstance(initial, (int, long)) and len(choices) > initial >= 0:
+                pass
+            elif initial in choices:
+                initial = choices.index(initial)
+            else:
+                initial = 0
+            inputBox.setCurrentIndex(initial)
+
+            self.data.append(choices[initial])
+
+            def handleCurrentIndexChanged(new_index):
+                ix = self.inputFields.index(inputBox)
+                self.data[ix] = inputBox.itemData(new_index).toPyObject()[0]
+
+            inputBox.currentIndexChanged.connect(handleCurrentIndexChanged)
+
+        if len(color):
+            inputBox.setPalette(inputLabel.palette())
+        if len(tip):
+            inputBox.setToolTip(tip)
+        inputBox.setEnabled(enabled)
+        self.layout.addWidget(inputBox, self.irow, 1)
+
+        self.inputFields.append(inputBox)  #store this to get data back on OK
+        self.irow += 1
+
+        return inputBox
+
+    def addFixedField(self, label='', initial='', color='', choices=None,
+                      tip=''):
+        """Adds a field to the dialog box (like addField) but the field cannot
+        be edited. e.g. Display experiment version.
+        """
+        return self.addField(label, initial, color, choices, tip, enabled=False)
+
+    def display(self):
+        """
+        Presents the dialog and waits for the user to press either OK or CANCEL.
+
+        If user presses OK button, function returns a list containing the
+        updated values coming from each of the input fields created.
+        Otherwise, None is returned.
+
+        :return: self.data
+        """
+        return self.exec_()
+
+    def show(self):
+        """
+        ** QDialog already has a show() method. So this method calls
+           QDialog.show() and then exec_(). This seems to not cause issues,
+           however we need to keep an eye out for any issues.
+
+        ** Deprecated: Use dlg.display() instead. This method will be removed
+           in a future version of psychopy.
+
+        Presents the dialog and waits for the user to press either OK or CANCEL.
+
+        If user presses OK button, function returns a list containing the
+        updated values coming from each of the input fields created.
+        Otherwise, None is returned.
+
+        :return: self.data
+        """
+        return self.display()
+
+    def exec_(self):
+        """
+        Presents the dialog and waits for the user to press either OK or CANCEL.
+
+        If user presses OK button, function returns a list containing the
+        updated values coming from each of the input fields created.
+        Otherwise, None is returned.
+        """
+
+        self.layout.addWidget(self.buttonBox, self.irow, 0, 1, 2)
+
+        # Center Dialog on appropriate screen
+        frameGm = self.frameGeometry()
+        desktop = QtGui.QApplication.desktop()
+        qtscreen = self.screen
+        if self.screen <= 0:
+            qtscreen = desktop.primaryScreen()
+        centerPoint = desktop.screenGeometry(qtscreen).center()
+        frameGm.moveCenter(centerPoint)
+        self.move(frameGm.topLeft())
+
+        QtGui.QDialog.show(self)
+        self.raise_()
+        self.activateWindow()
+
+        self.OK = False
+        if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
+            self.OK = True
+            return self.data
+
+class DlgFromDict(Dlg):
+    """Creates a dialogue box that represents a dictionary of values.
+    Any values changed by the user are change (in-place) by this
+    dialogue box.
+    """
+    def __init__(self, dictionary, title='',fixed=[], order=[], tip={}, screen=-1):
+        Dlg.__init__(self, title, screen=screen)
+        self.dictionary = dictionary
+        keys = self.dictionary.keys()
+        if not isinstance(self.dictionary, OrderedDict):
+            keys.sort()
+        if len(order):
+            keys = order + list(set(keys).difference(set(order)))
+        types=dict([])
+        for field in keys:
+            types[field] = type(self.dictionary[field])
+            tooltip = ''
+            if field in tip.keys():
+                tooltip = tip[field]
+            if field in fixed:
+                self.addFixedField(field, self.dictionary[field], tip=tooltip)
+            elif type(self.dictionary[field]) in [list, tuple]:
+                self.addField(field,choices=self.dictionary[field], tip=tooltip)
+            else:
+                self.addField(field, self.dictionary[field], tip=tooltip)
+
+        ok_data = self.exec_()
+        if ok_data:
+            for n,thisKey in enumerate(keys):
+                self.dictionary[thisKey]=ok_data[n]
+
+

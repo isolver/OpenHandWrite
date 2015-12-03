@@ -182,7 +182,23 @@ class MarkWriteProject(object):
                 except:
                     pass
 
-                self.createNewProject(fname, pdata, expcondvars)
+                # If cond var table exists, give user option of selecting
+                # a start and end time variable column to be used to
+                # split data into trial segments and remove any between trial
+                # data.
+                tstartvar = None
+                tendvar = None
+                if expcondvars is not None:
+                    from gui.dialogs import DlgFromDict
+                    tvarlists=OrderedDict()
+                    tvarlists["Start Time Variable"]=list(expcondvars.dtype.names)
+                    tvarlists["End Time Variable"]=list(expcondvars.dtype.names)
+                    dictDlg = DlgFromDict(dictionary=tvarlists, title='Select Trial Time Conditions')
+                    if dictDlg.OK:
+                        tstartvar = tvarlists["Start Time Variable"]
+                        tendvar = tvarlists["End Time Variable"]
+
+                self.createNewProject(fname, pdata, expcondvars, tstartvar, tendvar)
             else:
                 print "Unsupported file type:",file_path
         else:
@@ -205,17 +221,57 @@ class MarkWriteProject(object):
                     tag_list.append(seg_line)
         return tag_list
 
-    def createNewProject(self, file_name, pen_data, condvars=None):
+    def createNewProject(self, file_name, pen_data, condvars=None, stime_var=None, etime_var=None):
             PenDataSegmentCategory.clearSegmentCache()
 
             self._project_settings = None
 
             self._name = file_name
 
+            self._expcondvars = condvars
+            self._stimevar = stime_var
+            self._etimevar = etime_var
+
+            # go through each trial, select only the samples within
+            # the trial period, add the trials sample array to list of trial
+            # sample data.
+            samples_by_trial = []
+            trial_times = None
+            if self._expcondvars is not None and self._stimevar is not None and self._etimevar is not None:
+                trial_times = []
+                for t in self._expcondvars:
+                    trialstart = None
+                    trialend = None
+
+                    try:
+                        trialstart = float(t[self._stimevar])
+                        trialend = float(t[self._etimevar])
+                        trial_times.append((trialstart,trialend))
+                        trial_samples = pen_data[(pen_data['time'] >= trialstart) & (pen_data['time'] <= trialend)]
+                        samples_by_trial.append(trial_samples)
+                        #print "trial samples:",trial_samples.shape
+                    except:
+                        print("Error getting trial time period:")
+                        import traceback
+                        traceback.print_exc()
+
+            if samples_by_trial:
+                # make pen_data == concat'ed samples_by_trial
+                pen_data = np.concatenate(samples_by_trial)
+
+                # turn trial start, stop time list into np array
+                trial_times = np.asarray(trial_times)
+
             # Normalize pen sample times so first sample starts at 0.0 sec.
             self._original_timebase_offset=pen_data[0]['time']
             pen_data['time']-=self._original_timebase_offset
-            pen_data['time']=pen_data['time']/1000.0
+            if trial_times is not None:
+                trial_times-=self._original_timebase_offset
+
+            # Change time stamps to sec.msec format, if needed
+            if self._expcondvars is None:
+                # data from iohub hdf5 file is already in sec.msec format
+                pen_data['time']=pen_data['time']/1000.0
 
             self._pendata = pen_data
             self.nonzero_pressure_mask=self._pendata['pressure']>0
@@ -229,6 +285,10 @@ class MarkWriteProject(object):
             else:
                 MarkWriteProject._selectedtimeregion.project = self
 
+            if trial_times is not None:
+                for i, (tstart, tend) in enumerate(trial_times):
+                    self._createTrialSegment("Trial %d"%(i+1), tstart, tend)
+
             MarkWriteProject._selectedtimeregion.setBounds(bounds=(self.pendata['time'][0], self.pendata['time'][-1]))
             MarkWriteProject._selectedtimeregion.setRegion([self.pendata['time'][0], self.pendata['time'][0] + 1.0])
 
@@ -238,7 +298,46 @@ class MarkWriteProject(object):
             return np.unique(self.selectedpendata['segment_id'])
         return []
 
-    def createPenDataSegment(self, tag, parent_id):
+
+    def _createTrialSegment(self, seg_name, start_time, end_time):
+        """
+        Note: Only used when data is loaded from an iohub HDF5 file that
+        includes a condition variable table.
+
+        Create a default segment that includes all pen data within a
+        trial period.
+        :return:
+        """
+
+        print "TODO: Implement _createTrialSegment:",seg_name, start_time, end_time
+
+        """
+        if self.createSegmentAction.isEnabled():
+            # Shrink timeline selection region to fit start and end time
+            # of possible segment being created.
+            selectedtimeperiod = self.project.selectedtimeperiod[:]
+
+
+            pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*selectedtimeperiod)
+            if len(pendata_ix_range)>0:
+                segmenttimeperiod = self.project.pendata['time'][pendata_ix_range]
+                self.project.selectedtimeregion.setRegion(segmenttimeperiod)
+
+                tag, ok = showSegmentNameDialog(self.predefinedtags)
+                tag = unicode(tag).strip().replace('\t', "#")
+                if len(tag) > 0 and ok:
+                    psid = self.project.getSelectedDataSegmentIDs()[0]
+                    new_segment = self.project.createSegmentFromSelectedPenData(tag, psid)
+                    self.handleSelectedPenDataUpdate(None,None)
+                    self.sigSegmentCreated.emit(new_segment)
+                    self.setActiveObject(new_segment)
+                else:
+                    # If segment creation was cancelled or failed, then reset
+                    # timeline selection region to original time period.
+                    self.project.selectedtimeregion.setRegion(selectedtimeperiod)
+        """
+
+    def createSegmentFromSelectedPenData(self, tag, parent_id):
         """
         Only called if the currently selected pen data can make a valid segment.
         i.e. getSelectedDataSegmentIDs() returned a list of exactly 1 segment id

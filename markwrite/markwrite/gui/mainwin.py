@@ -577,13 +577,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         Displays the Create Segment dialog. If dialog is not cancelled and
         segment name length >0, then create a new segment and add to the
         projects segment list.
-
-        TODO: 1.'Autotrim' segment time period and update View Widgets when
-                the Create Segment dialog is first displayed. If no segment is
-                actually created, reset selection region to previous state.
-              2. If the selected / active node in the project tree gui widget
-                is a Segment, then add the newly create segment as a child of
-                currently selected segment, otherwise use current logic.
         :return:
         """
         if self.createSegmentAction.isEnabled():
@@ -601,7 +594,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 tag = unicode(tag).strip().replace('\t', "#")
                 if len(tag) > 0 and ok:
                     psid = self.project.getSelectedDataSegmentIDs()[0]
-                    new_segment = self.project.createPenDataSegment(tag, psid)
+                    new_segment = self.project.createSegmentFromSelectedPenData(tag, psid)
                     self.handleSelectedPenDataUpdate(None,None)
                     self.sigSegmentCreated.emit(new_segment)
                     self.setActiveObject(new_segment)
