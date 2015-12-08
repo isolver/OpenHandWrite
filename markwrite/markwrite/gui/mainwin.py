@@ -544,10 +544,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                     self.sigProjectChanged.emit(wmproj)
                     self.sigResetProjectData.emit(wmproj)
 
-                    print("TODO: Support spatial view gui only displaying data from a single top level segment only.")
                     if wmproj._trialtimes is not None:
                         for i, (tstart, tend) in enumerate(wmproj._trialtimes):
-                            #print "Create Segment for Trial%d"%(i+1), tstart, tend
                             self.createSegmentAction.setEnabled(True)
                             self.project.selectedtimeregion.setRegion((tstart, tend))
                             seg = self.createSegment("Trial%d"%(i+1))

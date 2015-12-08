@@ -18,10 +18,13 @@ import numpy as np
 import pyqtgraph as pg
 from markwrite.gui.projectsettings import SETTINGS
 from markwrite.gui.mainwin import MarkWriteMainWindow
+from markwrite.segment import PenDataSegment
 
 class PenDataSpatialPlotWidget(pg.PlotWidget):
     def __init__(self):
         pg.PlotWidget.__init__(self, enableMenu=False)
+
+        self._level1Segment=None
 
         self.getPlotItem().invertY(SETTINGS['spatialplot_invert_y_axis'])
         self.getPlotItem().setAspectLocked(True, 1)
@@ -40,6 +43,8 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             self.handleSegmentRemoved)
         MarkWriteMainWindow.instance().sigSegmentCreated.connect(
             self.handleSegmentCreated)
+        MarkWriteMainWindow.instance().sigActiveObjectChanged.connect(
+            self.handleSelectedObjectChanged)
 
     def createDefaultPenBrushForData(self, pdat):
         pen = pg.mkPen(SETTINGS['spatialplot_default_color'],
@@ -56,9 +61,28 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         brusharray[pdat['pressure'] == 0] = brush2
         return brusharray, penarray
 
+    def handleSelectedObjectChanged(self, newobj, oldobj):
+        if MarkWriteMainWindow.instance().project._autosegl1 is True:
+            if isinstance(newobj, PenDataSegment):
+                    l1seg=newobj.l1seg
+                    if l1seg and l1seg != self._level1Segment:
+                            #print ">> *** PenDataSpatialPlotWidget.handleSelectedObjectChanged:",l1seg
+
+                            self._level1Segment=l1seg
+                            self.handleResetPenData(None)
+                            #print "<< *** PenDataSpatialPlotWidget.handleSelectedObjectChanged"
+        else:
+            self._level1Segment = None
+
+    def getCurrentPenData(self):
+        if self._level1Segment:
+            return self._level1Segment.pendata
+        return MarkWriteMainWindow.instance().project.pendata
+
     def handleResetPenData(self, project):
-        #print ">> PenDataSpatialPlotWidget.handleResetPenData:",project
-        pdat = project.pendata
+        #print ">> ### PenDataSpatialPlotWidget.handleResetPenData:",project
+        #pdat = project.pendata
+        pdat = self.getCurrentPenData()
 
         if self.allPlotDataItem is None:
             brusharray,penarray = self.createDefaultPenBrushForData(pdat)
@@ -96,7 +120,7 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             self.setRange(xRange=(pdat['x'].min(), pdat['x'].max()),
                           yRange=(pdat['y'].min(), pdat['y'].max()),
                           padding=None)
-            #print "<< PenDataSpatialPlotWidget.handleResetPenData"
+        #print "<< ### PenDataSpatialPlotWidget.handleResetPenData"
 
 
     def updateSelectedPenPointsGraphics(self, selectedpendata=None):
@@ -123,8 +147,8 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
 
     def handleUpdatedSettingsEvent(self, updates, settings):
         selectedpendata = MarkWriteMainWindow.instance().project.selectedpendata
-        pdat = MarkWriteMainWindow.instance().project.pendata
-
+        #pdat = MarkWriteMainWindow.instance().project.pendata
+        pdat = self.getCurrentPenData()
         for k in updates.keys():
             if k.startswith('spatialplot_default'):
                 brusharray, penarray = self.createDefaultPenBrushForData(pdat)
@@ -149,7 +173,7 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         self.updateSelectedPenPointsGraphics()
 
     def handlePenDataSelectionChanged(self, timeperiod, selectedpendata):
-
+        #print ">> PenDataSpatialPlotWidget.handlePenDataSelectionChanged",timeperiod,selectedpendata.shape
         if self.allPlotDataItem is None:
             self.handleResetPenData(MarkWriteMainWindow.instance().project)
 

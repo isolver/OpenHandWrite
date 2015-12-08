@@ -21,6 +21,7 @@ from pyqtgraph.Qt import QtGui
 from weakref import proxy,ProxyType
 from markwrite.gui.projectsettings import SETTINGS
 from markwrite.gui.mainwin import MarkWriteMainWindow
+from markwrite.segment import PenDataSegment
 
 class PenDataTemporalPlotWidget(pg.PlotWidget):
     def __init__(self):
@@ -37,8 +38,29 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         self.maxTime=1
         self._lastselectedtimerange = None
         self.sigRegionChangedProxy = None
+        self._level1Segment = None
         MarkWriteMainWindow.instance().sigResetProjectData.connect(
             self.handleResetPenData)
+        MarkWriteMainWindow.instance().sigActiveObjectChanged.connect(
+            self.handleSelectedObjectChanged)
+
+    def handleSelectedObjectChanged(self, newobj, oldobj):
+        if MarkWriteMainWindow.instance().project._autosegl1 is True:
+            if isinstance(newobj, PenDataSegment):
+                    l1seg=newobj.l1seg
+                    if l1seg and l1seg != self._level1Segment:
+                            #print ">> *** PenDataTemporalPlotWidget.handleSelectedObjectChanged:",l1seg
+
+                            self._level1Segment=l1seg
+                            self.handleResetPenData(None)
+                            #print "<< *** PenDataTemporalPlotWidget.handleSelectedObjectChanged"
+        else:
+            self._level1Segment = None
+
+    def getCurrentPenData(self):
+        if self._level1Segment:
+            return self._level1Segment.pendata
+        return MarkWriteMainWindow.instance().project.pendata
 
     def getPenBrushX(self, penpoints, penarray=None, brusharray=None):
         if penarray is None:
@@ -107,7 +129,8 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         :param project:
         :return:
         '''
-        penpoints = project.pendata
+        #penpoints = project.pendata
+        penpoints = self.getCurrentPenData()
 
         self.fullPenValRange = (min(penpoints['x'].min(), penpoints['y'].min()),
                        max(penpoints['x'].max(), penpoints['y'].max()))
@@ -165,7 +188,9 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
 
     def handleUpdatedSettingsEvent(self, updates, settings):
         penarray, brusharray = None, None
-        penpoints = MarkWriteMainWindow.instance().project.pendata
+        #penpoints = MarkWriteMainWindow.instance().project.pendata
+        penpoints = self.getCurrentPenData()
+
         for k in updates.keys():
             if k.startswith('timeplot_xtrace'):
                 penarray, brusharray = self.updateTraceX(penpoints, penarray, brusharray)

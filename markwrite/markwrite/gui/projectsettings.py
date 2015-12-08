@@ -25,7 +25,8 @@ from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, reg
 
 flattenned_settings_dict = OrderedDict()
 
-flattenned_settings_dict['hdf5_create_trial_segments'] = {'name': 'Enable', 'type': 'bool', 'value': True}
+flattenned_settings_dict['auto_generate_l1segments'] = {'name': 'Enable Level 1 Auto Segmentation', 'type': 'bool', 'value': True}
+
 flattenned_settings_dict['hdf5_trial_start_var_select_filter'] = {'name': 'Start Time Options Filter', 'type': 'str', 'value': "DV_*_START"}
 flattenned_settings_dict['hdf5_trial_end_var_select_filter'] = {'name': 'End Time Options Filter', 'type': 'str', 'value':  "DV_*_END"}
 
@@ -48,8 +49,8 @@ flattenned_settings_dict['spatialplot_selectedpoint_size'] = {'name': 'Size', 't
 
 settings_params = [
         {'name': 'Loading Source Data', 'type': 'group', 'children': [
+            'auto_generate_l1segments',
                {'name': 'ioHub HDF5 Trial Segmentation', 'type': 'group', 'children': [
-                    'hdf5_create_trial_segments',
                     'hdf5_trial_start_var_select_filter',
                     'hdf5_trial_end_var_select_filter',
                  ]},

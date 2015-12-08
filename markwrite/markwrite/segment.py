@@ -161,6 +161,15 @@ class PenDataSegmentCategory(object):
             p=p.parent
         return spath[::-1]
 
+    @property
+    def tree(self):
+        spath=[]
+        p = self.parent
+        while p is not None:
+            spath.append(p)
+            p=p.parent
+        return spath
+
     def _args2kwargs(self, args, kwargs={}):
         for a in args:
             arghandled = True
@@ -251,6 +260,14 @@ class PenDataSegmentCategory(object):
         return segsbylvl
 
     @property
+    def l1seg(self):
+        segtree=self.tree
+        if len(segtree) == 1:
+            return self
+        elif len(segtree) > 1:
+            return segtree[-2]
+
+    @property
     def pendata(self):
         return self._project._pendata
 
@@ -286,7 +303,7 @@ class PenDataSegmentCategory(object):
     def calculateTrimmedSegmentIndexBoundsFromTimeRange(cls, starttime, endtime):
         """
         Calculates the first and last array indices in the full projects
-        pen data that wuld be used for creating a segment with the uncorrected time range
+        pen data that would be used for creating a segment with the uncorrected time range
         provided by starttime, endtime.
         :param startt:
         :param endt:
