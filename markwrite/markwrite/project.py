@@ -156,16 +156,18 @@ class MarkWriteProject(object):
         self._pendata = []
         self.nonzero_pressure_mask = []
         self.nonzero_region_ix=[]
+        self.sampling_interval = 0
+        self.sample_dts = []
+        self.series_boundaries = []
         self._segmentset=None
         self.autodetected_segment_tags=[]
         self._name = u"Unknown"
         self._original_timebase_offset=0
-        self._mwapp = None
-
         self._autosegl1=False
         self._trialtimes = None
         self._expcondvars = []
 
+        self._mwapp = None
         if mwapp:
             self._mwapp = proxy(mwapp)
 
@@ -311,6 +313,32 @@ class MarkWriteProject(object):
             self.nonzero_region_ix=contiguous_regions(self.nonzero_pressure_mask)
             self._segmentset=PenDataSegmentCategory(name=self.name,project=self)
             self._pendata['segment_id']=self._segmentset.id
+
+            # inter sample intervals, used for sampling rate calc and
+            # vel / accell measures.
+            self.sample_dts = self._pendata['time'][1:]-self._pendata['time'][:-1]
+
+            # Calculate what the sampling interval (1000.0 / hz_rate) for the device was in sec.msec
+            self.sampling_interval = np.percentile(self.sample_dts,5.0,interpolation='nearest')
+
+            # Find pen sample series boundaries, using calculated
+            # sampling_interval. Filtering and velocity alg's are applied to
+            # the pen samples within each series.
+            slist=[]
+            series_starts_ix, series_stops_ix, series_lengths = contiguous_regions(self.sample_dts < 2.0*self.sampling_interval)
+            for i in xrange(len(series_starts_ix)):
+                slist.append((series_starts_ix[i],series_stops_ix[i]))
+            series_dtype = np.dtype({'names':['start_ix','end_ix'], 'formats':[np.uint32,np.uint32,]})
+            self.series_boundaries = np.asarray(slist,dtype=series_dtype)
+
+            # filter data
+            from sample_filter import filter_pen_sample_series
+            from sample_va import calculate_velocity
+            for series_bounds in self.series_boundaries:
+                filter_pen_sample_series(self, self.pendata[
+                        series_bounds['start_ix']:series_bounds['end_ix']+1])
+                calculate_velocity(self, self.pendata[
+                        series_bounds['start_ix']:series_bounds['end_ix']+1])
 
             if self._selectedtimeregion is None:
                 MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)

@@ -85,6 +85,7 @@ def showSegmentNameDialog(tags, default=u""):
     )
 
 class MarkWriteMainWindow(QtGui.QMainWindow):
+    SAMPLE_XY_FIELDS = ['x_filtered', 'y_filtered']
     sigProjectChanged = QtCore.Signal(object)  # new_project
     sigResetProjectData = QtCore.Signal(object)  # project
     sigSelectedPenDataUpdate = QtCore.Signal(object,
@@ -554,6 +555,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                     else:
                         wmproj.selectedtimeregion.setRegion([wmproj.pendata['time'][0], wmproj.pendata['time'][0] + 1.0])
 
+                    #self.displayAllDataChannelsTimePlot()
+
                 except:
                     import traceback
 
@@ -679,10 +682,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         rx=(max(0,xmin-xpad),min(xmax+xpad,self._penDataTimeLineWidget.maxTime))
         if SETTINGS['timeplot_enable_ymouse']:
             ry = (
-                    min(selpendat['x'].min(), selpendat['y'].min()),
-                    max(selpendat['x'].max(), selpendat['y'].max()))
+                    min(selpendat[X_FIELD].min(), selpendat[Y_FIELD].min()),
+                    max(selpendat[X_FIELD].max(), selpendat[Y_FIELD].max()))
         else:
-            ry = (0, max(pdat['x'].max(),pdat['y'].max()))
+            ry = (0, max(pdat[X_FIELD].max(),pdat[Y_FIELD].max()))
         self._penDataTimeLineWidget.getPlotItem().setRange(xRange=rx, yRange=ry)
 
     def jumpTimeSelectionForward(self):
@@ -844,6 +847,59 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             writePickle(self._appdirs.user_config_dir,u'usersettings.pkl', savestate)
             if self.project and len(updatedsettings)>0:
                 self.sigAppSettingsUpdated.emit(updatedsettings, allsettings)
+
+    def displayAllDataChannelsTimePlot(self, left_plot_fields=(
+                                                    ('x',(153,255,0)),
+                                                    ('y',(51,204,255)),
+                                                    ('x_filtered',(0,204,0)),
+                                                    ('y_filtered',(0,0,204))),
+                                                    right_plot_fields=(
+                                                    ('x_velocity',(255,255,102)),
+                                                    ('y_velocity',(102,255,255)),
+                                                    ('xy_velocity',(255,255,255)))
+            ):
+
+            pw = pg.plot()
+            pw.setWindowTitle('All Pen Samples')
+            left_plot = pw.plotItem
+            left_plot.setLabels(left='Raw Position')
+
+            right_plot = pg.ViewBox()
+            left_plot.showAxis('right')
+            left_plot.scene().addItem(right_plot)
+            left_plot.getAxis('right').linkToView(right_plot)
+            right_plot.setXLink(left_plot)
+            left_plot.getAxis('right').setLabel('Abs. Velocity', color='#0000ff')
+
+
+            ## Handle view resizing
+            def updateViews():
+                ## view has resized; update auxiliary views to match
+                right_plot.setGeometry(left_plot.vb.sceneBoundingRect())
+
+                ## need to re-update linked axes since this was called
+                ## incorrectly while views had different shapes.
+                ## (probably this should be handled in ViewBox.resizeEvent)
+                right_plot.linkedViewChanged(left_plot.vb, right_plot.XAxis)
+
+            updateViews()
+            left_plot.vb.sigResized.connect(updateViews)
+            #plt.addLegend()
+            pdata=self.project.pendata
+
+            for fname,fcolor in left_plot_fields:
+                if fname.endswith('_filtered'):
+                    left_plot.plot(x=pdata['time'], y=pdata[fname],
+                                   pen=fcolor, name=fname)
+                else:
+                    left_plot.plot(x=pdata['time'], y=pdata[fname],
+                         symbolPen=fcolor, symbolBrush=fcolor, pen=None,
+                         symbol='o', symbolSize=2, name=fname)
+
+            for fname,fcolor in right_plot_fields:
+                right_plot.addItem(pg.PlotCurveItem(x=pdata['time'],
+                                                    y=pdata[fname],
+                                                    pen=fcolor, name=fname))
 
     def closeEvent(self, event):
         if event == u'FORCE_EXIT':

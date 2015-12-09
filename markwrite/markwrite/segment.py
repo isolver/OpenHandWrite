@@ -21,6 +21,7 @@ from operator import attrgetter
 from weakref import proxy, ProxyType,WeakValueDictionary
 import numpy as np
 from markwrite.gui.projectsettings import SETTINGS
+from markwrite.gui import X_FIELD, Y_FIELD
 
 class PenDataSegmentCategory(object):
     _nextid=0
@@ -206,7 +207,7 @@ class PenDataSegmentCategory(object):
                 return self.starttime <= v <= self.endtime
             elif k == 'position':
                 x, y = v
-                return np.any(self.pendata['x']==x & self.pendata['y']==y)
+                return np.any(self.pendata[X_FIELD]==x & self.pendata[Y_FIELD]==y)
             elif k == 'pressure':
                 return np.any(self.pendata['pressure']==v)
             elif k == 'timeperiod':
@@ -329,7 +330,7 @@ class PenDataSegmentCategory(object):
         """
         project_properties = OrderedDict()
         project_properties['Name'] = [self.name,]
-        project_properties['Locked'] = [self.locked,]
+        #project_properties['Locked'] = [self.locked,]
         project_properties['ID'] = [self.id,]
         project_properties['Start Time'] = [self.starttime,]
         project_properties['End Time'] = [self.endtime,]
@@ -387,7 +388,8 @@ class PenDataSegment(PenDataSegmentCategory):
             period_count = np.nonzero(np.logical_and(start_ixs<max_ix,start_ixs>=min_ix))[0].shape[0]
         project_properties = OrderedDict()
         project_properties['Name'] = [self.name,]
-        project_properties['Locked'] = [self.locked,]
+        if self.l1seg:
+            project_properties['L1 Segment'] = [self.l1seg.name,]
         project_properties['ID'] = [self.id,]
         project_properties['Start Time'] = [self.starttime,]
         project_properties['End Time'] = [self.endtime,]

@@ -16,3 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import division
 from projectsettings import ProjectSettingsDialog,SETTINGS
+
+X_FIELD = 'x_filtered'
+Y_FIELD = 'y_filtered'
+

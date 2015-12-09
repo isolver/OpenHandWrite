@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import pyqtgraph as pg
+from markwrite.gui import X_FIELD, Y_FIELD
 from markwrite.gui.mainwin import MarkWriteMainWindow
 from markwrite.gui.projectsettings import SETTINGS
 
@@ -35,7 +36,7 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
             self.handlePenDataSelectionChanged)
 
     def handlePenDataSelectionChanged(self, timeperiod, pendata):
-        self.plotDataItem.setData(x=pendata['x'], y=pendata['y'], )
+        self.plotDataItem.setData(x=pendata[X_FIELD], y=pendata[Y_FIELD], )
         self.getPlotItem().enableAutoRange(x=True, y=True)
 
     def handleUpdatedSettingsEvent(self, updates, settings):

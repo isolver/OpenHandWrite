@@ -19,6 +19,7 @@ import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui
 from weakref import proxy,ProxyType
+from markwrite.gui import X_FIELD, Y_FIELD
 from markwrite.gui.projectsettings import SETTINGS
 from markwrite.gui.mainwin import MarkWriteMainWindow
 from markwrite.segment import PenDataSegment
@@ -28,7 +29,7 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         pg.PlotWidget.__init__(self, enableMenu=False)
         # Create Pen Position Time Series Plot for All Data
 
-        self.getPlotItem().setLabel('left', "Pen Position", units='pix')
+        self.getPlotItem().setLabel('left', "Pen Position", units='raw')
         self.getPlotItem().setLabel('bottom', "Time", units='sec')
         self.getPlotItem().getViewBox().setMouseEnabled(y=SETTINGS['timeplot_enable_ymouse'])
         self.xPenPosTrace = None
@@ -84,7 +85,7 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
     def updateTraceX(self, penpoints, penarray, brusharray):
         penarray, brusharray = self.getPenBrushX(penpoints, penarray,
                                                  brusharray)
-        self.xPenPosTrace.setData(x=penpoints['time'], y=penpoints['x'],
+        self.xPenPosTrace.setData(x=penpoints['time'], y=penpoints[X_FIELD],
                                   symbolPen=penarray,
                                   symbolBrush=brusharray,
                                   pen=None, symbol='o',
@@ -113,7 +114,7 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
     def updateTraceY(self, penpoints, penarray, brusharray):
         penarray, brusharray = self.getPenBrushY(penpoints, penarray,
                                                  brusharray)
-        self.yPenPosTrace.setData(x=penpoints['time'], y=penpoints['y'],
+        self.yPenPosTrace.setData(x=penpoints['time'], y=penpoints[Y_FIELD],
                                   symbolPen=penarray,
                                   symbolBrush=brusharray,
                                     pen=None, symbol='o',
@@ -132,8 +133,8 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         #penpoints = project.pendata
         penpoints = self.getCurrentPenData()
 
-        self.fullPenValRange = (min(penpoints['x'].min(), penpoints['y'].min()),
-                       max(penpoints['x'].max(), penpoints['y'].max()))
+        self.fullPenValRange = (min(penpoints[X_FIELD].min(), penpoints[Y_FIELD].min()),
+                       max(penpoints[X_FIELD].max(), penpoints[Y_FIELD].max()))
         self.maxTime=penpoints['time'][-1]
         self.getPlotItem().setLimits(yMin=self.fullPenValRange[0], yMax=self.fullPenValRange[1],
                                      xMin=penpoints['time'][0],
@@ -146,7 +147,7 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
             penarray, brusharray = self.getPenBrushX(penpoints, penarray,
                                                      brusharray)
             self.xPenPosTrace = self.getPlotItem().plot(x=penpoints['time'],
-                                                        y=penpoints['x'],
+                                                        y=penpoints[X_FIELD],
                                                         pen=None, symbol='o',
                                                         symbolSize=SETTINGS[
                                                             'timeplot_xtrace_size'],
@@ -157,7 +158,7 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
             penarray, brusharray = self.getPenBrushY(penpoints, penarray,
                                                      brusharray)
             self.yPenPosTrace = self.getPlotItem().plot(x=penpoints['time'],
-                                                        y=penpoints['y'],
+                                                        y=penpoints[Y_FIELD],
                                                         pen=None, symbol='o',
                                                         symbolSize=SETTINGS[
                                                             'timeplot_ytrace_size'],
@@ -220,8 +221,8 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
     def zoomToPenData(self, pendata, lock_bounds=False):
         if len(pendata) > 0:
             if SETTINGS['timeplot_enable_ymouse']:
-                penValRange = (min(pendata['x'].min() - 20, pendata['y'].min() - 20, 0),
-                    max(pendata['x'].max() + 20, pendata['y'].max() + 20))
+                penValRange = (min(pendata[X_FIELD].min() - 20, pendata[Y_FIELD].min() - 20, 0),
+                    max(pendata[X_FIELD].max() + 20, pendata[Y_FIELD].max() + 20))
             else:
                 penValRange = self.fullPenValRange
             # if lock_bounds:
@@ -242,8 +243,8 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
             kwargs={}
             if SETTINGS['timeplot_enable_ymouse']:
                 kwargs['yRange'] = (
-                    min(pendata['x'].min() - 20, pendata['y'].min() - 20, vymin),
-                    max(pendata['x'].max() + 20, pendata['y'].max() + 20, vymax))
+                    min(pendata[X_FIELD].min() - 20, pendata[Y_FIELD].min() - 20, vymin),
+                    max(pendata[X_FIELD].max() + 20, pendata[Y_FIELD].max() + 20, vymax))
             else:
                 kwargs['yRange'] = self.fullPenValRange
 

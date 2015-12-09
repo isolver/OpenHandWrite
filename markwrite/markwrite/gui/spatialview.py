@@ -19,6 +19,7 @@ import pyqtgraph as pg
 from markwrite.gui.projectsettings import SETTINGS
 from markwrite.gui.mainwin import MarkWriteMainWindow
 from markwrite.segment import PenDataSegment
+from markwrite.gui import X_FIELD, Y_FIELD
 
 class PenDataSpatialPlotWidget(pg.PlotWidget):
     def __init__(self):
@@ -87,8 +88,8 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         if self.allPlotDataItem is None:
             brusharray,penarray = self.createDefaultPenBrushForData(pdat)
 
-            self.allPlotDataItem = self.getPlotItem().plot(x=pdat['x'],
-                                                           y=pdat['y'],
+            self.allPlotDataItem = self.getPlotItem().plot(x=pdat[X_FIELD],
+                                                           y=pdat[Y_FIELD],
                                                            pen=None, symbol='o',
                                                            symbolSize=1,
                                                            symbolBrush=brusharray,
@@ -106,19 +107,19 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         else:
             brusharray, penarray = self.createDefaultPenBrushForData(pdat)
 
-            self.allPlotDataItem.setData(x=pdat['x'], y=pdat['y'],
+            self.allPlotDataItem.setData(x=pdat[X_FIELD], y=pdat[Y_FIELD],
                                          pen=None, symbol='o',
                                          symbolSize=1,
                                          symbolBrush=brusharray,
                                          symbolPen=penarray)
 
-            self.getPlotItem().setLimits(xMin=pdat['x'].min(),
-                                         yMin=pdat['y'].min(),
-                                         xMax=pdat['x'].max(),
-                                         yMax=pdat['y'].max())
+            self.getPlotItem().setLimits(xMin=pdat[X_FIELD].min(),
+                                         yMin=pdat[Y_FIELD].min(),
+                                         xMax=pdat[X_FIELD].max(),
+                                         yMax=pdat[Y_FIELD].max())
 
-            self.setRange(xRange=(pdat['x'].min(), pdat['x'].max()),
-                          yRange=(pdat['y'].min(), pdat['y'].max()),
+            self.setRange(xRange=(pdat[X_FIELD].min(), pdat[X_FIELD].max()),
+                          yRange=(pdat[Y_FIELD].min(), pdat[Y_FIELD].max()),
                           padding=None)
         #print "<< ### PenDataSpatialPlotWidget.handleResetPenData"
 
@@ -130,8 +131,8 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             pen = pg.mkPen(SETTINGS['spatialplot_selectedvalid_color'],
                            width=SETTINGS['spatialplot_selectedpoint_size'])
             brush = pg.mkBrush(SETTINGS['spatialplot_selectedvalid_color'])
-            self.selectedPlotDataItem.setData(x=selectedpendata['x'],
-                                              y=selectedpendata['y'], pen=None,
+            self.selectedPlotDataItem.setData(x=selectedpendata[X_FIELD],
+                                              y=selectedpendata[Y_FIELD], pen=None,
                                               symbol='o', symbolSize=SETTINGS[
                     'spatialplot_selectedpoint_size'],
                                               symbolBrush=brush, symbolPen=pen)
@@ -139,8 +140,8 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             pen = pg.mkPen(SETTINGS['spatialplot_selectedinvalid_color'],
                            width=SETTINGS['spatialplot_selectedpoint_size'])
             brush = pg.mkBrush(SETTINGS['spatialplot_selectedinvalid_color'])
-            self.selectedPlotDataItem.setData(x=selectedpendata['x'],
-                                              y=selectedpendata['y'], pen=None,
+            self.selectedPlotDataItem.setData(x=selectedpendata[X_FIELD],
+                                              y=selectedpendata[Y_FIELD], pen=None,
                                               symbol='o', symbolSize=SETTINGS[
                     'spatialplot_selectedpoint_size'],
                                               symbolBrush=brush, symbolPen=pen)
@@ -153,7 +154,7 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             if k.startswith('spatialplot_default'):
                 brusharray, penarray = self.createDefaultPenBrushForData(pdat)
 
-                self.allPlotDataItem.setData(x=pdat['x'], y=pdat['y'],
+                self.allPlotDataItem.setData(x=pdat[X_FIELD], y=pdat[Y_FIELD],
                                              symbolBrush=brusharray,
                                              symbolPen=penarray)
                 break
@@ -186,21 +187,21 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         xpadding = self.getPlotItem().getViewBox().suggestPadding(0)
         ypadding = self.getPlotItem().getViewBox().suggestPadding(1)
         if lock_bounds:
-            self.setLimits(yMin=max(0.0, pendata['y'].min() - ypadding),
-                           yMax=pendata['y'].max() + ypadding,
-                           xMin=max(0.0, pendata['x'].min() - xpadding),
-                           xMax=pendata['x'].max() + xpadding)
-        self.setRange(xRange=(pendata['x'].min(), pendata['x'].max()),
-                      yRange=(pendata['y'].min(), pendata['y'].max()),
+            self.setLimits(yMin=max(0.0, pendata[Y_FIELD].min() - ypadding),
+                           yMax=pendata[Y_FIELD].max() + ypadding,
+                           xMin=max(0.0, pendata[X_FIELD].min() - xpadding),
+                           xMax=pendata[X_FIELD].max() + xpadding)
+        self.setRange(xRange=(pendata[X_FIELD].min(), pendata[X_FIELD].max()),
+                      yRange=(pendata[Y_FIELD].min(), pendata[Y_FIELD].max()),
                       padding=None)
 
     def ensureSelectionIsVisible(self, timespan, selectedpendata):
         if len(selectedpendata) > 0:
             (vxmin, vxmax), (vymin, vymax) = self.viewRange()
-            dxmin, dxmax, dymin, dymax = selectedpendata['x'].min(), \
-                                         selectedpendata['x'].max(), \
-                                         selectedpendata['y'].min(), \
-                                         selectedpendata['y'].max()
+            dxmin, dxmax, dymin, dymax = selectedpendata[X_FIELD].min(), \
+                                         selectedpendata[X_FIELD].max(), \
+                                         selectedpendata[Y_FIELD].min(), \
+                                         selectedpendata[Y_FIELD].max()
 
             vxlength = vxmax - vxmin
             vylength = vymax - vymin

@@ -20,11 +20,18 @@ from util import getSegmentTagsFilePath
 import codecs
 import os
 
-markwrite_pendata_format = [('time', np.float64),
+markwrite_pendata_format = [('time', np.float32),
                     ('x', np.int32),
                     ('y', np.int32),
                     ('pressure', np.int16),
+                    ('state', np.uint8),
                     # Following are set by MarkWrite
+                    ('x_filtered', np.float64),
+                    ('y_filtered', np.float64),
+                    ('pressure_filtered', np.float64),
+                    ('x_velocity', np.float64),
+                    ('y_velocity', np.float64),
+                    ('xy_velocity', np.float64),
                     ('segment_id', np.uint16)]
 
 
@@ -128,8 +135,15 @@ class EyePenDataImporter(DataImporter):
                          int(line_tokens[cls.X_COLUMN_IX].strip()),
                          int(line_tokens[cls.Y_COLUMN_IX].strip()),
                          int(line_tokens[cls.PRESS_COLUMN_IX].strip()),
-                         0)
-                    )
+                         0, # state field, always 0
+                         0, # x_filtered, filled in by markwrite runtime
+                         0, # y_filtered, filled in by markwrite runtime
+                         0, # pressure_filtered, filled in by markwrite runtime
+                         0, # x_velocity, filled in by markwrite runtime
+                         0, # y_velocity, filled in by markwrite runtime
+                         0, # xy_velocity, filled in by markwrite runtime
+                          0) #segment_id, filled in by markwrite runtime
+                        )
 
                 except IndexError:
                     print("Note: Skipping Line {0}. Contains {1} Tokens.".format(len(list_result), len(line_tokens)))
@@ -190,11 +204,19 @@ class HubDatastoreImporter(DataImporter):
         list_result = []
         if wintab_samples:
             for r in wintab_samples:
-                list_result.append((r['time'],
-                                     r['x'],
-                                     r['y'],
-                                     r['pressure'],
-                                     0)
+                list_result.append((
+                                 r['time'],
+                                 r['x'],
+                                 r['y'],
+                                 r['pressure'],
+                                 r['status'], # state field
+                                 0, # x_filtered, filled in by markwrite runtime
+                                 0, # y_filtered, filled in by markwrite runtime
+                                 0, # pressure_filtered, filled in by  runtime
+                                 0, # x_velocity, filled in by markwrite runtime
+                                 0, # y_velocity, filled in by markwrite runtime
+                                 0, # xy_velocity, filled in by markwrite runtime
+                                 0) #segment_id, filled in by markwrite runtime
                                     )
 
             try:
@@ -242,10 +264,18 @@ class XmlDataImporter(DataImporter):
             pressure = 0
             for stroke in stroke_set.iter(u'stroke'):
                 list_result.append((float(stroke.get("Time")),
-                                    stroke.get("X"),
-                                    stroke.get("Y"),
-                                    1, # pressure
-                                    0))
+                                stroke.get("X"),
+                                stroke.get("Y"),
+                                1, # pressure, always 1
+                                0, # state field, always 0
+                                0, # x_filtered, filled in by markwrite runtime
+                                0, # y_filtered, filled in by markwrite runtime
+                                0, # pressure_filtered, filled in by  runtime
+                                0, # x_velocity, filled in by markwrite runtime
+                                0, # y_velocity, filled in by markwrite runtime
+                                0, # xy_velocity, filled in by markwrite runtime
+                                0) #segment_id, filled in by markwrite runtime
+                                )
             last_point = list(list_result[-1])
             last_point[-2] = 0  # Set pressure to 0 for last point
             list_result.pop(-1)
@@ -280,20 +310,3 @@ def writePickle(file_path, file_name, dictobj):
 
 ################################################################################
 
-# Read condition variables table from iohub hdf5 file
-
-# TODO: Update to use pyqtgraph QT
-def displayTimeRangeVariableSelectionDialog(dataAccessUtil):
-    cv_names = [cvname for cvname in dataAccessUtil.getConditionVariableNames()
-                if cvname.startswith('DV_')]
-    dlg_info =  OrderedDict()
-    dlg_info["Start Trial Time"] = [cvname for cvname in cv_names
-                                    if cvname.endswith('START')]
-    dlg_info["End Trial Time"] = [cvname for cvname in cv_names
-                                  if cvname.endswith('END')]
-    infoDlg = gui.DlgFromDict(dictionary=dlg_info,
-                                       title="Trial Event Time Range Variables",
-                                       order=dlg_info.keys())
-    if not infoDlg.OK:
-        return None
-    return dlg_info.values()
