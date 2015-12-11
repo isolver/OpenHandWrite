@@ -345,7 +345,7 @@ class PenDataSegmentCategory(object):
         return project_properties
 
 class PenDataSegment(PenDataSegmentCategory):
-    def __init__(self, name=None, pendata=None, parent=None):
+    def __init__(self, name=None, pendata=None, parent=None, fulltimerange=None):
         """
 
         :param name:
@@ -354,6 +354,9 @@ class PenDataSegment(PenDataSegmentCategory):
         """
         PenDataSegmentCategory.__init__(self,name, parent, False)
 
+        if fulltimerange is None:
+            fulltimerange = pendata['time'][[0,-1]]
+        self._timerange = fulltimerange
 
         if self._name is None:
             self._name="Segment %d"%(self._id)
@@ -367,6 +370,22 @@ class PenDataSegment(PenDataSegmentCategory):
     @property
     def pendata(self):
         return self._pendata
+
+    @property
+    def starttime(self):
+        return self._timerange[0]
+
+    @property
+    def endtime(self):
+        return self._timerange[1]
+
+    @property
+    def duration(self):
+        return self._timerange[1]-self._timerange[0]
+
+    @property
+    def timerange(self):
+        return self._timerange
 
     @pendata.setter
     def pendata(self, n):

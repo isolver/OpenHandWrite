@@ -362,7 +362,7 @@ class MarkWriteProject(object):
         :return:
         """
         sparent = self._segmentset.id2obj[parent_id]
-        new_segment = PenDataSegment(name=tag, pendata=self.selectedpendata, parent=sparent)
+        new_segment = PenDataSegment(name=tag, pendata=self.selectedpendata, parent=sparent, fulltimerange=self.selectedtimeperiod)
         pendata = self.pendata
         mask = (pendata['time'] >= new_segment.starttime) & (pendata['time'] <= new_segment.endtime)
         self.pendata['segment_id'][mask]=new_segment.id
