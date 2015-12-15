@@ -30,11 +30,9 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         self.getPlotItem().invertY(SETTINGS['spatialplot_invert_y_axis'])
         self.getPlotItem().setAspectLocked(True, 1)
 
-        self.allPlotDataItem = None  #self.getPlotItem().plot(pen=None,
-        # symbol='o', symbolSize=1, symbolBrush=(255,255,255), symbolPen=(
-        # 255,255,255))
-        self.selectedPlotDataItem = None  #self.getPlotItem().plot(pen=None,
-        # symbol='o', symbolSize=3, symbolBrush=(0,0,255), symbolPen=(0,0,255))
+        self.allPlotDataItem = None
+        self.selectedPlotDataItem = None
+        self.strokeBoundaryPoints = None
 
         MarkWriteMainWindow.instance().sigResetProjectData.connect(
             self.handleResetPenData)
@@ -50,10 +48,10 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
     def createDefaultPenBrushForData(self, pdat):
         pen = pg.mkPen(SETTINGS['spatialplot_default_color'],
                        width=SETTINGS['spatialplot_default_point_size'])
-        pen2 = pg.mkPen(SETTINGS['spatialplot_default_color'].lighter(),
+        pen2 = pg.mkPen(SETTINGS['spatialplot_default_color'].darker(300),
                         width=SETTINGS['spatialplot_default_point_size'])
         brush = pg.mkBrush(SETTINGS['spatialplot_default_color'])
-        brush2 = pg.mkBrush(SETTINGS['spatialplot_default_color'].lighter())
+        brush2 = pg.mkBrush(SETTINGS['spatialplot_default_color'].darker(300))
         penarray = np.empty(pdat.shape[0], dtype=object)
         penarray[:] = pen
         penarray[pdat['pressure'] == 0] = pen2
@@ -61,6 +59,20 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         brusharray[:] = brush
         brusharray[pdat['pressure'] == 0] = brush2
         return brusharray, penarray
+
+    def addStrokeBoundaryPoints(self, strokeboundries):
+        if self.strokeBoundaryPoints is None:
+            ssize = SETTINGS['timeplot_xtrace_size']*2
+            pen = pg.mkPen([255, 0, 255],
+                           width=ssize)
+            brush = pg.mkBrush([255,0,255])
+            self.strokeBoundaryPoints = pg.ScatterPlotItem(size=ssize, pen=pen, brush=brush)
+            self.getPlotItem().addItem(self.strokeBoundaryPoints)
+        else:
+            self.strokeBoundaryPoints.clear()
+        self.strokeBoundaryPoints.addPoints(x=strokeboundries[X_FIELD],
+                                             y=strokeboundries[Y_FIELD])
+
 
     def handleSelectedObjectChanged(self, newobj, oldobj):
         if MarkWriteMainWindow.instance().project._autosegl1 is True:
@@ -121,6 +133,12 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             self.setRange(xRange=(pdat[X_FIELD].min(), pdat[X_FIELD].max()),
                           yRange=(pdat[Y_FIELD].min(), pdat[Y_FIELD].max()),
                           padding=None)
+
+        proj = MarkWriteMainWindow.instance().project
+        pstart, pend = pdat['time'][[0,-1]]
+        vms_times = proj.velocity_minima_samples['time']
+        vms_mask = (vms_times >= pstart) & (vms_times <= pend)
+        self.addStrokeBoundaryPoints(proj.velocity_minima_samples[vms_mask])
         #print "<< ### PenDataSpatialPlotWidget.handleResetPenData"
 
 

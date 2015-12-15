@@ -25,6 +25,8 @@ from markwrite.gui.mainwin import MarkWriteMainWindow
 from markwrite.segment import PenDataSegment
 
 class PenDataTemporalPlotWidget(pg.PlotWidget):
+    displayVelocityTrace = True
+    displayStrokePoints = True
     def __init__(self):
         pg.PlotWidget.__init__(self, enableMenu=False)
         # Create Pen Position Time Series Plot for All Data
@@ -32,8 +34,32 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         self.getPlotItem().setLabel('left', "Pen Position", units='raw')
         self.getPlotItem().setLabel('bottom', "Time", units='sec')
         self.getPlotItem().getViewBox().setMouseEnabled(y=SETTINGS['timeplot_enable_ymouse'])
+
+#       self.velocityPlot = None
+#        self.velocityTrace = None
+#        self.velocityPlot = pg.ViewBox()
+#        self.getPlotItem().showAxis('right')
+#        self.getPlotItem().scene().addItem(self.velocityPlot)
+#        self.getPlotItem().getAxis('right').linkToView(self.velocityPlot)
+#        self.velocityPlot.setXLink(self.getPlotItem())
+#        self.getPlotItem().getAxis('right').setLabel('Absolute Velocity', color='#0000ff')
+
+#        self.updateTwoAxisViews()
+#        self.getPlotItem().vb.sigResized.connect(self.updateTwoAxisViews)
+
+#        ssize = SETTINGS['timeplot_xtrace_size']
+#        self.velocityTrace = pg.PlotCurveItem(
+#                                symbolPen=pg.mkPen([255,255,255],width=ssize),
+#                                symbolBrush=pg.mkBrush([255,255,255]),
+#                                pen=None, symbol='-',
+#                                symbolSize=ssize,
+#                                name="Absolute Velocity")
+#        self.velocityPlot.addItem(self.velocityTrace)
+
         self.xPenPosTrace = None
         self.yPenPosTrace = None
+
+        self.strokeBoundaryPoints = None
         self.currentSelection = None
         self.fullPenValRange=[0,1]
         self.maxTime=1
@@ -44,6 +70,16 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
             self.handleResetPenData)
         MarkWriteMainWindow.instance().sigActiveObjectChanged.connect(
             self.handleSelectedObjectChanged)
+
+#    ## Handle view resizing
+#    def updateTwoAxisViews(self):
+#        ## view has resized; update auxiliary views to match
+#        self.velocityPlot.setGeometry(self.getPlotItem().vb.sceneBoundingRect())
+
+        ## need to re-update linked axes since this was called
+        ## incorrectly while views had different shapes.
+        ## (probably this should be handled in ViewBox.resizeEvent)
+#        self.velocityPlot.linkedViewChanged(self.getPlotItem().vb, self.velocityPlot.XAxis)
 
     def handleSelectedObjectChanged(self, newobj, oldobj):
         if MarkWriteMainWindow.instance().project._autosegl1 is True:
@@ -92,6 +128,31 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
                                     symbolSize=SETTINGS[
                                         'timeplot_xtrace_size'])
         return penarray, brusharray
+
+    def addStrokeBoundaryPoints(self, strokeboundries):
+        if self.strokeBoundaryPoints is None:
+            ssize = SETTINGS['timeplot_xtrace_size']*2
+            pen = pg.mkPen([255, 0, 255],
+                           width=ssize)
+            brush = pg.mkBrush([255, 0, 255])
+            self.strokeBoundaryPoints = pg.ScatterPlotItem(size=ssize, pen=pen, brush=brush)
+            self.getPlotItem().addItem(self.strokeBoundaryPoints)
+        else:
+            self.strokeBoundaryPoints.clear()
+        self.strokeBoundaryPoints.addPoints(x=strokeboundries['time'],
+                                             y=strokeboundries[X_FIELD])
+        self.strokeBoundaryPoints.addPoints(x=strokeboundries['time'],
+                                             y=strokeboundries[Y_FIELD],
+                                            )
+
+#    def updateVelocityTrace(self, penpoints):
+#        if self.displayVelocityTrace:
+#            print "updateVelocityTrace called:",penpoints.shape,penpoints['time'].min(),penpoints['time'].max(),penpoints['xy_velocity'].min(),penpoints['xy_velocity'].max()
+#            self.velocityTrace.setData(x=penpoints['time'],
+#                                           y=penpoints['xy_velocity'],
+#                                           )
+#        elif self.velocityTrace is not None:
+#            print"TODO: Remove Velocity trace from plot."
 
     def getPenBrushY(self, penpoints, penarray=None, brusharray=None):
         if penarray is None:
@@ -180,6 +241,14 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
             # Update DataItem objects
             penarray, brusharray = self.updateTraceX(penpoints, penarray, brusharray)
             self.updateTraceY(penpoints, penarray, brusharray)
+
+        proj = MarkWriteMainWindow.instance().project
+        pstart, pend = penpoints['time'][[0,-1]]
+        vms_times = proj.velocity_minima_samples['time']
+        vms_mask = (vms_times >= pstart) & (vms_times <= pend)
+        self.addStrokeBoundaryPoints(proj.velocity_minima_samples[vms_mask])
+
+#        self.updateVelocityTrace(penpoints)
 
         self.setRange(xRange=(penpoints['time'][0], penpoints['time'][-1]),
                       yRange=self.fullPenValRange,

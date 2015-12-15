@@ -26,12 +26,11 @@ window_length = 13
 # polyorder must be less than window_length.
 polyorder = 9
 
-def filter_pen_sample_series(project, series):
+def filter_pen_sample_series(series):
     """
     Given the pen samples ndarray in series, perform filtering on the
     x, y, and pressure values, updating the associated 'filter_X' fields
     with the filter results.
-    :param project: markwrite project containing the all sample data.
     :param series: markwrite sample ndarray for the series to be filtered.
     :return:
     """
@@ -41,6 +40,18 @@ def filter_pen_sample_series(project, series):
     # a good job of smoothing out noise while maintaining signal.
     # See http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.savgol_filter.html#scipy.signal.savgol_filter
 
-    series['x_filtered'] = savgol_filter(series['x'], window_length, polyorder)
-    series['y_filtered'] = savgol_filter(series['y'], window_length, polyorder)
-    series['pressure_filtered'] =  savgol_filter(series['pressure_filtered'], window_length, polyorder)
+    if len(series)> window_length*2:
+        series['x_filtered'] = savgol_filter(series['x'], window_length, polyorder)
+        series['y_filtered'] = savgol_filter(series['y'], window_length, polyorder)
+        series['pressure_filtered'] =  savgol_filter(series['pressure_filtered'], window_length, polyorder)
+    elif len(series) > 10:
+        series['x_filtered'] = savgol_filter(series['x'], 5, 3)
+        series['y_filtered'] = savgol_filter(series['y'], 5, 3)
+        series['pressure_filtered'] =  savgol_filter(series['pressure_filtered'], 5, 3)
+    else:
+        series['x_filtered'] = series['x']
+        series['y_filtered'] = series['y']
+        series['pressure_filtered'] =  series['pressure_filtered']
+
+
+

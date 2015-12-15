@@ -17,20 +17,19 @@
 from __future__ import division
 
 from weakref import proxy,ProxyType
-import time
 import os
 import glob
-import numpy as np
 import codecs
 
+import numpy as np
 import pyqtgraph as pg
 from pyqtgraph import OrderedDict
-from pyqtgraph.Qt import QtGui
 
 from file_io import EyePenDataImporter, XmlDataImporter, HubDatastoreImporter
 from segment import PenDataSegment, PenDataSegmentCategory
 from util import contiguous_regions
 from gui.projectsettings import SETTINGS
+
 
 selectedtimeperiod_properties=None
 
@@ -165,6 +164,7 @@ class MarkWriteProject(object):
         self._original_timebase_offset=0
         self._autosegl1=False
         self._trialtimes = None
+        self._trialindices = None
         self._expcondvars = []
 
         self._mwapp = None
@@ -272,6 +272,7 @@ class MarkWriteProject(object):
             # sample data.
             samples_by_trial = []
             trial_times = None
+            self._trialindices=[]
             if self._expcondvars is not None and self._stimevar is not None and self._etimevar is not None:
                 trial_times = []
                 for t in self._expcondvars:
@@ -279,13 +280,18 @@ class MarkWriteProject(object):
                         trialstart = float(t[self._stimevar])
                         trialend = float(t[self._etimevar])
                         trial_times.append((trialstart,trialend))
-                        trial_samples = pen_data[(pen_data['time'] >= trialstart) & (pen_data['time'] <= trialend)]
+                        trial_time_mask = (pen_data['time'] >= trialstart) & (pen_data['time'] <= trialend)
+                        start_ix, end_ix = np.asarray(np.where(trial_time_mask))[[0, -1]]
+                        self._trialindices.append([start_ix, end_ix])
+                        trial_samples = pen_data[trial_time_mask]
                         samples_by_trial.append(trial_samples)
                         #print "trial samples:",trial_samples.shape
                     except:
                         print("Error getting trial time period:")
                         import traceback
                         traceback.print_exc()
+            else:
+                self._trialindices=[[0,len(pen_data)-1],]
 
             if samples_by_trial:
                 # make pen_data == concat'ed samples_by_trial
@@ -330,15 +336,44 @@ class MarkWriteProject(object):
                 slist.append((series_starts_ix[i],series_stops_ix[i]))
             series_dtype = np.dtype({'names':['start_ix','end_ix'], 'formats':[np.uint32,np.uint32,]})
             self.series_boundaries = np.asarray(slist,dtype=series_dtype)
-
+            self.series_press_period_boundaries=[]
+            self.series_press_period_minima_ix=[]
+            self.velocity_minima_samples = None
             # filter data
-            from sample_filter import filter_pen_sample_series
-            from sample_va import calculate_velocity
+            from .sigproc import filter_pen_sample_series, calculate_velocity, detect_peaks
             for series_bounds in self.series_boundaries:
-                filter_pen_sample_series(self, self.pendata[
-                        series_bounds['start_ix']:series_bounds['end_ix']+1])
-                calculate_velocity(self, self.pendata[
-                        series_bounds['start_ix']:series_bounds['end_ix']+1])
+                # get sample array for current series
+                pseries = self.pendata[
+                        series_bounds['start_ix']:series_bounds['end_ix']+1]
+
+                # Filter and valc velocity for all samples in the series,
+                # regardless of pressure state.
+                filter_pen_sample_series(pseries)
+                calculate_velocity(pseries)
+
+                # For current series, get boundaries for
+                # pen pressed periods (pressure > 0)
+                press_starts, press_stops, press_lenths = contiguous_regions(pseries['pressure'] > 0)
+
+                # Add pressed period boundaries array for current series to
+                # the list of series pen pressed boundaries.
+                splist=[]
+                for i in xrange(len(press_starts)):
+                    psb_start_ix = series_bounds['start_ix']
+                    ppbounds = (press_starts[i], press_stops[i])
+                    splist.append(ppbounds)
+
+                    ppp_minima = detect_peaks(pseries['xy_velocity'][ppbounds[0]:ppbounds[1]+1], mph=None, mpd=10, valley=True)#, show=True)
+                    #print 'ppp_minima:',ppp_minima
+
+                    # Update minima indexes to be relative to full trial array
+                    pminima = [psb_start_ix+ppbounds[0]+pmin for pmin in ppp_minima]
+                    #print "pminima:",pminima
+                    self.series_press_period_minima_ix.extend(pminima)
+
+                self.series_press_period_boundaries.append(np.asarray(splist,dtype=series_dtype))
+
+            self.velocity_minima_samples = self.pendata[self.series_press_period_minima_ix]
 
             if self._selectedtimeregion is None:
                 MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)

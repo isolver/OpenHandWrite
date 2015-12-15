@@ -368,6 +368,82 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.decreaseSelectionStartPointAction.setStatusTip(atext)
         self.decreaseSelectionStartPointAction.triggered.connect(self.decreaseSelectionStartPointTime)
 
+        #
+        # Next/Prev Sample Series Actions
+        #
+        atext = 'INSERT ACTION TOOLTIP TEXT HERE'
+        aicon = 'help&32.png'
+        self.selectNextSampleSeriesAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            'ICON DESC. TXT HERE',
+            self)
+        #self.selectNextSampleSeriesAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.selectNextSampleSeriesAction.setEnabled(False)
+        self.selectNextSampleSeriesAction.setStatusTip(atext)
+        self.selectNextSampleSeriesAction.triggered.connect(self.selectNextSampleSeries)
+
+        atext = 'INSERT ACTION TOOLTIP TEXT HERE'
+        aicon = 'help&32.png'
+        self.selectPrevSampleSeriesAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            'ICON DESC. TXT HERE',
+            self)
+        #self.selectPrevSampleSeriesAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.selectPrevSampleSeriesAction.setEnabled(False)
+        self.selectPrevSampleSeriesAction.setStatusTip(atext)
+        self.selectPrevSampleSeriesAction.triggered.connect(self.selectPrevSampleSeries)
+
+        #
+        # Next/Prev Pen Pressed Series Actions
+        #
+        atext = 'INSERT ACTION TOOLTIP TEXT HERE'
+        aicon = 'help&32.png'
+        self.selectNextPressSeriesAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            'ICON DESC. TXT HERE',
+            self)
+        #self.selectNextPressSeriesAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.selectNextPressSeriesAction.setEnabled(False)
+        self.selectNextPressSeriesAction.setStatusTip(atext)
+        self.selectNextPressSeriesAction.triggered.connect(self.selectNextPressSeries)
+
+        atext = 'INSERT ACTION TOOLTIP TEXT HERE'
+        aicon = 'help&32.png'
+        self.selectPrevPressSeriesAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            'ICON DESC. TXT HERE',
+            self)
+        #self.selectPrevPressSeriesAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.selectPrevPressSeriesAction.setEnabled(False)
+        self.selectPrevPressSeriesAction.setStatusTip(atext)
+        self.selectPrevPressSeriesAction.triggered.connect(self.selectPrevPressSeries)
+
+        #
+        # Next/Prev Stroke Actions
+        #
+        atext = 'INSERT ACTION TOOLTIP TEXT HERE'
+        aicon = 'help&32.png'
+        self.selectNextStrokeAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            'ICON DESC. TXT HERE',
+            self)
+        #self.selectNextStrokeAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.selectNextStrokeAction.setEnabled(False)
+        self.selectNextStrokeAction.setStatusTip(atext)
+        self.selectNextStrokeAction.triggered.connect(self.selectNextStroke)
+
+        atext = 'INSERT ACTION TOOLTIP TEXT HERE'
+        aicon = 'help&32.png'
+        self.selectPrevStrokeAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            'ICON DESC. TXT HERE',
+            self)
+        #self.selectPrevStrokeAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.selectPrevStrokeAction.setEnabled(False)
+        self.selectPrevStrokeAction.setStatusTip(atext)
+        self.selectPrevStrokeAction.triggered.connect(self.selectPrevStroke)
+
+        #---
 
         self.exportSampleReportAction.enableActionsList.append(self.zoomInTimelineAction)
         self.exportSampleReportAction.enableActionsList.append(self.zoomOutTimelineAction)
@@ -378,7 +454,12 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.exportSampleReportAction.enableActionsList.append(self.increaseSelectionStartPointAction)
         self.exportSampleReportAction.enableActionsList.append(self.forwardSelectionAction)
         self.exportSampleReportAction.enableActionsList.append(self.backwardSelectionAction)
-
+        self.exportSampleReportAction.enableActionsList.append(self.selectNextSampleSeriesAction)
+        self.exportSampleReportAction.enableActionsList.append(self.selectPrevSampleSeriesAction)
+        self.exportSampleReportAction.enableActionsList.append(self.selectNextPressSeriesAction)
+        self.exportSampleReportAction.enableActionsList.append(self.selectPrevPressSeriesAction)
+        self.exportSampleReportAction.enableActionsList.append(self.selectNextStrokeAction)
+        self.exportSampleReportAction.enableActionsList.append(self.selectPrevStrokeAction)
         #
         # Help Menu / Toolbar Related Actions
         #
@@ -455,6 +536,13 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.toolbarsegment.addAction(self.forwardSelectionAction)
         self.toolbarsegment.addAction(self.decreaseSelectionEndPointAction)
         self.toolbarsegment.addAction(self.increaseSelectionEndPointAction)
+
+        self.toolbarsegment.addAction(self.selectNextSampleSeriesAction)
+        self.toolbarsegment.addAction(self.selectPrevSampleSeriesAction)
+        self.toolbarsegment.addAction(self.selectNextPressSeriesAction)
+        self.toolbarsegment.addAction(self.selectPrevPressSeriesAction)
+        self.toolbarsegment.addAction(self.selectNextStrokeAction)
+        self.toolbarsegment.addAction(self.selectPrevStrokeAction)
 
         self.toolbarHelp = self.addToolBar('Help')
         self.toolbarHelp.addAction(self.aboutAction)
@@ -854,15 +942,53 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             if self.project and len(updatedsettings)>0:
                 self.sigAppSettingsUpdated.emit(updatedsettings, allsettings)
 
+    @not_implemented
+    def selectNextSampleSeries(self):
+        pass
+
+    @not_implemented
+    def selectPrevSampleSeries(self):
+        pass
+
+    @not_implemented
+    def selectNextPressSeries(self):
+        pass
+
+    @not_implemented
+    def selectPrevPressSeries(self):
+        pass
+
+    @not_implemented
+    def selectNextStroke(self):
+        pass
+
+    @not_implemented
+    def selectPrevStroke(self):
+        pass
+
+    def closeEvent(self, event):
+        if event == u'FORCE_EXIT':
+            QtCore.QCoreApplication.instance().quit()
+            return
+
+        exitapp = ExitApplication.display()
+        if exitapp:
+            pass
+            if event:
+                event.accept()
+            else:
+                QtCore.QCoreApplication.instance().quit()
+        else:
+            if event:
+                event.ignore()
+
+    def __del__(self):
+        pass
+
+'''
     def displayAllDataChannelsTimePlot(self, left_plot_fields=(
-                                                    ('x',(153,255,0)),
-                                                    ('y',(51,204,255)),
                                                     ('x_filtered',(0,204,0)),
-                                                    ('y_filtered',(0,0,204))),
-                                                    right_plot_fields=(
-                                                    ('x_velocity',(255,255,102)),
-                                                    ('y_velocity',(102,255,255)),
-                                                    ('xy_velocity',(255,255,255)))
+                                                    ('y_filtered',(0,0,204)))
             ):
 
             pw = pg.plot()
@@ -893,39 +1019,37 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             #plt.addLegend()
             pdata=self.project.pendata
 
+
             for fname,fcolor in left_plot_fields:
-                if fname.endswith('_filtered'):
-                    left_plot.plot(x=pdata['time'], y=pdata[fname],
-                                   pen=fcolor, name=fname)
-                else:
-                    left_plot.plot(x=pdata['time'], y=pdata[fname],
-                         symbolPen=fcolor, symbolBrush=fcolor, pen=None,
-                         symbol='o', symbolSize=2, name=fname)
+                pen = pg.mkPen(fcolor, width=1)
+                brush = pg.mkBrush(fcolor)
 
-            for fname,fcolor in right_plot_fields:
-                right_plot.addItem(pg.PlotCurveItem(x=pdata['time'],
-                                                    y=pdata[fname],
-                                                    pen=fcolor, name=fname))
+                left_plot.plot(x=pdata['time'], y=pdata[fname],
+                         symbolPen=pen, symbolBrush=brush, pen=None,
+                         symbol='o', symbolSize=1, name=fname)
 
-    def closeEvent(self, event):
-        if event == u'FORCE_EXIT':
-            QtCore.QCoreApplication.instance().quit()
-            return
 
-        exitapp = ExitApplication.display()
-        if exitapp:
-            pass
-            if event:
-                event.accept()
-            else:
-                QtCore.QCoreApplication.instance().quit()
-        else:
-            if event:
-                event.ignore()
+            ssize = SETTINGS['timeplot_xtrace_size']*2
+            pen = pg.mkPen([255,255,255],
+                           width=ssize)
+            brush = pg.mkBrush([255,255,255])
+            left_plot.plot(x=self.project.velocity_minima_samples['time'],
+                                    y=self.project.velocity_minima_samples['y_filtered'],
+                                    symbolPen=pen,
+                                    symbolBrush=brush,
+                                    pen=None, symbol='x',
+                                    symbolSize=ssize,
+                                    name="Stroke Boundary")
 
-    def __del__(self):
-        pass
 
+            left_plot.plot(x=pdata['time'],
+                                                y=pdata['xy_velocity'],
+                                                symbolPen=(255,0,0), symbolBrush=(255,0,0), pen=None,
+                                                symbol='o', symbolSize=1,
+                                                name='xy_velocity')
+
+            #right_plot.addItem(pg.PlotCurveItem
+'''
 
 #
 ## Main App Helpers

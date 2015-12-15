@@ -26,12 +26,11 @@ window_length = 13
 # polyorder must be less than window_length.
 polyorder = 9
 
-def calculate_velocity(project, series):
+def calculate_velocity(series):
     """
     Given the pen samples ndarray in series, calculate velocity for x and y
     fields, updating the associated '*_velocity' fields
     with the calculated result.
-    :param project: markwrite project containing the all sample data.
     :param series: markwrite sample ndarray.
     :return:
     """
@@ -40,17 +39,37 @@ def calculate_velocity(project, series):
     # as it does not phase shift the data and does a good job of
     # smoothing out noise with minimal signal distortion.
     # See http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.savgol_filter.html#scipy.signal.savgol_filter
-    #dt = series['time'][1:]-series['time'][0:-1]
-    #delta = dt.mean()
-    series['x_velocity'] = savgol_filter(series['x'], window_length, polyorder,
-                                         deriv=1, delta=1.0)
-    series['y_velocity'] = savgol_filter(series['y'], window_length, polyorder,
-                                         deriv=1, delta=1.0)
+    if len(series)==1:
+        # nothing to do
+        return
 
     dx = series['x_filtered'][1:]-series['x_filtered'][0:-1]
     dy = series['y_filtered'][1:]-series['y_filtered'][0:-1]
+    xy_velocity = np.hypot(dx, dy)
 
-    series['xy_velocity'][1:] = savgol_filter(np.hypot(dx,dy), window_length, polyorder)
-    series['xy_velocity'][0] = 0
+    wlength = 0
+    polyo = 0
+    if len(series)> window_length*2:
+        wlength = window_length
+        polyo = polyorder
+    elif len(series) > 10:
+        wlength = 5
+        polyo = 3
+
+    if wlength > 0:
+        series['x_velocity'] = savgol_filter(series['x'], wlength, polyo,
+                                         deriv=1, delta=1.0)
+        series['y_velocity'] = savgol_filter(series['y'], wlength, polyo,
+                                         deriv=1, delta=1.0)
+        xy_velocity = savgol_filter(xy_velocity, wlength, polyo)
+        series['xy_velocity'][1:] = xy_velocity
+        series['xy_velocity'][0] = 0
+    else:
+        series['x_velocity'][0] = 0
+        series['y_velocity'][0] = 0
+        series['xy_velocity'][0] = 0
+        series['x_velocity'][1:] = dx
+        series['y_velocity'][1:] = dy
+        series['xy_velocity'][1:] = xy_velocity
 
 

@@ -32,11 +32,26 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
                                                     symbolBrush=(255, 255, 255),
                                                     symbolPen=(255, 255, 255))
 
+        ssize = SETTINGS['timeplot_xtrace_size']*2
+        pen = pg.mkPen((255, 0, 255),
+                       width=ssize)
+        brush = pg.mkBrush((255, 0, 255))
+        self.strokeBoundaryPoints = pg.ScatterPlotItem(size=ssize, pen=pen, brush=brush)
+        self.getPlotItem().addItem(self.strokeBoundaryPoints)
+
         MarkWriteMainWindow.instance().sigSelectedPenDataUpdate.connect(
             self.handlePenDataSelectionChanged)
 
     def handlePenDataSelectionChanged(self, timeperiod, pendata):
         self.plotDataItem.setData(x=pendata[X_FIELD], y=pendata[Y_FIELD], )
+
+        if len(pendata):
+            proj = MarkWriteMainWindow.instance().project
+            pstart, pend = pendata['time'][[0,-1]]
+            vms_times = proj.velocity_minima_samples['time']
+            vmpoints = proj.velocity_minima_samples[(vms_times >= pstart) & (vms_times <= pend)]
+            self.strokeBoundaryPoints.setData(x=vmpoints[X_FIELD], y=vmpoints[Y_FIELD], )
+
         self.getPlotItem().enableAutoRange(x=True, y=True)
 
     def handleUpdatedSettingsEvent(self, updates, settings):
