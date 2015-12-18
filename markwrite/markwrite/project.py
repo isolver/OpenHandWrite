@@ -37,9 +37,12 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
     def __init__(self, *args, **kwargs):
         project = kwargs.pop('project')
         kwargs['movable']=True
-
         pg.LinearRegionItem.__init__(self,*args, **kwargs)
-
+        for l in self.lines:
+            l.pen.color()
+            l.setPen(l.pen.color(),
+                       width=2)
+            l.setHoverPen(l.hoverPen.color(),width=2)
         self._project = None
         if project:
             self.project=project
