@@ -132,19 +132,23 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
     def addStrokeBoundaryPoints(self, strokeboundries):
         ssize = SETTINGS['pen_stroke_boundary_size']
         if ssize == 0:
+            if self.strokeBoundaryPoints:
+                self.strokeBoundaryPoints.clear()
             return
+        scolor = SETTINGS['pen_stroke_boundary_color']
+        pen = pg.mkPen(scolor, width=ssize)
+        brush = pg.mkBrush(scolor)
         if self.strokeBoundaryPoints is None:
-            scolor = SETTINGS['pen_stroke_boundary_color']
-            pen = pg.mkPen(scolor, width=ssize)
-            brush = pg.mkBrush(scolor)
             self.strokeBoundaryPoints = pg.ScatterPlotItem(size=ssize, pen=pen, brush=brush)
             self.getPlotItem().addItem(self.strokeBoundaryPoints)
         else:
             self.strokeBoundaryPoints.clear()
         self.strokeBoundaryPoints.addPoints(x=strokeboundries['time'],
-                                             y=strokeboundries[X_FIELD])
+                                             y=strokeboundries[X_FIELD],
+                                             size=ssize, pen=pen, brush=brush)
         self.strokeBoundaryPoints.addPoints(x=strokeboundries['time'],
                                              y=strokeboundries[Y_FIELD],
+                                             size=ssize, pen=pen, brush=brush
                                             )
 
     def getPenBrushY(self, penpoints, penarray=None, brusharray=None):
@@ -263,6 +267,14 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
             if k.startswith('timeplot_ytrace'):
                 self.updateTraceY(penpoints, penarray, brusharray)
                 break
+
+        for k in updates.keys():
+            if k.startswith('pen_stroke_boundary'):
+                proj = MarkWriteMainWindow.instance().project
+                pstart, pend = penpoints['time'][[0,-1]]
+                vms_times = proj.velocity_minima_samples['time']
+                vms_mask = (vms_times >= pstart) & (vms_times <= pend)
+                self.addStrokeBoundaryPoints(proj.velocity_minima_samples[vms_mask])
 
         self.getPlotItem().getViewBox().setMouseEnabled(y=SETTINGS['timeplot_enable_ymouse'])
         if SETTINGS['timeplot_enable_ymouse'] is False:

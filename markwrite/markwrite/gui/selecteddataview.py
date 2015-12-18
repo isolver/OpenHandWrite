@@ -23,6 +23,8 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
     def __init__(self):
         pg.PlotWidget.__init__(self, enableMenu=False, )
 
+        self._lastSelectedData=[]
+
         self.getPlotItem().invertY(SETTINGS['spatialplot_invert_y_axis'])
         self.getPlotItem().setAspectLocked(True, 1)
         self.getPlotItem().hideAxis('left')
@@ -33,29 +35,45 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
                                                     symbolPen=(255, 255, 255))
 
         self.strokeBoundaryPoints = None
-        ssize = SETTINGS['pen_stroke_boundary_size']
-        if ssize:
-            scolor = SETTINGS['pen_stroke_boundary_color']
-            pen = pg.mkPen(scolor,width=ssize)
-            brush = pg.mkBrush(scolor)
-            self.strokeBoundaryPoints = pg.ScatterPlotItem(size=ssize, pen=pen, brush=brush)
-            self.getPlotItem().addItem(self.strokeBoundaryPoints)
 
         MarkWriteMainWindow.instance().sigSelectedPenDataUpdate.connect(
             self.handlePenDataSelectionChanged)
 
     def handlePenDataSelectionChanged(self, timeperiod, pendata):
+        self._lastSelectedData = pendata
         self.plotDataItem.setData(x=pendata[X_FIELD], y=pendata[Y_FIELD], )
 
-        if len(pendata) and self.strokeBoundaryPoints:
-            proj = MarkWriteMainWindow.instance().project
-            pstart, pend = pendata['time'][[0,-1]]
-            vms_times = proj.velocity_minima_samples['time']
-            vmpoints = proj.velocity_minima_samples[(vms_times >= pstart) & (vms_times <= pend)]
-            self.strokeBoundaryPoints.setData(x=vmpoints[X_FIELD], y=vmpoints[Y_FIELD], )
+        if len(pendata):
+            if self.strokeBoundaryPoints is None:
+                ssize = SETTINGS['pen_stroke_boundary_size']
+                if ssize:
+                    scolor = SETTINGS['pen_stroke_boundary_color']
+                    pen = pg.mkPen(scolor,width=ssize)
+                    brush = pg.mkBrush(scolor)
+                    self.strokeBoundaryPoints = pg.ScatterPlotItem(size=ssize, pen=pen, brush=brush)
+                    self.getPlotItem().addItem(self.strokeBoundaryPoints)
+            else:
+                ssize = SETTINGS['pen_stroke_boundary_size']
+                if ssize == 0:
+                    self.strokeBoundaryPoints.clear()
+                else:
+                    scolor = SETTINGS['pen_stroke_boundary_color']
+                    pen = pg.mkPen(scolor,width=ssize)
+                    brush = pg.mkBrush(scolor)
+
+                    proj = MarkWriteMainWindow.instance().project
+                    pstart, pend = pendata['time'][[0,-1]]
+                    vms_times = proj.velocity_minima_samples['time']
+                    vmpoints = proj.velocity_minima_samples[(vms_times >= pstart) & (vms_times <= pend)]
+                    self.strokeBoundaryPoints.setData(x=vmpoints[X_FIELD], y=vmpoints[Y_FIELD], size=ssize, pen=pen, brush=brush)
+
 
         self.getPlotItem().enableAutoRange(x=True, y=True)
 
     def handleUpdatedSettingsEvent(self, updates, settings):
         if 'spatialplot_invert_y_axis' in updates.keys():
             self.getPlotItem().invertY(SETTINGS['spatialplot_invert_y_axis'])
+
+        for k in updates.keys():
+            if k.startswith('pen_stroke_boundary'):
+                self.handlePenDataSelectionChanged(None,self._lastSelectedData)
