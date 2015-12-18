@@ -29,6 +29,7 @@ from file_io import EyePenDataImporter, XmlDataImporter, HubDatastoreImporter
 from segment import PenDataSegment, PenDataSegmentCategory
 from util import contiguous_regions
 from gui.projectsettings import SETTINGS
+from .sigproc import filter_pen_sample_series, calculate_velocity, detect_peaks
 
 
 selectedtimeperiod_properties=None
@@ -374,7 +375,6 @@ class MarkWriteProject(object):
             stroke_detect_min_p2p_sample_count = SETTINGS['stroke_detect_min_p2p_sample_count']
 
             # filter data
-            from .sigproc import filter_pen_sample_series, calculate_velocity, detect_peaks
             for series_bounds in self.series_boundaries:
                 # get sample array for current series
                 pseries = self.pendata[
@@ -398,79 +398,15 @@ class MarkWriteProject(object):
                     curr_press_series_id = press_run_count
                     press_run_count+=1
                     self.press_period_boundaries.append((curr_press_series_id,series_bounds['id'],psb_start_ix+si,st,psb_start_ix+ei,et))
-
                     if stroke_detect_pressed_runs_only is True:
-                        run_samples = pseries[si:ei]
                         # Create/extend list of all velocity minima points found
-                        ppp_minima = detect_peaks(run_samples['xy_velocity'],
-                                                  mph=None,
-                                                  mpd=stroke_detect_min_p2p_sample_count,
-                                                  edge='falling',##edge=None,
-                                                  valley=True)#, show=True)
-
-                        #if stroke_detect_min_value_threshold is not None:
-                        #    minima_samples =  run_samples[ppp_minima]
-                        #    ppp_minima = ppp_minima[minima_samples['xy_velocity'] >= stroke_detect_min_value_threshold]
-
-                        if len(ppp_minima)>1:
-                            for s,vmin_ix in enumerate(ppp_minima[:-1]):
-                                if s == 0:
-                                    vmin_ix = ppp_minima[0] = 0
-                                abs_vmin_ix = psb_start_ix+si+vmin_ix
-
-                                if ppp_minima[s+1] == ppp_minima[-1]:
-                                    next_abs_vmin_ix = psb_start_ix+si+len(run_samples)
-                                else:
-                                    next_abs_vmin_ix = psb_start_ix+si+ppp_minima[s+1]
-                                if next_abs_vmin_ix >= len(pen_data):
-                                    next_abs_vmin_ix=len(pen_data)-1
-                                st, et = pen_data['time'][[abs_vmin_ix, next_abs_vmin_ix-1]]
-                                self.stroke_boundaries.append((stroke_count,curr_press_series_id,abs_vmin_ix,st,next_abs_vmin_ix,et))
-                                self.sample_velocity_minima_ix.append(abs_vmin_ix)
-                                stroke_count+=1
-                            next_abs_vmin_ix = psb_start_ix+si+len(run_samples)
-                            if next_abs_vmin_ix >= len(pen_data):
-                                next_abs_vmin_ix=len(pen_data)-1
-                            self.sample_velocity_minima_ix.append(next_abs_vmin_ix)
-                        else:
-                            # add full run as one stroke
-                            self.sample_velocity_minima_ix.append(psb_start_ix+si)
-                            self.sample_velocity_minima_ix.append(psb_start_ix+si+len(run_samples))
-                            self.stroke_boundaries.append((stroke_count,curr_press_series_id,
-                                                           psb_start_ix+si,
-                                                           run_samples['time'][0],
-                                                           psb_start_ix+si+len(run_samples),
-                                                           run_samples['time'][-1]))
-                            stroke_count+=1
+                        # for current pressed sample run
+                        self.findstrokes(pseries[si:ei], psb_start_ix+si, curr_press_series_id)
 
                 if stroke_detect_pressed_runs_only is False:
                     # Create/extend list of all velocity minima points found
-                    ppp_minima = detect_peaks(pseries['xy_velocity'],
-                                              mph=None,
-                                              mpd=stroke_detect_min_p2p_sample_count,
-                                              edge='falling',#None,
-                                              valley=True)#, show=True)
-
-                    #if stroke_detect_min_value_threshold is not None:
-                    #    minima_samples =  pseries[ppp_minima]
-                    #    ppp_minima = ppp_minima[minima_samples['xy_velocity'] >= stroke_detect_min_value_threshold]
-
-                    if len(ppp_minima)>1:
-                        for s,vmin_ix in enumerate(ppp_minima[:-1]):
-                            abs_vmin_ix = psb_start_ix+vmin_ix
-
-                            minima_vel = pseries['xy_velocity'][vmin_ix]
-                            pre_vel = pseries['xy_velocity'][max(vmin_ix-3,0):vmin_ix]
-                            post_vel= pseries['xy_velocity'][vmin_ix+1:min(vmin_ix+4,len(pseries))]
-                            print "sample_time,pre_vel,minima_vel, post_vel, pre_diff, post_diff:",pseries['time'][vmin_ix],pre_vel.mean(),minima_vel,post_vel.mean(),pre_vel.mean()-minima_vel,post_vel.mean()-minima_vel
-
-                            next_abs_vmin_ix = psb_start_ix+ppp_minima[s+1]
-                            st, et = pen_data['time'][[abs_vmin_ix, next_abs_vmin_ix]]
-                            self.stroke_boundaries.append((stroke_count,series_bounds['id'],abs_vmin_ix,st,next_abs_vmin_ix,et))
-                            self.sample_velocity_minima_ix.append(abs_vmin_ix)
-                            stroke_count+=1
-                        self.sample_velocity_minima_ix.append(psb_start_ix+ppp_minima[-1])
-
+                    # for whole series
+                    self.findstrokes(pseries, psb_start_ix, series_bounds['id'])
 
             self.press_period_boundaries = np.asarray(self.press_period_boundaries, dtype=series_part_dtype)
             self.stroke_boundaries = np.asarray(self.stroke_boundaries, dtype=series_part_dtype)
@@ -480,6 +416,42 @@ class MarkWriteProject(object):
                 MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)
             else:
                 MarkWriteProject._selectedtimeregion.project = self
+
+    def findstrokes(self, searchsamplearray, obsolute_offset, parent_id):
+        ppp_minima = detect_peaks(searchsamplearray['xy_velocity'],
+                                  mph=None,
+                                  mpd=SETTINGS['stroke_detect_min_p2p_sample_count'],
+                                  edge='falling',##edge=None,
+                                  valley=True)#, show=True)
+
+        if len(ppp_minima)>1:
+            for s,vmin_ix in enumerate(ppp_minima[:-1]):
+                if s == 0:
+                    vmin_ix = ppp_minima[0] = 0
+                abs_vmin_ix = obsolute_offset+vmin_ix
+
+                if ppp_minima[s+1] == ppp_minima[-1]:
+                    next_abs_vmin_ix = obsolute_offset+len(searchsamplearray)-1
+                else:
+                    next_abs_vmin_ix = obsolute_offset+ppp_minima[s+1]
+                if next_abs_vmin_ix >= len(self._pendata):
+                    next_abs_vmin_ix=len(self._pendata)-1
+                st, et = self._pendata['time'][[abs_vmin_ix, next_abs_vmin_ix-1]]
+                self.stroke_boundaries.append((len(self.stroke_boundaries),parent_id,abs_vmin_ix,st,next_abs_vmin_ix,et))
+                self.sample_velocity_minima_ix.append(abs_vmin_ix)
+            next_abs_vmin_ix = obsolute_offset+len(searchsamplearray)-1
+            if next_abs_vmin_ix >= len(self._pendata):
+                next_abs_vmin_ix=len(self._pendata)-1
+            self.sample_velocity_minima_ix.append(next_abs_vmin_ix)
+        else:
+            # add full run as one stroke
+            self.sample_velocity_minima_ix.append(obsolute_offset)
+            self.sample_velocity_minima_ix.append(obsolute_offset+len(searchsamplearray)-1)
+            self.stroke_boundaries.append((len(self.stroke_boundaries),parent_id,
+                                           obsolute_offset,
+                                           searchsamplearray['time'][0],
+                                           obsolute_offset+len(searchsamplearray),
+                                           searchsamplearray['time'][-1]))
 
     def getSeriesPeriodForTime(self, atime, positions='current'):
         """
