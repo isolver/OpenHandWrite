@@ -14,8 +14,10 @@ class RawSampleDataReportExporter(ReportExporter):
         # Note that the report cls has a 'project' attribute
         # that can be used to access the project in use when
         # generating the report
-
-        return cls.project.pendata.dtype.names
+        r = ['index',]
+        r.extend(cls.project.pendata.dtype.names)
+        r.extend(('series_id','run_id','stroke_id'))
+        return r
 
     @classmethod
     def datarowcount(cls):
@@ -27,5 +29,12 @@ class RawSampleDataReportExporter(ReportExporter):
     def datarows(cls):
         # Iterate through the pen data array, yielding each pen sample
         # as a list.
-        for pensample in cls.project.pendata:
-            yield list(pensample.tolist())
+        getSeriesForSample = cls.project.getSeriesForSample
+        getPressedRunForSample = cls.project.getPressedRunForSample
+        getStrokeForSample = cls.project.getStrokeForSample
+
+        for i, pensample in enumerate(cls.project.pendata):
+            r = [i,]
+            r.extend(pensample.tolist())
+            r.extend((getSeriesForSample(i),getPressedRunForSample(i),getStrokeForSample(i)))
+            yield r

@@ -24,7 +24,7 @@ from scipy.signal import savgol_filter
 window_length = 13
 # The order of the polynomial used to fit the samples.
 # polyorder must be less than window_length.
-polyorder = 9
+polyorder = 5
 
 def filter_pen_sample_series(series):
     """
@@ -43,15 +43,15 @@ def filter_pen_sample_series(series):
     if len(series)> window_length*2:
         series['x_filtered'] = savgol_filter(series['x'], window_length, polyorder)
         series['y_filtered'] = savgol_filter(series['y'], window_length, polyorder)
-        series['pressure_filtered'] =  savgol_filter(series['pressure_filtered'], window_length, polyorder)
+        series['pressure_filtered'] =  savgol_filter(series['pressure'], window_length, polyorder)
     elif len(series) > 10:
         series['x_filtered'] = savgol_filter(series['x'], 5, 3)
         series['y_filtered'] = savgol_filter(series['y'], 5, 3)
-        series['pressure_filtered'] =  savgol_filter(series['pressure_filtered'], 5, 3)
+        series['pressure_filtered'] =  savgol_filter(series['pressure'], 5, 3)
     else:
         series['x_filtered'] = series['x']
         series['y_filtered'] = series['y']
-        series['pressure_filtered'] =  series['pressure_filtered']
+        series['pressure_filtered'] =  series['pressure']
 
 
 

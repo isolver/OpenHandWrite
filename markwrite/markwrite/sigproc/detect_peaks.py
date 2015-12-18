@@ -89,7 +89,8 @@ def detect_peaks(x, mph=None, mpd=1, threshold=0, edge='rising',
     if x.size < 3:
         return np.array([], dtype=int)
     if valley:
-        x = -x
+        xm=x.max()
+        x = -x+xm
     # find indices of all peaks
     dx = x[1:] - x[:-1]
     # handle NaN's

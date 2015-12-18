@@ -18,7 +18,7 @@ from __future__ import division
 import numpy as np
 import pyqtgraph as pg
 
-from markwrite.gui import ProjectSettingsDialog, SETTINGS
+from markwrite.gui import ProjectSettingsDialog, SETTINGS,  X_FIELD, Y_FIELD
 
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.dockarea import DockArea, Dock
@@ -421,24 +421,24 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         #
         # Next/Prev Stroke Actions
         #
-        atext = 'INSERT ACTION TOOLTIP TEXT HERE'
-        aicon = 'help&32.png'
+        atext = 'Select the Next Pen Stroke'
+        aicon = 'nextstroke&24.png'
         self.selectNextStrokeAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'ICON DESC. TXT HERE',
+            'Next Pen Stroke',
             self)
-        #self.selectNextStrokeAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.selectNextStrokeAction.setShortcut(QtCore.Qt.KeypadModifier + QtCore.Qt.Key_Right)
         self.selectNextStrokeAction.setEnabled(False)
         self.selectNextStrokeAction.setStatusTip(atext)
         self.selectNextStrokeAction.triggered.connect(self.selectNextStroke)
 
-        atext = 'INSERT ACTION TOOLTIP TEXT HERE'
-        aicon = 'help&32.png'
+        atext = 'Select the Previous Pen Stroke'
+        aicon = 'prevstroke&24.png'
         self.selectPrevStrokeAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'ICON DESC. TXT HERE',
+            'Previous Pen Stroke',
             self)
-        #self.selectPrevStrokeAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.selectNextStrokeAction.setShortcut(QtCore.Qt.KeypadModifier + QtCore.Qt.Key_Left)
         self.selectPrevStrokeAction.setEnabled(False)
         self.selectPrevStrokeAction.setStatusTip(atext)
         self.selectPrevStrokeAction.triggered.connect(self.selectPrevStroke)
@@ -537,12 +537,12 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.toolbarsegment.addAction(self.decreaseSelectionEndPointAction)
         self.toolbarsegment.addAction(self.increaseSelectionEndPointAction)
 
-        self.toolbarsegment.addAction(self.selectNextSampleSeriesAction)
-        self.toolbarsegment.addAction(self.selectPrevSampleSeriesAction)
-        self.toolbarsegment.addAction(self.selectNextPressSeriesAction)
-        self.toolbarsegment.addAction(self.selectPrevPressSeriesAction)
-        self.toolbarsegment.addAction(self.selectNextStrokeAction)
+        #self.toolbarsegment.addAction(self.selectNextSampleSeriesAction)
+        #self.toolbarsegment.addAction(self.selectPrevSampleSeriesAction)
+        #self.toolbarsegment.addAction(self.selectNextPressSeriesAction)
+        #self.toolbarsegment.addAction(self.selectPrevPressSeriesAction)
         self.toolbarsegment.addAction(self.selectPrevStrokeAction)
+        self.toolbarsegment.addAction(self.selectNextStrokeAction)
 
         self.toolbarHelp = self.addToolBar('Help')
         self.toolbarHelp.addAction(self.aboutAction)
@@ -749,7 +749,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             segment.parent.removeChild(segment)
         else:
             print "   - Remove action IGNORED"
-        print "<< removeSegment"
+       #print "<< removeSegment"
 
     def handleProjectChange(self, project):
         if self._current_project:
@@ -958,13 +958,21 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     def selectPrevPressSeries(self):
         pass
 
-    @not_implemented
     def selectNextStroke(self):
-        pass
+        selection_start, selection_end = self.project.selectedtimeregion.getRegion()
+        nsmask = self.project.stroke_boundaries['start_time'] > selection_start
+        next_strokes = self.project.stroke_boundaries[nsmask]
+        if len(next_strokes):
+            nstroke = next_strokes[0]
+            self.project.selectedtimeregion.setRegion((nstroke['start_time'],nstroke['end_time']))
 
-    @not_implemented
     def selectPrevStroke(self):
-        pass
+        selection_start, selection_end = self.project.selectedtimeregion.getRegion()
+        nsmask = self.project.stroke_boundaries['start_time'] < selection_start
+        next_strokes = self.project.stroke_boundaries[nsmask]
+        if len(next_strokes):
+            nstroke = next_strokes[-1]
+            self.project.selectedtimeregion.setRegion((nstroke['start_time'],nstroke['end_time']))
 
     def closeEvent(self, event):
         if event == u'FORCE_EXIT':
@@ -985,71 +993,78 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     def __del__(self):
         pass
 
-'''
-    def displayAllDataChannelsTimePlot(self, left_plot_fields=(
-                                                    ('x_filtered',(0,204,0)),
-                                                    ('y_filtered',(0,0,204)))
-            ):
-
+    def displayAllDataChannelsTimePlot(self):
             pw = pg.plot()
             pw.setWindowTitle('All Pen Samples')
-            left_plot = pw.plotItem
-            left_plot.setLabels(left='Raw Position')
+            pw = pw.plotItem
+            pw.setLabels(left='Pen Position')
 
-            right_plot = pg.ViewBox()
-            left_plot.showAxis('right')
-            left_plot.scene().addItem(right_plot)
-            left_plot.getAxis('right').linkToView(right_plot)
-            right_plot.setXLink(left_plot)
-            left_plot.getAxis('right').setLabel('Abs. Velocity', color='#0000ff')
-
-
-            ## Handle view resizing
-            def updateViews():
-                ## view has resized; update auxiliary views to match
-                right_plot.setGeometry(left_plot.vb.sceneBoundingRect())
-
-                ## need to re-update linked axes since this was called
-                ## incorrectly while views had different shapes.
-                ## (probably this should be handled in ViewBox.resizeEvent)
-                right_plot.linkedViewChanged(left_plot.vb, right_plot.XAxis)
-
-            updateViews()
-            left_plot.vb.sigResized.connect(updateViews)
-            #plt.addLegend()
+            pw.addLegend()
             pdata=self.project.pendata
 
 
-            for fname,fcolor in left_plot_fields:
-                pen = pg.mkPen(fcolor, width=1)
-                brush = pg.mkBrush(fcolor)
+            def getPenBrushForAxis(axis, penpoints, penarray=None, brusharray=None):
+                if penarray is None:
+                    penarray = np.empty(penpoints.shape[0], dtype=object)
+                    brusharray = np.empty(penpoints.shape[0], dtype=object)
 
-                left_plot.plot(x=pdata['time'], y=pdata[fname],
-                         symbolPen=pen, symbolBrush=brush, pen=None,
-                         symbol='o', symbolSize=1, name=fname)
+                pen = pg.mkPen(SETTINGS['timeplot_%strace_color'%(axis)],
+                               width=SETTINGS['timeplot_%strace_size'%(axis)])
+                pen2 = pg.mkPen(SETTINGS['timeplot_%strace_color'%(axis)].darker(),
+                                width=SETTINGS['timeplot_%strace_size'%(axis)])
+                penarray[:] = pen
+                penarray[penpoints['pressure'] == 0] = pen2
 
+                brush = pg.mkBrush(SETTINGS['timeplot_%strace_color'%(axis)])
+                brush2 = pg.mkBrush(SETTINGS['timeplot_%strace_color'%(axis)].darker())
+                brusharray[:] = brush
+                brusharray[penpoints['pressure'] == 0] = brush2
 
-            ssize = SETTINGS['timeplot_xtrace_size']*2
-            pen = pg.mkPen([255,255,255],
-                           width=ssize)
-            brush = pg.mkBrush([255,255,255])
-            left_plot.plot(x=self.project.velocity_minima_samples['time'],
-                                    y=self.project.velocity_minima_samples['y_filtered'],
-                                    symbolPen=pen,
-                                    symbolBrush=brush,
-                                    pen=None, symbol='x',
-                                    symbolSize=ssize,
-                                    name="Stroke Boundary")
+                return penarray, brusharray
 
 
-            left_plot.plot(x=pdata['time'],
-                                                y=pdata['xy_velocity'],
-                                                symbolPen=(255,0,0), symbolBrush=(255,0,0), pen=None,
-                                                symbol='o', symbolSize=1,
-                                                name='xy_velocity')
+#            left_axis = ('x','y')
+#            penarray=None
+#            brusharray=None
+#            for axis  in left_axis:
+#                penarray, brusharray = getPenBrushForAxis(axis,pdata,penarray,brusharray)
+#                left_plot.plot(x=pdata['time'], y=pdata['%s_filtered'%(axis)],
+#                                pen=None, symbol='o',
+#                                symbolSize=SETTINGS[
+#                                    'timeplot_%strace_size'%(axis)],
+#                                symbolPen=penarray,
+#                                symbolBrush=brusharray,
+#                                name = "%s"%(axis))
 
-            #right_plot.addItem(pg.PlotCurveItem
-'''
+
+
+            left_axis = ('v','a')
+            axis2data=dict(v='xy_velocity',a='xy_acceleration')
+
+            ssize= SETTINGS['pen_stroke_boundary_size']
+            scolor = SETTINGS['pen_stroke_boundary_color']
+            pen = pg.mkPen(scolor, width=ssize)
+            brush = pg.mkBrush(scolor)
+            strokeBoundaryPoints = pg.ScatterPlotItem(size=ssize, pen=pen, brush=brush)
+            pw.addItem(strokeBoundaryPoints)
+            strokeboundries=self.project.velocity_minima_samples
+            for axis in left_axis:
+                strokeBoundaryPoints.addPoints(x=strokeboundries['time'],
+                                               y=strokeboundries[axis2data[axis]])
+
+
+            penarray=None
+            brusharray=None
+            for axis  in left_axis:
+                penarray, brusharray = getPenBrushForAxis(axis,pdata,penarray, brusharray)
+                pw.addItem(pg.PlotCurveItem(x=pdata['time'],
+                                                    y=pdata[axis2data[axis]],
+                                                    pen=None, symbol='o',
+                                                    symbolSize=SETTINGS[
+                                                        'timeplot_%strace_size'%(axis)],
+                                                    symbolPen=penarray,
+                                                    symbolBrush=brusharray,
+                                                    name = "%s"%(axis)))
 
 #
 ## Main App Helpers

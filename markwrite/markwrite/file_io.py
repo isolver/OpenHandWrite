@@ -32,6 +32,7 @@ markwrite_pendata_format = [('time', np.float32),
                     ('x_velocity', np.float64),
                     ('y_velocity', np.float64),
                     ('xy_velocity', np.float64),
+                    ('xy_acceleration', np.float64),
                     ('segment_id', np.uint16)]
 
 
@@ -142,7 +143,8 @@ class EyePenDataImporter(DataImporter):
                          0, # x_velocity, filled in by markwrite runtime
                          0, # y_velocity, filled in by markwrite runtime
                          0, # xy_velocity, filled in by markwrite runtime
-                          0) #segment_id, filled in by markwrite runtime
+                         0, # xy_accell, filled in by markwrite runtime
+                         0) #segment_id, filled in by markwrite runtime
                         )
 
                 except IndexError:
@@ -216,6 +218,7 @@ class HubDatastoreImporter(DataImporter):
                                  0, # x_velocity, filled in by markwrite runtime
                                  0, # y_velocity, filled in by markwrite runtime
                                  0, # xy_velocity, filled in by markwrite runtime
+                                 0, # xy_accell, filled in by markwrite runtime
                                  0) #segment_id, filled in by markwrite runtime
                                     )
 
@@ -274,6 +277,7 @@ class XmlDataImporter(DataImporter):
                                 0, # x_velocity, filled in by markwrite runtime
                                 0, # y_velocity, filled in by markwrite runtime
                                 0, # xy_velocity, filled in by markwrite runtime
+                                0, # xy_accell, filled in by markwrite runtime
                                 0) #segment_id, filled in by markwrite runtime
                                 )
             last_point = list(list_result[-1])

@@ -33,12 +33,18 @@ flattenned_settings_dict['hdf5_trial_end_var_select_filter'] = {'name': 'End Tim
 flattenned_settings_dict['new_segment_trim_0_pressure_points'] = {'name': 'Trim 0 Pressure Points', 'type': 'bool', 'value': True}
 flattenned_settings_dict['plotviews_background_color'] = {'name': 'Background Color', 'type': 'color', 'value': (32,32,32), 'tip': "Application Plot's background color. Change will not take effect until the application is restarted."}
 flattenned_settings_dict['plotviews_foreground_color'] =  {'name': 'Foreground Color', 'type': 'color', 'value': (224,224,224), 'tip': "Application Plot's foreground color (axis lines / labels)."}
+flattenned_settings_dict['pen_stroke_boundary_size'] ={'name': 'Stroke Boundary Point Size', 'type': 'int', 'value': 2, 'limits': (0, 5)}
+flattenned_settings_dict['pen_stroke_boundary_color'] =  {'name': 'Stroke Boundary Sample Color', 'type': 'color', 'value': (224,0,224)}
 
 flattenned_settings_dict['timeplot_enable_ymouse'] = {'name': 'Enable Y Axis Pan / Scale with Mouse', 'type': 'bool', 'value': False}
 flattenned_settings_dict['timeplot_xtrace_color'] = {'name': 'Point Color', 'type': 'color', 'value': (170,255,127)}
 flattenned_settings_dict['timeplot_xtrace_size'] ={'name': 'Point Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
 flattenned_settings_dict['timeplot_ytrace_color'] = {'name': 'Point Color', 'type': 'color', 'value': (0,170,255)}
 flattenned_settings_dict['timeplot_ytrace_size'] ={'name': 'Point Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
+flattenned_settings_dict['timeplot_vtrace_color'] = {'name': 'Point Color', 'type': 'color', 'value': (255,170,100)}
+flattenned_settings_dict['timeplot_vtrace_size'] ={'name': 'Point Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
+flattenned_settings_dict['timeplot_atrace_color'] = {'name': 'Point Color', 'type': 'color', 'value': (100,170,255)}
+flattenned_settings_dict['timeplot_atrace_size'] ={'name': 'Point Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
 
 flattenned_settings_dict['spatialplot_invert_y_axis'] = {'name': 'Invert Y Axis', 'type': 'bool', 'value': True}
 flattenned_settings_dict['spatialplot_default_color'] = {'name':'Default Point Color', 'type': 'color', 'value':(224,224,224)}
@@ -47,12 +53,23 @@ flattenned_settings_dict['spatialplot_selectedvalid_color'] = {'name': 'Valid Se
 flattenned_settings_dict['spatialplot_selectedinvalid_color'] ={'name': 'Invalid Segment Color', 'type': 'color', 'value': (160,0,0)}
 flattenned_settings_dict['spatialplot_selectedpoint_size'] = {'name': 'Size', 'type': 'int', 'value': 2, 'limits': (1, 5)}
 
+flattenned_settings_dict['stroke_detect_pressed_runs_only'] = {'name': 'Use Pressed Sample Runs Only', 'type': 'bool', 'value': True}
+flattenned_settings_dict['stroke_detect_min_value_threshold'] = {'name': 'Minimum Velocity Threshold', 'type': 'float', 'value': 0.0, 'step': 0.1, 'limits':(0.0, 500.0)}
+flattenned_settings_dict['stroke_detect_min_p2p_sample_count'] = {'name': 'Minimum Stroke Sample Count', 'type': 'int', 'value': 10, 'limits': (1, 50)}
+#flattenned_settings_dict['stroke_detect_edge_type'] =  {'name': 'Edge Type', 'type': 'list', 'values': ['none', 'rising', 'falling', 'both'], 'value': 'rising'}
+
 settings_params = [
         {'name': 'Loading Source Data', 'type': 'group', 'children': [
             'auto_generate_l1segments',
                {'name': 'ioHub HDF5 Trial Segmentation', 'type': 'group', 'children': [
                     'hdf5_trial_start_var_select_filter',
                     'hdf5_trial_end_var_select_filter',
+                 ]},
+               {'name': 'Stoke Detection', 'type': 'group', 'children': [
+                    'stroke_detect_pressed_runs_only',
+#                    'stroke_detect_min_value_threshold',
+                    'stroke_detect_min_p2p_sample_count',
+#                    'stroke_detect_edge_type',
                  ]},
         ]},
         {'name': 'Segment Creation', 'type': 'group', 'children': [
@@ -61,6 +78,8 @@ settings_params = [
         {'name': 'GUI Options', 'type': 'group', 'children': [
             'plotviews_background_color',
             'plotviews_foreground_color',
+            'pen_stroke_boundary_size',
+            'pen_stroke_boundary_color',
             {'name': 'TimeLine View', 'type': 'group', 'children': [
                 'timeplot_enable_ymouse',
                 {'name': 'Horizontal Pen Position Trace', 'type': 'group', 'children': [
@@ -70,6 +89,14 @@ settings_params = [
                {'name': 'Vertical Pen Position Trace', 'type': 'group', 'children': [
                     'timeplot_ytrace_color',
                     'timeplot_ytrace_size',
+                 ]},
+               {'name': 'XY Velocity Trace', 'type': 'group', 'children': [
+                    'timeplot_vtrace_color',
+                    'timeplot_vtrace_size',
+                 ]},
+               {'name': 'Acceleration Trace', 'type': 'group', 'children': [
+                    'timeplot_atrace_color',
+                    'timeplot_atrace_size',
                  ]},
            ]},
             {'name': 'Spatial View', 'type': 'group', 'children': [

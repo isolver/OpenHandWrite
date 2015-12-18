@@ -61,11 +61,13 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         return brusharray, penarray
 
     def addStrokeBoundaryPoints(self, strokeboundries):
+        ssize = SETTINGS['pen_stroke_boundary_size']
+        if ssize == 0:
+            return
         if self.strokeBoundaryPoints is None:
-            ssize = SETTINGS['timeplot_xtrace_size']*2
-            pen = pg.mkPen([255, 0, 255],
-                           width=ssize)
-            brush = pg.mkBrush([255,0,255])
+            scolor = SETTINGS['pen_stroke_boundary_color']
+            pen = pg.mkPen(scolor,width=ssize)
+            brush = pg.mkBrush(scolor)
             self.strokeBoundaryPoints = pg.ScatterPlotItem(size=ssize, pen=pen, brush=brush)
             self.getPlotItem().addItem(self.strokeBoundaryPoints)
         else:

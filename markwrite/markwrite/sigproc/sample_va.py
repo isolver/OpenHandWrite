@@ -24,7 +24,7 @@ import numpy as np
 window_length = 13
 # The order of the polynomial used to fit the samples.
 # polyorder must be less than window_length.
-polyorder = 9
+polyorder = 3
 
 def calculate_velocity(series):
     """
@@ -49,7 +49,7 @@ def calculate_velocity(series):
 
     wlength = 0
     polyo = 0
-    if len(series)> window_length*2:
+    if len(series)> window_length:
         wlength = window_length
         polyo = polyorder
     elif len(series) > 10:
@@ -61,15 +61,22 @@ def calculate_velocity(series):
                                          deriv=1, delta=1.0)
         series['y_velocity'] = savgol_filter(series['y'], wlength, polyo,
                                          deriv=1, delta=1.0)
-        xy_velocity = savgol_filter(xy_velocity, wlength, polyo)
-        series['xy_velocity'][1:] = xy_velocity
-        series['xy_velocity'][0] = 0
+        series['xy_velocity'][1:] = savgol_filter(xy_velocity, wlength, polyo)
+        series['xy_velocity'][0] = series['xy_velocity'][1]
+        series['xy_acceleration'] = savgol_filter(series['xy_velocity'],
+                                                   wlength, polyo,
+                                                   deriv=1, delta=1.0)
+
     else:
-        series['x_velocity'][0] = 0
-        series['y_velocity'][0] = 0
-        series['xy_velocity'][0] = 0
         series['x_velocity'][1:] = dx
         series['y_velocity'][1:] = dy
+        series['x_velocity'][0] = series['x_velocity'][1]
+        series['y_velocity'][0] = series['y_velocity'][1]
+
         series['xy_velocity'][1:] = xy_velocity
+        series['xy_velocity'][0] = series['xy_velocity'][1]
+
+        series['xy_acceleration'][1:] = series['xy_velocity'][1:]-series['xy_velocity'][0:-1]
+        series['xy_acceleration'][0] = series['xy_acceleration'][1]
 
 

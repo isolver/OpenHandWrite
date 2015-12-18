@@ -130,11 +130,13 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
         return penarray, brusharray
 
     def addStrokeBoundaryPoints(self, strokeboundries):
+        ssize = SETTINGS['pen_stroke_boundary_size']
+        if ssize == 0:
+            return
         if self.strokeBoundaryPoints is None:
-            ssize = SETTINGS['timeplot_xtrace_size']*2
-            pen = pg.mkPen([255, 0, 255],
-                           width=ssize)
-            brush = pg.mkBrush([255, 0, 255])
+            scolor = SETTINGS['pen_stroke_boundary_color']
+            pen = pg.mkPen(scolor, width=ssize)
+            brush = pg.mkBrush(scolor)
             self.strokeBoundaryPoints = pg.ScatterPlotItem(size=ssize, pen=pen, brush=brush)
             self.getPlotItem().addItem(self.strokeBoundaryPoints)
         else:
@@ -145,15 +147,6 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
                                              y=strokeboundries[Y_FIELD],
                                             )
 
-#    def updateVelocityTrace(self, penpoints):
-#        if self.displayVelocityTrace:
-#            print "updateVelocityTrace called:",penpoints.shape,penpoints['time'].min(),penpoints['time'].max(),penpoints['xy_velocity'].min(),penpoints['xy_velocity'].max()
-#            self.velocityTrace.setData(x=penpoints['time'],
-#                                           y=penpoints['xy_velocity'],
-#                                           )
-#        elif self.velocityTrace is not None:
-#            print"TODO: Remove Velocity trace from plot."
-
     def getPenBrushY(self, penpoints, penarray=None, brusharray=None):
         if penarray is None:
             penarray = np.empty(penpoints.shape[0], dtype=object)
@@ -161,12 +154,12 @@ class PenDataTemporalPlotWidget(pg.PlotWidget):
 
         pen = pg.mkPen(SETTINGS['timeplot_ytrace_color'],
                        width=SETTINGS['timeplot_ytrace_size'])
-        pen2 = pg.mkPen(SETTINGS['timeplot_ytrace_color'].darker(),
+        pen2 = pg.mkPen(SETTINGS['timeplot_ytrace_color'].darker(300),
                         width=SETTINGS['timeplot_ytrace_size'])
         penarray[:] = pen
         penarray[penpoints['pressure'] == 0] = pen2
         brush = pg.mkBrush(SETTINGS['timeplot_ytrace_color'])
-        brush2 = pg.mkBrush(SETTINGS['timeplot_ytrace_color'].darker())
+        brush2 = pg.mkBrush(SETTINGS['timeplot_ytrace_color'].darker(300))
         brusharray[:] = brush
         brusharray[penpoints['pressure'] == 0] = brush2
 
