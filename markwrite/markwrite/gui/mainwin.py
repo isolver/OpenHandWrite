@@ -934,12 +934,12 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         #print '<< App.handleSelectedPenDataUpdate'
 
     def handleDisplayAppSettingsDialogEvent(self):
-        usersettings = readPickle(self._appdirs.user_config_dir,u'usersettings.pkl')
-
-        updatedsettings, allsettings, savestate, ok = ProjectSettingsDialog.getProjectSettings(self, usersettings)
+        updatedsettings, allsettings, savestate, ok = ProjectSettingsDialog.getProjectSettings(self)
         if ok is True:
-            writePickle(self._appdirs.user_config_dir,u'usersettings.pkl', savestate)
-            if self.project and len(updatedsettings)>0:
+            if len(updatedsettings)>0:
+                writePickle(self._appdirs.user_config_dir,u'usersettings.pkl', SETTINGS)
+                #print "MAINWIN.writePickle called:",SETTINGS
+            if self.project:
                 self.sigAppSettingsUpdated.emit(updatedsettings, allsettings)
 
     @not_implemented

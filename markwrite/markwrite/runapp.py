@@ -34,16 +34,17 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui
 from markwrite.gui.mainwin import MarkWriteMainWindow
 from markwrite.appdirs import AppDirs
-from markwrite.file_io import readPickle
+from markwrite.file_io import readPickle, writePickle
 
 appdirs = AppDirs("MarkWrite")
 usersettings = readPickle(appdirs.user_config_dir,u'usersettings.pkl')
-
 app = QtGui.QApplication(sys.argv)
 
 from markwrite.gui.projectsettings import ProjectSettingsDialog
 _ = ProjectSettingsDialog(savedstate=usersettings)
 from markwrite.gui.projectsettings import SETTINGS
+
+writePickle(appdirs.user_config_dir,u'usersettings.pkl', SETTINGS)
 pg.setConfigOption('background', SETTINGS['plotviews_background_color'])
 pg.setConfigOption('foreground', SETTINGS['plotviews_foreground_color'])
 

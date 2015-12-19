@@ -54,7 +54,7 @@ flattenned_settings_dict['spatialplot_selectedinvalid_color'] ={'name': 'Invalid
 flattenned_settings_dict['spatialplot_selectedpoint_size'] = {'name': 'Size', 'type': 'int', 'value': 2, 'limits': (1, 5)}
 
 flattenned_settings_dict['stroke_detect_pressed_runs_only'] = {'name': 'Use Pressed Sample Runs Only', 'type': 'bool', 'value': True}
-flattenned_settings_dict['stroke_detect_min_value_threshold'] = {'name': 'Minimum Velocity Threshold', 'type': 'float', 'value': 0.0, 'step': 0.1, 'limits':(0.0, 500.0)}
+#flattenned_settings_dict['stroke_detect_min_value_threshold'] = {'name': 'Minimum Velocity Threshold', 'type': 'float', 'value': 0.0, 'step': 0.1, 'limits':(0.0, 500.0)}
 flattenned_settings_dict['stroke_detect_min_p2p_sample_count'] = {'name': 'Minimum Stroke Sample Count', 'type': 'int', 'value': 10, 'limits': (1, 50)}
 #flattenned_settings_dict['stroke_detect_edge_type'] =  {'name': 'Edge Type', 'type': 'list', 'values': ['none', 'rising', 'falling', 'both'], 'value': 'rising'}
 
@@ -120,12 +120,17 @@ class ProjectSettingsDialog(QtGui.QDialog):
         super(ProjectSettingsDialog, self).__init__(parent)
         self.setWindowTitle("Application Settings")
         layout = QtGui.QVBoxLayout(self)
+        self.setLayout(layout)
+
+        if savedstate:
+            for key,val in savedstate.items():
+                if flattenned_settings_dict.get(key):
+                    flattenned_settings_dict[key]['value'] = val
+
+            #self._settings.restoreState(savedstate)
 
         self.initKeyParamMapping()
         self._settings = Parameter.create(name='params', type='group', children=settings_params)
-
-        if savedstate:
-            self._settings.restoreState(savedstate)
 
         # Holds settings keys that have changed by the user when the
         # dialog is closed. Used to update any needed gui values..
@@ -138,8 +143,9 @@ class ProjectSettingsDialog(QtGui.QDialog):
         self.ptree = ParameterTree()
         self.ptree.setParameters(self._settings, showTop=False)
         self.ptree.setWindowTitle('MarkWrite Application Settings')
+
         layout.addWidget(self.ptree)
-        self.ptree.adjustSize()
+
         # OK and Cancel buttons
         self.buttons = QtGui.QDialogButtonBox(
             QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel,
@@ -149,7 +155,15 @@ class ProjectSettingsDialog(QtGui.QDialog):
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
 
-        self.resize(500,700)
+        wscreen = QtGui.QDesktopWidget().screenGeometry()
+        if parent:
+            wscreen = QtGui.QDesktopWidget().screenGeometry(parent)
+        self.resize(min(500,int(wscreen.width()*.66)),min(700,int(wscreen.height()*.66)))
+        # center dialog on same screen as is being used by markwrite app.
+        qr = self.frameGeometry()
+        cp = wscreen.center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
 
     def initKeyParamMapping(self):
         if len(self.path2key)==0:
@@ -197,6 +211,8 @@ class ProjectSettingsDialog(QtGui.QDialog):
     # static method to create the dialog and return (date, time, accepted)
     @staticmethod
     def getProjectSettings(parent = None, usersettings = None):
+        if usersettings is None:
+            usersettings=SETTINGS
         dialog = ProjectSettingsDialog(parent, usersettings)
         result = dialog.exec_()
         usersettings=dialog._settings.saveState()
