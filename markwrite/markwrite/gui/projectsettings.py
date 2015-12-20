@@ -41,11 +41,13 @@ flattenned_settings_dict['timeplot_xtrace_color'] = {'name': 'Point Color', 'typ
 flattenned_settings_dict['timeplot_xtrace_size'] ={'name': 'Point Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
 flattenned_settings_dict['timeplot_ytrace_color'] = {'name': 'Point Color', 'type': 'color', 'value': (0,170,255)}
 flattenned_settings_dict['timeplot_ytrace_size'] ={'name': 'Point Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
+
+flattenned_settings_dict['display_timeplot_vtrace'] = {'name': 'Display Plot', 'type': 'bool', 'value': False}
 flattenned_settings_dict['timeplot_vtrace_color'] = {'name': 'Point Color', 'type': 'color', 'value': (255,170,100)}
 flattenned_settings_dict['timeplot_vtrace_size'] ={'name': 'Point Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
+flattenned_settings_dict['display_timeplot_atrace'] = {'name': 'Display Plot', 'type': 'bool', 'value': False}
 flattenned_settings_dict['timeplot_atrace_color'] = {'name': 'Point Color', 'type': 'color', 'value': (100,170,255)}
 flattenned_settings_dict['timeplot_atrace_size'] ={'name': 'Point Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
-
 flattenned_settings_dict['spatialplot_invert_y_axis'] = {'name': 'Invert Y Axis', 'type': 'bool', 'value': True}
 flattenned_settings_dict['spatialplot_default_color'] = {'name':'Default Point Color', 'type': 'color', 'value':(224,224,224)}
 flattenned_settings_dict['spatialplot_default_point_size'] = {'name': 'Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
@@ -91,10 +93,12 @@ settings_params = [
                     'timeplot_ytrace_size',
                  ]},
                {'name': 'XY Velocity Trace', 'type': 'group', 'children': [
+                    'display_timeplot_vtrace',
                     'timeplot_vtrace_color',
                     'timeplot_vtrace_size',
                  ]},
                {'name': 'Acceleration Trace', 'type': 'group', 'children': [
+                    'display_timeplot_atrace',
                     'timeplot_atrace_color',
                     'timeplot_atrace_size',
                  ]},
