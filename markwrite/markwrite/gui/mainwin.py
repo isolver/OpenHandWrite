@@ -762,11 +762,11 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
     def zoomInTimeline(self):
         # TODO: Move method to _penDataTimeLineWidget
-        self._penDataTimeLineWidget.getPlotItem().getViewBox().scaleBy(x=0.5)
+        self._penDataTimeLineWidget.scaleBy(x=0.5)
 
     def zoomOutTimeline(self):
         # TODO: Move method to _penDataTimeLineWidget
-        self._penDataTimeLineWidget.getPlotItem().getViewBox().scaleBy(x=2.0)#,center=(xmin+xmax)/2)
+        self._penDataTimeLineWidget.scaleBy(x=2.0)#,center=(xmin+xmax)/2)
 
     def gotoSelectTimelinePeriod(self):
         # TODO: Move method to _penDataTimeLineWidget
@@ -780,7 +780,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                     max(selpendat[X_FIELD].max(), selpendat[Y_FIELD].max()))
         else:
             ry = (0, max(pdat[X_FIELD].max(),pdat[Y_FIELD].max()))
-        self._penDataTimeLineWidget.getPlotItem().setRange(xRange=rx, yRange=ry)
+        self._penDataTimeLineWidget.setPlotRange(xrange=rx, yrange=ry)
 
     def jumpTimeSelectionForward(self):
         # TODO: Move method to _penDataTimeLineWidget
@@ -803,9 +803,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 return
             self.project.selectedtimeregion.setRegion([nxmin,nxmax])
 
-            (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getPlotItem().getViewBox().viewRange()
+            (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()
             if nxmax >= vmax:
-                self._penDataTimeLineWidget.getPlotItem().getViewBox().translateBy(x=(nxmax-vmax)*1.25)
+                self._penDataTimeLineWidget.translateViewBy(x=(nxmax-vmax)*1.25)
 
     def jumpTimeSelectionBackward(self):
         # TODO: Move method to _penDataTimeLineWidget
@@ -818,9 +818,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 segmenttimeperiod = self.project.pendata['time'][pendata_ix_range]
                 self.project.selectedtimeregion.setRegion(segmenttimeperiod)
 
-                (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getPlotItem().getViewBox().viewRange()
+                (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()
                 if nxmin < vmin:
-                    self._penDataTimeLineWidget.getPlotItem().getViewBox().translateBy(x=(nxmin-vmin)*1.25)
+                    self._penDataTimeLineWidget.translateViewBy(x=(nxmin-vmin)*1.25)
         else:
             xmin, xmax = self.project.selectedtimeregion.getRegion()
             pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
@@ -844,9 +844,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                     return
                 self.project.selectedtimeregion.setRegion([nxmin,nxmax])
 
-                (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getPlotItem().getViewBox().viewRange()
+                (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()
                 if nxmin <= vmin:
-                    self._penDataTimeLineWidget.getPlotItem().getViewBox().translateBy(x=(nxmin-vmin)*1.25)
+                    self._penDataTimeLineWidget.translateViewBy(x=(nxmin-vmin)*1.25)
 
     def increaseSelectionEndPointTime(self):
         # TODO: Move method to _penDataTimeLineWidget
@@ -863,9 +863,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 min_ix, next_max_ix = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
                 self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, next_max_ix]])
                 _,nxmax=segmenttimeperiod
-                (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getPlotItem().getViewBox().viewRange()
+                (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()
                 if nxmax >= vmax:
-                    self._penDataTimeLineWidget.getPlotItem().getViewBox().translateBy(x=(nxmax-vmax)*1.25)
+                    self._penDataTimeLineWidget.translateViewBy(x=(nxmax-vmax)*1.25)
             else:
                  infoDlg(title=u"Action Aborted", prompt=u"The selected time period can not be extended<br>as it is at the end of the data samples.")
 
@@ -923,9 +923,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                     min_ix, max_ix = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
                     self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
                     nxmin,_=segmenttimeperiod
-                    (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getPlotItem().getViewBox().viewRange()
+                    (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()
                     if nxmin < vmin:
-                        self._penDataTimeLineWidget.getPlotItem().getViewBox().translateBy(x=(nxmin-vmin)*1.25)
+                        self._penDataTimeLineWidget.translateViewBy(x=(nxmin-vmin)*1.25)
 
     def handleSelectedPenDataUpdate(self, timeperiod, pendata):
         #print '>> App.handleSelectedPenDataUpdate:',timeperiod

@@ -92,6 +92,9 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
 
         last_plot.setLabel('bottom', text="Time", units='sec')
 
+        # TODO: self.strokeBoundaryPoints should be moved into plotitems dict
+        self.strokeBoundaryPoints=None
+
         self.currentSelection = None
         self.fullPenValRange=[0,1]
         self.maxTime=1
@@ -321,6 +324,20 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                                                                      selectedpendata)
         self.ensureSelectionIsVisible([minT, maxT], selectedpendata)
 
+    def scaleBy(self, x=None,y=None):
+        for pi in self.dataplots.values():
+            pi.getViewBox().scaleBy(x=x)
+
+    def setPlotRange(self, xrange=None, yrange=None):
+        for pi in self.dataplots.values():
+            pi.setRange(xRange=xrange, yRange=yrange)
+
+    def getViewRange(self):
+        return self.xy_plot.getViewBox().viewRange()
+
+    def translateViewBy(self, x=None):
+        for pi in self.dataplots.values():
+            pi.getViewBox().translateBy(x=x)
 
     def zoomToPenData(self, pendata, lock_bounds=False):
         if len(pendata) > 0:
