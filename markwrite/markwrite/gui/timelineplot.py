@@ -28,8 +28,10 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
     displayVelocityTrace = True
     displayStrokePoints = True
 
-    def addSubPlot(self,name, **kwargs):
-        self.dataplots[name] = self.addPlot(name=name)
+    def addSubPlot(self,name, row, **kwargs):
+        if name in self.dataplots.keys():
+            return None
+        self.dataplots[name] = self.addPlot(name=name, row=row, col=0)
         for k,v in kwargs.items():
             a = getattr(self.dataplots[name], k, None)#, v)
             if a is None:
@@ -70,27 +72,16 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
 
         ylabel = dict(axis='left', text="Position")
         mouseenabled = {'y':SETTINGS['timeplot_enable_ymouse']}
-        last_plot = self.addSubPlot("xy_plot", setMenuEnabled=False,
+        last_plot = self.addSubPlot("xy_plot", 0, setMenuEnabled=False,
                         setMouseEnabled=mouseenabled, hideAxis='bottom',
                         setLabel=ylabel)
-        #last_plot.showGrid(x=True, y=True, alpha=0.5)
+        self.nextRow()
+        last_plot = self.createVelocityPlot(mouseenabled)
+        self.nextRow()
+        self.createAccelerationPlot(mouseenabled)
 
-        if SETTINGS['display_timeplot_vtrace']:
-            self.nextRow()
-            ylabel = dict(axis='left', text="Velocity")
-            last_plot = self.addSubPlot("velocity_plot", setMenuEnabled=False, setXLink="xy_plot",
-                            setMouseEnabled=mouseenabled, hideAxis='bottom',
-                            setLabel=ylabel)
-        #    last_plot.showGrid(x=True, y=True, alpha=0.5)
+        self.bottom_plot.setLabel('bottom', text="Time", units='sec')
 
-        if SETTINGS['display_timeplot_atrace']:
-            self.nextRow()
-            ylabel = dict(axis='left', text="Acceleration")
-            last_plot = self.addSubPlot("acceleration_plot", setMenuEnabled=False, setXLink="xy_plot",
-                            setMouseEnabled=mouseenabled, setLabel=ylabel)
-        #    last_plot.showGrid(x=True, y=True, alpha=0.5)
-
-        last_plot.setLabel('bottom', text="Time", units='sec')
 
         # TODO: self.strokeBoundaryPoints should be moved into plotitems dict
         self.strokeBoundaryPoints=None
@@ -107,6 +98,45 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
             self.handleResetPenData)
         MarkWriteMainWindow.instance().sigActiveObjectChanged.connect(
             self.handleSelectedObjectChanged)
+
+    @property
+    def bottom_plot(self):
+        if hasattr(self,'acceleration_plot'):
+            return self.acceleration_plot
+        if hasattr(self,'velocity_plot'):
+            return self.velocity_plot
+        return self.xy_plot
+
+    def createVelocityPlot(self, mouseenabled):
+        if SETTINGS['display_timeplot_vtrace']:
+            ylabel = dict(axis='left', text="Velocity")
+            return self.addSubPlot("velocity_plot", 1, setMenuEnabled=False, setXLink="xy_plot",
+                            setMouseEnabled=mouseenabled, hideAxis='bottom',
+                            setLabel=ylabel)
+
+    def createAccelerationPlot(self, mouseenabled):
+        if SETTINGS['display_timeplot_atrace']:
+            ylabel = dict(axis='left', text="Acceleration")
+            return self.addSubPlot("acceleration_plot", 2, setMenuEnabled=False, setXLink="xy_plot",
+                            setMouseEnabled=mouseenabled, setLabel=ylabel)
+
+    def removeVelocityPlot(self):
+        if not SETTINGS['display_timeplot_vtrace']:
+            delattr(self,'velocity_plot')
+            self.removeItem(self.dataplots['velocity_plot'])
+            if self.plotitems.get('velocity_plot'):
+                del self.plotitems['velocity_plot']
+            if self.dataplots.get('velocity_plot'):
+                del self.dataplots['velocity_plot']
+
+    def removeAccelerationPlot(self):
+        if not SETTINGS['display_timeplot_atrace']:
+            delattr(self,'acceleration_plot')
+            self.removeItem(self.dataplots['acceleration_plot'])
+            if self.plotitems.get('acceleration_plot'):
+                del self.plotitems['acceleration_plot']
+            if self.dataplots.get('acceleration_plot'):
+                del self.dataplots['acceleration_plot']
 
     def handleSelectedObjectChanged(self, newobj, oldobj):
         if MarkWriteMainWindow.instance().project._autosegl1 is True:
@@ -288,22 +318,39 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                 self.updateTrace('xy_plot', 'y', 'timeplot_ytrace_color', 'timeplot_ytrace_size', penpoints, penarray, brusharray)
                 break
 
-        if 'display_timeplot_vtrace' in updates.keys() and updates.get('display_timeplot_vtrace', False) is True:
+        prev_bottom_plot = self.bottom_plot
+
+        if 'display_timeplot_atrace' in updates.keys():
+            plot_currently_displayed = hasattr(self,'acceleration_plot') and self.acceleration_plot is not None
+            if plot_currently_displayed and updates['display_timeplot_atrace'] is False:
+                self.removeAccelerationPlot()
+            elif not plot_currently_displayed and updates['display_timeplot_atrace'] is True:
+                self.createAccelerationPlot(SETTINGS['timeplot_enable_ymouse'])
+                penarray, brusharray = self.updateTrace('acceleration_plot', 'xy_acceleration', 'timeplot_atrace_color', 'timeplot_atrace_size', penpoints, penarray, brusharray)
+        else:
+            if hasattr(self,'acceleration_plot'):
+                for k in updates.keys():
+                    if k.startswith('timeplot_atrace'):
+                        penarray, brusharray = self.updateTrace('acceleration_plot', 'xy_acceleration', 'timeplot_atrace_color', 'timeplot_atrace_size', penpoints, penarray, brusharray)
+                    break
+
+        if 'display_timeplot_vtrace' in updates.keys():
+            plot_currently_displayed = hasattr(self,'velocity_plot') and self.velocity_plot is not None
+            if plot_currently_displayed and updates['display_timeplot_vtrace'] is False:
+                self.removeVelocityPlot()
+            elif not plot_currently_displayed and updates['display_timeplot_vtrace'] is True:
+                self.createVelocityPlot(SETTINGS['timeplot_enable_ymouse'])
+                penarray, brusharray = self.updateTrace('velocity_plot', 'xy_velocity', 'timeplot_vtrace_color', 'timeplot_vtrace_size', penpoints, penarray, brusharray)
+        else:
             if hasattr(self,'velocity_plot'):
                 for k in updates.keys():
                     if k.startswith('timeplot_vtrace'):
                         penarray, brusharray = self.updateTrace('velocity_plot', 'xy_velocity', 'timeplot_vtrace_color', 'timeplot_vtrace_size', penpoints, penarray, brusharray)
                     break
-        else:
-            print("TODO: Handle removing velocity subplot....")
 
-        if 'display_timeplot_atrace' in updates.keys() and updates.get('display_timeplot_atrace', False) is True:
-            for k in updates.keys():
-                if k.startswith('timeplot_atrace'):
-                    penarray, brusharray = self.updateTrace('acceleration_plot', 'xy_acceleration', 'timeplot_atrace_color', 'timeplot_atrace_size', penpoints, penarray, brusharray)
-                break
-        else:
-            print("TODO: Handle removing accell subplot....")
+        if self.bottom_plot != prev_bottom_plot:
+            prev_bottom_plot.hideAxis('bottom')
+        self.bottom_plot.setLabel('bottom', text="Time", units='sec')
 
         for k in updates.keys():
             if k.startswith('pen_stroke_boundary'):
