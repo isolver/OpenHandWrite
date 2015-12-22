@@ -37,7 +37,7 @@ DEFAULT_DOCK_PLACEMENT = {
     u"Segment Tree": ('left', (.2, 1.0)),
     u"Timeline": (['right', u"Segment Tree"], (.8, .35)),
     u"Spatial View": (['bottom', u"Timeline"], (.60, .65)),
-    u"Selected Data": (['right', u"Spatial View"], (.2, .65)),
+    u"Selected Pen Points": (['right', u"Spatial View"], (.2, .65)),
 }
 
 ABOUT_DIALOG_TEXT = """
@@ -585,7 +585,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         addDock(u"Timeline", self._penDataTimeLineWidget)
         addDock(u"Spatial View", self._penDataSpatialViewWidget)
         self._selectedPenDataViewWidget = SelectedPointsPlotWidget()
-        addDock(u"Selected Data", self._selectedPenDataViewWidget)
+        addDock(u"Selected Pen Points", self._selectedPenDataViewWidget)
 
         #
         ## Do Misc. GUI setup.
