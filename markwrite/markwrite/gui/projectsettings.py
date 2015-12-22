@@ -60,8 +60,11 @@ flattenned_settings_dict['stroke_detect_pressed_runs_only'] = {'name': 'Use Pres
 flattenned_settings_dict['stroke_detect_min_p2p_sample_count'] = {'name': 'Minimum Stroke Sample Count', 'type': 'int', 'value': 7, 'limits': (1, 50)}
 flattenned_settings_dict['stroke_detect_edge_type'] =  {'name': 'Detect Edge Type', 'type': 'list', 'values': ['none', 'rising', 'falling', 'both'], 'value': 'rising'}
 
+flattenned_settings_dict['series_detect_max_isi_msec'] = {'name': 'Maximum Series ISI (msec)', 'type': 'int', 'value': 0, 'limits': (0, 100)}
+
 settings_params = [
         {'name': 'Loading Source Data', 'type': 'group', 'children': [
+            'series_detect_max_isi_msec',
             'auto_generate_l1segments',
                {'name': 'ioHub HDF5 Trial Segmentation', 'type': 'group', 'children': [
                     'hdf5_trial_start_var_select_filter',

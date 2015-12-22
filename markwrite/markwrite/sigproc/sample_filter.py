@@ -44,10 +44,12 @@ def filter_pen_sample_series(series):
         series['x_filtered'] = savgol_filter(series['x'], window_length, polyorder)
         series['y_filtered'] = savgol_filter(series['y'], window_length, polyorder)
         series['pressure_filtered'] =  savgol_filter(series['pressure'], window_length, polyorder)
+        series['pressure_filtered'][series['pressure_filtered'] < 0.0] = 0.0
     elif len(series) > 10:
         series['x_filtered'] = savgol_filter(series['x'], 5, 3)
         series['y_filtered'] = savgol_filter(series['y'], 5, 3)
         series['pressure_filtered'] =  savgol_filter(series['pressure'], 5, 3)
+        series['pressure_filtered'][series['pressure_filtered'] < 0.0] = 0.0
     else:
         series['x_filtered'] = series['x']
         series['y_filtered'] = series['y']

@@ -181,14 +181,14 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
 
     def addStrokeBoundaryPoints(self, strokeboundries):
         ssize = SETTINGS['pen_stroke_boundary_size']
+        bpoints = self.plotitems['xy_plot'].get('boundary_points')
         if ssize == 0:
-            if self.plotitems['xy_plot']['boundary_points']:
-                self.plotitems['xy_plot']['boundary_points'].clear()
+            if bpoints:
+                bpoints.clear()
             return
         scolor = SETTINGS['pen_stroke_boundary_color']
         pen = pg.mkPen(scolor, width=ssize)
         brush = pg.mkBrush(scolor)
-        bpoints = self.plotitems['xy_plot'].get('boundary_points')
         if bpoints is None:
             bpoints = self.plotitems['xy_plot']['boundary_points'] = pg.ScatterPlotItem(size=ssize, pen=pen, brush=brush)
             self.xy_plot.addItem(bpoints)

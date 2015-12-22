@@ -349,19 +349,25 @@ class MarkWriteProject(object):
 
             # Calculate what the sampling interval (1000.0 / hz_rate) for the device was in sec.msec
             self.sampling_interval = np.percentile(self.sample_dts,5.0,interpolation='nearest')
-
+            self.max_series_isi = 3.0*self.sampling_interval
+            if SETTINGS['series_detect_max_isi_msec'] > 0:
+                self.max_series_isi = SETTINGS['series_detect_max_isi_msec']/1000.0
             # Find pen sample series boundaries, using calculated
             # sampling_interval. Filtering and velocity alg's are applied to
             # the pen samples within each series.
+            #print 'self.max_series_isi:',self.max_series_isi
             slist=[]
-            series_starts_ix, series_stops_ix, series_lengths = contiguous_regions(self.sample_dts < 2.0*self.sampling_interval)
+            series_starts_ix, series_stops_ix, series_lengths = contiguous_regions(self.sample_dts < self.max_series_isi)#2.0*self.sampling_interval)
             for i in xrange(len(series_starts_ix)):
                 si, ei = series_starts_ix[i],series_stops_ix[i]
                 st, et = pen_data['time'][[si, ei]]
                 slist.append((i,si,st,ei,et))
+                #print "Series ", si, ei, st, et
             series_dtype = np.dtype({'names':['id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint32,np.float32,np.uint32,np.float32]})
             self.series_boundaries = np.asarray(slist,dtype=series_dtype)
 
+            #print "Sampling interval calculated:",self.sampling_interval
+            #print "min, max, mean, median:",self.sample_dts.min(), self.sample_dts.max(), self.sample_dts.mean(), np.median(self.sample_dts)
 
             series_part_dtype = np.dtype({'names':['id','parent_id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint16,np.uint32,np.float32,np.uint32,np.float32]})
 
@@ -396,14 +402,21 @@ class MarkWriteProject(object):
                 psb_start_ix = series_bounds['start_ix']
                 for i in xrange(len(press_starts)):
                     si, ei = press_starts[i], press_stops[i]
-                    st, et = pseries['time'][[si, ei-1]]
+                    try:
+                        st, et = pseries['time'][[si, ei]]
+                    except IndexError, err:
+                        #print 'index error for:',si, ei, pseries.shape
+                        ei = ei-1
+                        st, et = pseries['time'][[si, ei]]
+                        press_stops[i]=ei
+
                     curr_press_series_id = press_run_count
                     press_run_count+=1
                     self.press_period_boundaries.append((curr_press_series_id,series_bounds['id'],psb_start_ix+si,st,psb_start_ix+ei,et))
                     if SETTINGS['stroke_detect_pressed_runs_only'] is True:
                         # Create/extend list of all velocity minima points found
                         # for current pressed sample run
-                        self.findstrokes(pseries[si:ei], psb_start_ix+si, curr_press_series_id)
+                        self.findstrokes(pseries[si:ei+1], psb_start_ix+si, curr_press_series_id)
 
                 if SETTINGS['stroke_detect_pressed_runs_only'] is False:
                     # Create/extend list of all velocity minima points found
@@ -441,7 +454,7 @@ class MarkWriteProject(object):
                     next_abs_vmin_ix = obsolute_offset+ppp_minima[s+1]
                 if next_abs_vmin_ix >= len(self._pendata):
                     next_abs_vmin_ix=len(self._pendata)-1
-                st, et = self._pendata['time'][[abs_vmin_ix, next_abs_vmin_ix-1]]
+                st, et = self._pendata['time'][[abs_vmin_ix, next_abs_vmin_ix]]
                 self.stroke_boundaries.append((len(self.stroke_boundaries),parent_id,abs_vmin_ix,st,next_abs_vmin_ix,et))
                 self.sample_velocity_minima_ix.append(abs_vmin_ix)
             next_abs_vmin_ix = obsolute_offset+len(searchsamplearray)-1
@@ -455,7 +468,7 @@ class MarkWriteProject(object):
             self.stroke_boundaries.append((len(self.stroke_boundaries),parent_id,
                                            obsolute_offset,
                                            searchsamplearray['time'][0],
-                                           obsolute_offset+len(searchsamplearray),
+                                           obsolute_offset+len(searchsamplearray)-1,
                                            searchsamplearray['time'][-1]))
 
     def getSeriesPeriodForTime(self, atime, positions='current'):
@@ -526,7 +539,7 @@ class MarkWriteProject(object):
     def getPressedRunForSample(self, sample_index):
         starts = self.press_period_boundaries['start_ix']
         ends = self.press_period_boundaries['end_ix']
-        run = self.press_period_boundaries[(sample_index >= starts) & (sample_index < ends)]
+        run = self.press_period_boundaries[(sample_index >= starts) & (sample_index <= ends)]
         if len(run)>1:
             print "Error, > 1 stroke found:",sample_index, run
         elif len(run)==1:
@@ -536,7 +549,7 @@ class MarkWriteProject(object):
     def getStrokeForSample(self, sample_index):
         starts = self.stroke_boundaries['start_ix']
         ends = self.stroke_boundaries['end_ix']
-        stroke = self.stroke_boundaries[(sample_index >= starts) & (sample_index < ends)]
+        stroke = self.stroke_boundaries[(sample_index >= starts) & (sample_index <= ends)]
         if len(stroke)>1:
             print "Error, > 1 stroke found:",sample_index, stroke
         elif len(stroke)==1:
