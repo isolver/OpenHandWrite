@@ -82,10 +82,6 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
 
         self.bottom_plot.setLabel('bottom', text="Time", units='sec')
 
-
-        # TODO: self.strokeBoundaryPoints should be moved into plotitems dict
-        self.strokeBoundaryPoints=None
-
         self.currentSelection = None
         self.fullPenValRange=[0,1]
         self.maxTime=1
@@ -186,8 +182,8 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
     def addStrokeBoundaryPoints(self, strokeboundries):
         ssize = SETTINGS['pen_stroke_boundary_size']
         if ssize == 0:
-            if self.strokeBoundaryPoints:
-                self.strokeBoundaryPoints.clear()
+            if self.plotitems['xy_plot']['boundary_points']:
+                self.plotitems['xy_plot']['boundary_points'].clear()
             return
         scolor = SETTINGS['pen_stroke_boundary_color']
         pen = pg.mkPen(scolor, width=ssize)
