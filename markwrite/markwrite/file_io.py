@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+from __future__ import division
 import numpy as np
 from util import getSegmentTagsFilePath
 import codecs
@@ -132,7 +132,7 @@ class EyePenDataImporter(DataImporter):
                     line_tokens = tab_line.split(u'\t')
 
                     list_result.append(
-                        (float(line_tokens[cls.TIME_COLUMN_IX].strip()),
+                        (float(line_tokens[cls.TIME_COLUMN_IX].strip())/1000.0,
                          int(line_tokens[cls.X_COLUMN_IX].strip()),
                          int(line_tokens[cls.Y_COLUMN_IX].strip()),
                          int(line_tokens[cls.PRESS_COLUMN_IX].strip()),
@@ -264,11 +264,10 @@ class XmlDataImporter(DataImporter):
         list_result = []
         xml_root = ET.parse(file_path).getroot()
         for stroke_set in xml_root.iter(u'strokes'):
-            pressure = 0
             for stroke in stroke_set.iter(u'stroke'):
-                list_result.append((float(stroke.get("Time")),
-                                stroke.get("X"),
-                                stroke.get("Y"),
+                list_result.append((float(stroke.get("Time"))/1000.0,
+                                int(stroke.get("X")),
+                                int(stroke.get("Y")),
                                 1, # pressure, always 1
                                 0, # state field, always 0
                                 0, # x_filtered, filled in by markwrite runtime
@@ -281,9 +280,8 @@ class XmlDataImporter(DataImporter):
                                 0) #segment_id, filled in by markwrite runtime
                                 )
             last_point = list(list_result[-1])
-            last_point[-2] = 0  # Set pressure to 0 for last point
-            list_result.pop(-1)
-            list_result.append(tuple(last_point))
+            last_point[3] = 0  # Set pressure to 0 for last point
+            list_result[-1]=tuple(last_point)
         return list_result
 
 ################################################################################

@@ -638,7 +638,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                             self.createSegmentAction.setEnabled(True)
                             self.project.selectedtimeregion.setRegion((tstart, tend))
                             seg = self.createSegment("Trial%d"%(i+1),trim_time_region=False)
-                            seg.locked = True
+                            if seg:
+                                seg.locked = True
+                            else:
+                                print("!! Error: Unable to create segment for trial %d, with time period [%.3f, %.3f]."%(i,tstart, tend))
                         self.setActiveObject(self.project.segmentset.children[0])
                     else:
                         wmproj.selectedtimeregion.setRegion([wmproj.pendata['time'][0], wmproj.pendata['time'][0] + 1.0])

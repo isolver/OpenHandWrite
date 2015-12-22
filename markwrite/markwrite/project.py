@@ -236,6 +236,7 @@ class MarkWriteProject(object):
                         if dictDlg.OK:
                             tstartvar = tvarlists["Start Time Variable"]
                             tendvar = tvarlists["End Time Variable"]
+                print "cREATING PROJECT WITH DATA:",pdata.shape, pdata['time'][0],pdata['time'][-1]
                 self.createNewProject(fname, pdata, expcondvars, tstartvar, tendvar, fext)
             else:
                 print "Unsupported file type:",file_path
@@ -296,10 +297,11 @@ class MarkWriteProject(object):
                             if (start_ix >= ts and start_ix <= te) or (end_ix >= ts and  end_ix <= te):
                                 raise ValueError("Trial sample range overlaps with existing trial: current=[{}, {}], existing=[{}, {}]".format(start_ix, end_ix, ts, te))
 
-                        trial_times.append((trialstart,trialend))
-                        self._trialindices.append([start_ix, end_ix-1])
                         trial_samples = pen_data[trial_time_mask]
-                        samples_by_trial.append(trial_samples)
+                        if len(trial_samples)>0:
+                            trial_times.append((trialstart,trialend))
+                            self._trialindices.append([start_ix, end_ix-1])
+                            samples_by_trial.append(trial_samples)
                     except:
                         print("Error getting trial time period: [{}, {}] = [{}, {}]".format(self._stimevar, self._etimevar, t[self._stimevar], t[self._etimevar]))
                         import traceback
@@ -320,19 +322,21 @@ class MarkWriteProject(object):
                 self._autosegl1 = False
 
             # Normalize pen sample times so first sample starts at 0.0 sec.
-            self._original_timebase_offset=pen_data[0]['time']
+            self._original_timebase_offset=pen_data['time'][0]
             pen_data['time']-=self._original_timebase_offset
             if trial_times is not None:
                 trial_times-=self._original_timebase_offset
                 self._trialtimes = trial_times
 
             # Change time stamps to sec.msec format, if needed
-            if file_type != 'hdf5':
+            #if file_type != 'hdf5':
                 # data from iohub hdf5 file is already in sec.msec format
-                pen_data['time']=pen_data['time']/1000.0
+            #    pen_data['time']=pen_data['time']/1000.0
+            #    self._original_timebase_offset= self._original_timebase_offset/1000.0
 
             self._pendata = pen_data
-
+            print "data time range: %.3f - %.3f. offset = %.3f"%(pen_data['time'][0],pen_data['time'][-1],self._original_timebase_offset)
+            print pen_data['time'][0:100]
             self.nonzero_pressure_mask=self._pendata['pressure']>0
             # nonzero_regions_ix will be a tuple of (starts, stops, lengths) arrays
             self.nonzero_region_ix=contiguous_regions(self.nonzero_pressure_mask)
@@ -368,11 +372,9 @@ class MarkWriteProject(object):
             stroke_count=0
             press_run_count=0
 
-            stroke_detect_pressed_runs_only = SETTINGS['stroke_detect_pressed_runs_only']
             #stroke_detect_min_value_threshold = SETTINGS['stroke_detect_min_value_threshold']
             #if stroke_detect_min_value_threshold == 0.0:
             #    stroke_detect_min_value_threshold = None
-            stroke_detect_min_p2p_sample_count = SETTINGS['stroke_detect_min_p2p_sample_count']
 
             # filter data
             for series_bounds in self.series_boundaries:
@@ -398,12 +400,12 @@ class MarkWriteProject(object):
                     curr_press_series_id = press_run_count
                     press_run_count+=1
                     self.press_period_boundaries.append((curr_press_series_id,series_bounds['id'],psb_start_ix+si,st,psb_start_ix+ei,et))
-                    if stroke_detect_pressed_runs_only is True:
+                    if SETTINGS['stroke_detect_pressed_runs_only'] is True:
                         # Create/extend list of all velocity minima points found
                         # for current pressed sample run
                         self.findstrokes(pseries[si:ei], psb_start_ix+si, curr_press_series_id)
 
-                if stroke_detect_pressed_runs_only is False:
+                if SETTINGS['stroke_detect_pressed_runs_only'] is False:
                     # Create/extend list of all velocity minima points found
                     # for whole series
                     self.findstrokes(pseries, psb_start_ix, series_bounds['id'])
@@ -418,10 +420,13 @@ class MarkWriteProject(object):
                 MarkWriteProject._selectedtimeregion.project = self
 
     def findstrokes(self, searchsamplearray, obsolute_offset, parent_id):
+        edge_type = SETTINGS['stroke_detect_edge_type']
+        if edge_type == 'none':
+            edge_type=None
         ppp_minima = detect_peaks(searchsamplearray['xy_velocity'],
                                   mph=None,
                                   mpd=SETTINGS['stroke_detect_min_p2p_sample_count'],
-                                  edge='falling',##edge=None,
+                                  edge=edge_type,##edge=None,
                                   valley=True)#, show=True)
 
         if len(ppp_minima)>1:

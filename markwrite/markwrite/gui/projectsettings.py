@@ -57,8 +57,8 @@ flattenned_settings_dict['spatialplot_selectedpoint_size'] = {'name': 'Size', 't
 
 flattenned_settings_dict['stroke_detect_pressed_runs_only'] = {'name': 'Use Pressed Sample Runs Only', 'type': 'bool', 'value': True}
 #flattenned_settings_dict['stroke_detect_min_value_threshold'] = {'name': 'Minimum Velocity Threshold', 'type': 'float', 'value': 0.0, 'step': 0.1, 'limits':(0.0, 500.0)}
-flattenned_settings_dict['stroke_detect_min_p2p_sample_count'] = {'name': 'Minimum Stroke Sample Count', 'type': 'int', 'value': 10, 'limits': (1, 50)}
-#flattenned_settings_dict['stroke_detect_edge_type'] =  {'name': 'Edge Type', 'type': 'list', 'values': ['none', 'rising', 'falling', 'both'], 'value': 'rising'}
+flattenned_settings_dict['stroke_detect_min_p2p_sample_count'] = {'name': 'Minimum Stroke Sample Count', 'type': 'int', 'value': 7, 'limits': (1, 50)}
+flattenned_settings_dict['stroke_detect_edge_type'] =  {'name': 'Detect Edge Type', 'type': 'list', 'values': ['none', 'rising', 'falling', 'both'], 'value': 'rising'}
 
 settings_params = [
         {'name': 'Loading Source Data', 'type': 'group', 'children': [
@@ -71,7 +71,7 @@ settings_params = [
                     'stroke_detect_pressed_runs_only',
 #                    'stroke_detect_min_value_threshold',
                     'stroke_detect_min_p2p_sample_count',
-#                    'stroke_detect_edge_type',
+                    'stroke_detect_edge_type',
                  ]},
         ]},
         {'name': 'Segment Creation', 'type': 'group', 'children': [
