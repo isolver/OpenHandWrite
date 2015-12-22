@@ -236,7 +236,7 @@ class MarkWriteProject(object):
                         if dictDlg.OK:
                             tstartvar = tvarlists["Start Time Variable"]
                             tendvar = tvarlists["End Time Variable"]
-                print "cREATING PROJECT WITH DATA:",pdata.shape, pdata['time'][0],pdata['time'][-1]
+                #print "cREATING PROJECT WITH DATA:",pdata.shape, pdata['time'][0],pdata['time'][-1]
                 self.createNewProject(fname, pdata, expcondvars, tstartvar, tendvar, fext)
             else:
                 print "Unsupported file type:",file_path
@@ -335,8 +335,8 @@ class MarkWriteProject(object):
             #    self._original_timebase_offset= self._original_timebase_offset/1000.0
 
             self._pendata = pen_data
-            print "data time range: %.3f - %.3f. offset = %.3f"%(pen_data['time'][0],pen_data['time'][-1],self._original_timebase_offset)
-            print pen_data['time'][0:100]
+            #print "data time range: %.3f - %.3f. offset = %.3f"%(pen_data['time'][0],pen_data['time'][-1],self._original_timebase_offset)
+            #print pen_data['time'][0:100]
             self.nonzero_pressure_mask=self._pendata['pressure']>0
             # nonzero_regions_ix will be a tuple of (starts, stops, lengths) arrays
             self.nonzero_region_ix=contiguous_regions(self.nonzero_pressure_mask)
