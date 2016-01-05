@@ -75,6 +75,7 @@ class SegmentInfoDockArea(DockArea):
         self.project_tree_dock.addWidget(self.project_tree)
 
         self.properties_table = TableWidget(sortable=False, editable=False)
+        self.properties_table.setFormat("%.3f",1)
         self.properties_table.setColumnCount(1)
         self.properties_table.contextMenu.clear()
         self.properties_table.horizontalHeader().hide()

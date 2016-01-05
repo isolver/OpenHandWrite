@@ -126,8 +126,8 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
 
         props['Name'][0] = u"Selected Time Period"
         stime, etime = self.getRegion()
-        props['Start Time'][0] = stime
-        props['End Time'][0] = etime
+        props['Start Time'][0] = '%.3f'%stime
+        props['End Time'][0] = '%.3f'%etime
         props['Point Count'][0] = self.selectedpendata.shape[0]
 
         return props
@@ -328,16 +328,9 @@ class MarkWriteProject(object):
                 trial_times-=self._original_timebase_offset
                 self._trialtimes = trial_times
 
-            # Change time stamps to sec.msec format, if needed
-            #if file_type != 'hdf5':
-                # data from iohub hdf5 file is already in sec.msec format
-            #    pen_data['time']=pen_data['time']/1000.0
-            #    self._original_timebase_offset= self._original_timebase_offset/1000.0
-
             self._pendata = pen_data
-            #print "data time range: %.3f - %.3f. offset = %.3f"%(pen_data['time'][0],pen_data['time'][-1],self._original_timebase_offset)
-            #print pen_data['time'][0:100]
             self.nonzero_pressure_mask=self._pendata['pressure']>0
+
             # nonzero_regions_ix will be a tuple of (starts, stops, lengths) arrays
             self.nonzero_region_ix=contiguous_regions(self.nonzero_pressure_mask)
             self._segmentset=PenDataSegmentCategory(name=self.name,project=self)
@@ -355,32 +348,21 @@ class MarkWriteProject(object):
             # Find pen sample series boundaries, using calculated
             # sampling_interval. Filtering and velocity alg's are applied to
             # the pen samples within each series.
-            #print 'self.max_series_isi:',self.max_series_isi
             slist=[]
             series_starts_ix, series_stops_ix, series_lengths = contiguous_regions(self.sample_dts < self.max_series_isi)#2.0*self.sampling_interval)
             for i in xrange(len(series_starts_ix)):
                 si, ei = series_starts_ix[i],series_stops_ix[i]
                 st, et = pen_data['time'][[si, ei]]
                 slist.append((i,si,st,ei,et))
-                #print "Series ", si, ei, st, et
             series_dtype = np.dtype({'names':['id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint32,np.float32,np.uint32,np.float32]})
             self.series_boundaries = np.asarray(slist,dtype=series_dtype)
 
-            #print "Sampling interval calculated:",self.sampling_interval
-            #print "min, max, mean, median:",self.sample_dts.min(), self.sample_dts.max(), self.sample_dts.mean(), np.median(self.sample_dts)
-
             series_part_dtype = np.dtype({'names':['id','parent_id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint16,np.uint32,np.float32,np.uint32,np.float32]})
-
             self.press_period_boundaries=[]
             self.sample_velocity_minima_ix=[]
             self.velocity_minima_samples = None
             self.stroke_boundaries = []
-            stroke_count=0
             press_run_count=0
-
-            #stroke_detect_min_value_threshold = SETTINGS['stroke_detect_min_value_threshold']
-            #if stroke_detect_min_value_threshold == 0.0:
-            #    stroke_detect_min_value_threshold = None
 
             # filter data
             for series_bounds in self.series_boundaries:
@@ -405,7 +387,6 @@ class MarkWriteProject(object):
                     try:
                         st, et = pseries['time'][[si, ei]]
                     except IndexError, err:
-                        #print 'index error for:',si, ei, pseries.shape
                         ei = ei-1
                         st, et = pseries['time'][[si, ei]]
                         press_stops[i]=ei
