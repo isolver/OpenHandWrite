@@ -371,22 +371,22 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         #
         # Next/Prev Sample Series Actions
         #
-        atext = 'INSERT ACTION TOOLTIP TEXT HERE'
-        aicon = 'help&32.png'
+        atext = 'Select Next Sample Series'
+        aicon = 'nextstroke&24.png'
         self.selectNextSampleSeriesAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'ICON DESC. TXT HERE',
+            'Select Next Sample Series',
             self)
         #self.selectNextSampleSeriesAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
         self.selectNextSampleSeriesAction.setEnabled(False)
         self.selectNextSampleSeriesAction.setStatusTip(atext)
         self.selectNextSampleSeriesAction.triggered.connect(self.selectNextSampleSeries)
 
-        atext = 'INSERT ACTION TOOLTIP TEXT HERE'
-        aicon = 'help&32.png'
+        atext = 'Select Previous Sample Series'
+        aicon = 'prevstroke&24.png'
         self.selectPrevSampleSeriesAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'ICON DESC. TXT HERE',
+            'Select Previous Sample Series',
             self)
         #self.selectPrevSampleSeriesAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
         self.selectPrevSampleSeriesAction.setEnabled(False)
@@ -396,27 +396,27 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         #
         # Next/Prev Pen Pressed Series Actions
         #
-        atext = 'INSERT ACTION TOOLTIP TEXT HERE'
-        aicon = 'help&32.png'
-        self.selectNextPressSeriesAction = ContextualStateAction(
+        atext = 'Selected Next Pressed Sample Run'
+        aicon = 'nextstroke&24.png'
+        self.selectNextPressedRunAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'ICON DESC. TXT HERE',
+            'Selected Next Pressed Sample Run',
             self)
         #self.selectNextPressSeriesAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
-        self.selectNextPressSeriesAction.setEnabled(False)
-        self.selectNextPressSeriesAction.setStatusTip(atext)
-        self.selectNextPressSeriesAction.triggered.connect(self.selectNextPressSeries)
+        self.selectNextPressedRunAction.setEnabled(False)
+        self.selectNextPressedRunAction.setStatusTip(atext)
+        self.selectNextPressedRunAction.triggered.connect(self.selectNextPressedRun)
 
-        atext = 'INSERT ACTION TOOLTIP TEXT HERE'
-        aicon = 'help&32.png'
-        self.selectPrevPressSeriesAction = ContextualStateAction(
+        atext = 'Selected Previous Pressed Sample Run'
+        aicon = 'prevstroke&24.png'
+        self.selectPrevPressedRunAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'ICON DESC. TXT HERE',
+            'Selected Previous Pressed Sample Run',
             self)
         #self.selectPrevPressSeriesAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
-        self.selectPrevPressSeriesAction.setEnabled(False)
-        self.selectPrevPressSeriesAction.setStatusTip(atext)
-        self.selectPrevPressSeriesAction.triggered.connect(self.selectPrevPressSeries)
+        self.selectPrevPressedRunAction.setEnabled(False)
+        self.selectPrevPressedRunAction.setStatusTip(atext)
+        self.selectPrevPressedRunAction.triggered.connect(self.selectPrevPressedRun)
 
         #
         # Next/Prev Stroke Actions
@@ -456,8 +456,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.exportSampleReportAction.enableActionsList.append(self.backwardSelectionAction)
         self.exportSampleReportAction.enableActionsList.append(self.selectNextSampleSeriesAction)
         self.exportSampleReportAction.enableActionsList.append(self.selectPrevSampleSeriesAction)
-        self.exportSampleReportAction.enableActionsList.append(self.selectNextPressSeriesAction)
-        self.exportSampleReportAction.enableActionsList.append(self.selectPrevPressSeriesAction)
+        self.exportSampleReportAction.enableActionsList.append(self.selectNextPressedRunAction)
+        self.exportSampleReportAction.enableActionsList.append(self.selectPrevPressedRunAction)
         self.exportSampleReportAction.enableActionsList.append(self.selectNextStrokeAction)
         self.exportSampleReportAction.enableActionsList.append(self.selectPrevStrokeAction)
         #
@@ -537,10 +537,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.toolbarsegment.addAction(self.decreaseSelectionEndPointAction)
         self.toolbarsegment.addAction(self.increaseSelectionEndPointAction)
 
-        #self.toolbarsegment.addAction(self.selectNextSampleSeriesAction)
-        #self.toolbarsegment.addAction(self.selectPrevSampleSeriesAction)
-        #self.toolbarsegment.addAction(self.selectNextPressSeriesAction)
-        #self.toolbarsegment.addAction(self.selectPrevPressSeriesAction)
+        self.toolbarsegment.addAction(self.selectPrevSampleSeriesAction)
+        self.toolbarsegment.addAction(self.selectNextSampleSeriesAction)
+        self.toolbarsegment.addAction(self.selectPrevPressedRunAction)
+        self.toolbarsegment.addAction(self.selectNextPressedRunAction)
         self.toolbarsegment.addAction(self.selectPrevStrokeAction)
         self.toolbarsegment.addAction(self.selectNextStrokeAction)
 
@@ -945,37 +945,54 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             if self.project:
                 self.sigAppSettingsUpdated.emit(updatedsettings, allsettings)
 
-    @not_implemented
+    def getNextUnitTimeRange(self, unit_lookup_table):
+        selection_start, selection_end = self.project.selectedtimeregion.getRegion()
+        next_units = unit_lookup_table[unit_lookup_table['start_time'] > selection_start]
+        try:
+            return next_units[0]['start_time'], next_units[0]['end_time']
+        except:
+            return None
+
+    def getPreviousUnitTimeRange(self, unit_lookup_table):
+        selection_start, selection_end = self.project.selectedtimeregion.getRegion()
+        next_units = unit_lookup_table[unit_lookup_table['start_time'] < selection_start]
+        try:
+            return next_units[-1]['start_time'], next_units[-1]['end_time']
+        except:
+            return None
+
     def selectNextSampleSeries(self):
-        pass
+        seriestimerange = self.getNextUnitTimeRange(self.project.series_boundaries)
+        if seriestimerange:
+            self.project.selectedtimeregion.setRegion(seriestimerange)
 
-    @not_implemented
     def selectPrevSampleSeries(self):
-        pass
+        seriestimerange = self.getPreviousUnitTimeRange(self.project.series_boundaries)
+        if seriestimerange:
+            self.project.selectedtimeregion.setRegion(seriestimerange)
 
-    @not_implemented
-    def selectNextPressSeries(self):
-        pass
 
-    @not_implemented
-    def selectPrevPressSeries(self):
-        pass
+    def selectNextPressedRun(self):
+        runtimerange = self.getNextUnitTimeRange(self.project.press_period_boundaries)
+        if runtimerange:
+            self.project.selectedtimeregion.setRegion(runtimerange)
+
+
+    def selectPrevPressedRun(self):
+        runtimerange = self.getPreviousUnitTimeRange(self.project.press_period_boundaries)
+        if runtimerange:
+            self.project.selectedtimeregion.setRegion(runtimerange)
 
     def selectNextStroke(self):
-        selection_start, selection_end = self.project.selectedtimeregion.getRegion()
-        nsmask = self.project.stroke_boundaries['start_time'] > selection_start
-        next_strokes = self.project.stroke_boundaries[nsmask]
-        if len(next_strokes):
-            nstroke = next_strokes[0]
-            self.project.selectedtimeregion.setRegion((nstroke['start_time'],nstroke['end_time']))
+        stroketimerange = self.getNextUnitTimeRange(self.project.stroke_boundaries)
+        if stroketimerange:
+            self.project.selectedtimeregion.setRegion(stroketimerange)
 
     def selectPrevStroke(self):
-        selection_start, selection_end = self.project.selectedtimeregion.getRegion()
-        nsmask = self.project.stroke_boundaries['start_time'] < selection_start
-        next_strokes = self.project.stroke_boundaries[nsmask]
-        if len(next_strokes):
-            nstroke = next_strokes[-1]
-            self.project.selectedtimeregion.setRegion((nstroke['start_time'],nstroke['end_time']))
+        stroketimerange = self.getPreviousUnitTimeRange(self.project.stroke_boundaries)
+        if stroketimerange:
+            self.project.selectedtimeregion.setRegion(stroketimerange)
+
 
     def closeEvent(self, event):
         if event == u'FORCE_EXIT':
