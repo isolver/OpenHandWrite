@@ -494,6 +494,50 @@ class MarkWriteProject(object):
 
         return result
 
+    def getNextUnitStartTime(self,unit_lookup_table, current_time):
+        next_unit_ends = unit_lookup_table[unit_lookup_table['start_time'] > current_time]
+        try:
+            return next_unit_ends[0]['start_time']
+        except:
+            return None
+
+    def getNextUnitEndTime(self,unit_lookup_table, current_time):
+        next_unit_ends = unit_lookup_table[unit_lookup_table['end_time'] > current_time]
+        try:
+            return next_unit_ends[0]['end_time']
+        except:
+            return None
+
+    def getPrevUnitStartTime(self,unit_lookup_table, current_time):
+        prev_unit_starts = unit_lookup_table[unit_lookup_table['start_time'] < current_time]
+        try:
+            return prev_unit_starts[-1]['start_time']
+        except:
+            return None
+
+    def getPrevUnitEndTime(self,unit_lookup_table, current_time):
+        prev_unit_starts = unit_lookup_table[unit_lookup_table['end_time'] < current_time]
+        try:
+            return prev_unit_starts[-1]['end_time']
+        except:
+            return None
+
+    def getNextUnitTimeRange(self, unit_lookup_table):
+        selection_start, selection_end = self.selectedtimeregion.getRegion()
+        next_units = unit_lookup_table[unit_lookup_table['start_time'] > selection_start]
+        try:
+            return next_units[0]['start_time'], next_units[0]['end_time']
+        except:
+            return None
+
+    def getPreviousUnitTimeRange(self, unit_lookup_table):
+        selection_start, selection_end = self.selectedtimeregion.getRegion()
+        next_units = unit_lookup_table[unit_lookup_table['start_time'] < selection_start]
+        try:
+            return next_units[-1]['start_time'], next_units[-1]['end_time']
+        except:
+            return None
+
     def getPressedRunsForSeries(self, series_id):
         ppbmask = self.press_period_boundaries['parent_id']==series_id
         return self.press_period_boundaries[ppbmask]

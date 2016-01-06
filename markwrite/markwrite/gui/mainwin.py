@@ -393,14 +393,58 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.selectPrevSampleSeriesAction.setStatusTip(atext)
         self.selectPrevSampleSeriesAction.triggered.connect(self.selectPrevSampleSeries)
 
+        atext = 'Move Selection End to Next Series End'
+        aicon = 'help&32.png'
+        self.advanceSelectionEndToNextSeriesEndAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        #self.advanceSelectionEndToNextSeriesEndAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.advanceSelectionEndToNextSeriesEndAction.setEnabled(False)
+        self.advanceSelectionEndToNextSeriesEndAction.setStatusTip(atext)
+        self.advanceSelectionEndToNextSeriesEndAction.triggered.connect(self.advanceSelectionEndToNextSeriesEnd)
+
+        atext = 'Move Selection End to Previous Series End'
+        aicon = 'help&32.png'
+        self.returnSelectionEndToPrevSeriesEndAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        #self.returnSelectionEndToPrevSeriesEndAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.returnSelectionEndToPrevSeriesEndAction.setEnabled(False)
+        self.returnSelectionEndToPrevSeriesEndAction.setStatusTip(atext)
+        self.returnSelectionEndToPrevSeriesEndAction.triggered.connect(self.returnSelectionEndToPrevSeriesEnd)
+
+        atext = 'Move Selection Start to Next Series Start'
+        aicon = 'help&32.png'
+        self.advanceSelectionStartToNextSeriesStartAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        #self.advanceSelectionStartToNextSeriesStartAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.advanceSelectionStartToNextSeriesStartAction.setEnabled(False)
+        self.advanceSelectionStartToNextSeriesStartAction.setStatusTip(atext)
+        self.advanceSelectionStartToNextSeriesStartAction.triggered.connect(self.advanceSelectionStartToNextSeriesStart)
+
+        atext = 'Move Selection Start to Previous Series Start'
+        aicon = 'help&32.png'
+        self.returnSelectionStartToPrevSeriesStartAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        #self.returnSelectionStartToPrevSeriesStartAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.returnSelectionStartToPrevSeriesStartAction.setEnabled(False)
+        self.returnSelectionStartToPrevSeriesStartAction.setStatusTip(atext)
+        self.returnSelectionStartToPrevSeriesStartAction.triggered.connect(self.returnSelectionStartToPrevSeriesStart)
+
         #
-        # Next/Prev Pen Pressed Series Actions
+        # Next/Prev Pen Pressed Run Actions
         #
         atext = 'Selected Next Pressed Sample Run'
         aicon = 'nextstroke&24.png'
         self.selectNextPressedRunAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Selected Next Pressed Sample Run',
+            atext,
             self)
         #self.selectNextPressSeriesAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
         self.selectNextPressedRunAction.setEnabled(False)
@@ -411,12 +455,56 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'prevstroke&24.png'
         self.selectPrevPressedRunAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Selected Previous Pressed Sample Run',
+            atext,
             self)
         #self.selectPrevPressSeriesAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
         self.selectPrevPressedRunAction.setEnabled(False)
         self.selectPrevPressedRunAction.setStatusTip(atext)
         self.selectPrevPressedRunAction.triggered.connect(self.selectPrevPressedRun)
+
+        atext = 'Move Selection End to Next Pressed Run End'
+        aicon = 'help&32.png'
+        self.advanceSelectionEndToNextRunEndAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        #self.advanceSelectionEndToNextRunEndAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.advanceSelectionEndToNextRunEndAction.setEnabled(False)
+        self.advanceSelectionEndToNextRunEndAction.setStatusTip(atext)
+        self.advanceSelectionEndToNextRunEndAction.triggered.connect(self.advanceSelectionEndToNextRunEnd)
+
+        atext = 'Move Selection End to Previous Pressed Run End'
+        aicon = 'help&32.png'
+        self.returnSelectionEndToPrevRunEndAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        #self.returnSelectionEndToPrevRunEndAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.returnSelectionEndToPrevRunEndAction.setEnabled(False)
+        self.returnSelectionEndToPrevRunEndAction.setStatusTip(atext)
+        self.returnSelectionEndToPrevRunEndAction.triggered.connect(self.returnSelectionEndToPrevRunEnd)
+
+        atext = 'Move Selection Start to Next Pressed Run Start'
+        aicon = 'help&32.png'
+        self.advanceSelectionStartToNextRunStartAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        #self.advanceSelectionStartToNextRunStartAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.advanceSelectionStartToNextRunStartAction.setEnabled(False)
+        self.advanceSelectionStartToNextRunStartAction.setStatusTip(atext)
+        self.advanceSelectionStartToNextRunStartAction.triggered.connect(self.advanceSelectionStartToNextRunStart)
+
+        atext = 'Move Selection Start to Previous Pressed Run Start'
+        aicon = 'help&32.png'
+        self.returnSelectionStartToPrevRunStartAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        #self.returnSelectionStartToPrevRunStartAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.returnSelectionStartToPrevRunStartAction.setEnabled(False)
+        self.returnSelectionStartToPrevRunStartAction.setStatusTip(atext)
+        self.returnSelectionStartToPrevRunStartAction.triggered.connect(self.returnSelectionStartToPrevRunStart)
 
         #
         # Next/Prev Stroke Actions
@@ -443,6 +531,50 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.selectPrevStrokeAction.setStatusTip(atext)
         self.selectPrevStrokeAction.triggered.connect(self.selectPrevStroke)
 
+        atext = 'Move Selection End to Next Stroke End'
+        aicon = 'help&32.png'
+        self.advanceSelectionEndToNextStrokeEndAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        #self.advanceSelectionEndToNextStrokeEndAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.advanceSelectionEndToNextStrokeEndAction.setEnabled(False)
+        self.advanceSelectionEndToNextStrokeEndAction.setStatusTip(atext)
+        self.advanceSelectionEndToNextStrokeEndAction.triggered.connect(self.advanceSelectionEndToNextStrokeEnd)
+
+        atext = 'Move Selection End to Previous Stroke End'
+        aicon = 'help&32.png'
+        self.returnSelectionEndToPrevStrokeEndAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        #self.returnSelectionEndToPrevStrokeEndAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.returnSelectionEndToPrevStrokeEndAction.setEnabled(False)
+        self.returnSelectionEndToPrevStrokeEndAction.setStatusTip(atext)
+        self.returnSelectionEndToPrevStrokeEndAction.triggered.connect(self.returnSelectionEndToPrevStrokeEnd)
+
+        atext = 'Move Selection Start to Next Stroke Start'
+        aicon = 'help&32.png'
+        self.advanceSelectionStartToNextStrokeStartAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        #self.advanceSelectionStartToNextStrokeStartAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.advanceSelectionStartToNextStrokeStartAction.setEnabled(False)
+        self.advanceSelectionStartToNextStrokeStartAction.setStatusTip(atext)
+        self.advanceSelectionStartToNextStrokeStartAction.triggered.connect(self.advanceSelectionStartToNextStrokeStart)
+
+        atext = 'Move Selection Start to Previous Stroke Start'
+        aicon = 'help&32.png'
+        self.returnSelectionStartToPrevStrokeStartAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        #self.returnSelectionStartToPrevStrokeStartAction.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
+        self.returnSelectionStartToPrevStrokeStartAction.setEnabled(False)
+        self.returnSelectionStartToPrevStrokeStartAction.setStatusTip(atext)
+        self.returnSelectionStartToPrevStrokeStartAction.triggered.connect(self.returnSelectionStartToPrevStrokeStart)
+
         #---
 
         self.exportSampleReportAction.enableActionsList.append(self.zoomInTimelineAction)
@@ -454,12 +586,29 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.exportSampleReportAction.enableActionsList.append(self.increaseSelectionStartPointAction)
         self.exportSampleReportAction.enableActionsList.append(self.forwardSelectionAction)
         self.exportSampleReportAction.enableActionsList.append(self.backwardSelectionAction)
+
         self.exportSampleReportAction.enableActionsList.append(self.selectNextSampleSeriesAction)
         self.exportSampleReportAction.enableActionsList.append(self.selectPrevSampleSeriesAction)
+        self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionEndToNextSeriesEndAction)
+        self.exportSampleReportAction.enableActionsList.append(self.returnSelectionEndToPrevSeriesEndAction)
+        self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionStartToNextSeriesStartAction)
+        self.exportSampleReportAction.enableActionsList.append(self.returnSelectionStartToPrevSeriesStartAction)
+
+
         self.exportSampleReportAction.enableActionsList.append(self.selectNextPressedRunAction)
         self.exportSampleReportAction.enableActionsList.append(self.selectPrevPressedRunAction)
+        self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionEndToNextRunEndAction)
+        self.exportSampleReportAction.enableActionsList.append(self.returnSelectionEndToPrevRunEndAction)
+        self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionStartToNextRunStartAction)
+        self.exportSampleReportAction.enableActionsList.append(self.returnSelectionStartToPrevRunStartAction)
+
+
         self.exportSampleReportAction.enableActionsList.append(self.selectNextStrokeAction)
         self.exportSampleReportAction.enableActionsList.append(self.selectPrevStrokeAction)
+        self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionEndToNextStrokeEndAction)
+        self.exportSampleReportAction.enableActionsList.append(self.returnSelectionEndToPrevStrokeEndAction)
+        self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionStartToNextStrokeStartAction)
+        self.exportSampleReportAction.enableActionsList.append(self.returnSelectionStartToPrevStrokeStartAction)
         #
         # Help Menu / Toolbar Related Actions
         #
@@ -539,10 +688,25 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         self.toolbarsegment.addAction(self.selectPrevSampleSeriesAction)
         self.toolbarsegment.addAction(self.selectNextSampleSeriesAction)
+        self.toolbarsegment.addAction(self.advanceSelectionEndToNextSeriesEndAction)
+        self.toolbarsegment.addAction(self.returnSelectionEndToPrevSeriesEndAction)
+        self.toolbarsegment.addAction(self.advanceSelectionStartToNextSeriesStartAction)
+        self.toolbarsegment.addAction(self.returnSelectionStartToPrevSeriesStartAction)
+
         self.toolbarsegment.addAction(self.selectPrevPressedRunAction)
         self.toolbarsegment.addAction(self.selectNextPressedRunAction)
+        self.toolbarsegment.addAction(self.advanceSelectionEndToNextRunEndAction)
+        self.toolbarsegment.addAction(self.returnSelectionEndToPrevRunEndAction)
+        self.toolbarsegment.addAction(self.advanceSelectionStartToNextRunStartAction)
+        self.toolbarsegment.addAction(self.returnSelectionStartToPrevRunStartAction)
+
+
         self.toolbarsegment.addAction(self.selectPrevStrokeAction)
         self.toolbarsegment.addAction(self.selectNextStrokeAction)
+        self.toolbarsegment.addAction(self.advanceSelectionEndToNextStrokeEndAction)
+        self.toolbarsegment.addAction(self.returnSelectionEndToPrevStrokeEndAction)
+        self.toolbarsegment.addAction(self.advanceSelectionStartToNextStrokeStartAction)
+        self.toolbarsegment.addAction(self.returnSelectionStartToPrevStrokeStartAction)
 
         self.toolbarHelp = self.addToolBar('Help')
         self.toolbarHelp.addAction(self.aboutAction)
@@ -945,54 +1109,107 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             if self.project:
                 self.sigAppSettingsUpdated.emit(updatedsettings, allsettings)
 
-    def getNextUnitTimeRange(self, unit_lookup_table):
+    # >>>>>>
+    # Generic Unit based selection region actions
+    def advanceSelectionEndToNextUnitEnd(self, unit_lookup_table):
         selection_start, selection_end = self.project.selectedtimeregion.getRegion()
-        next_units = unit_lookup_table[unit_lookup_table['start_time'] > selection_start]
-        try:
-            return next_units[0]['start_time'], next_units[0]['end_time']
-        except:
-            return None
+        new_selection_end = self.project.getNextUnitEndTime(unit_lookup_table,selection_end)
+        if new_selection_end:
+            self.project.selectedtimeregion.setRegion((selection_start,new_selection_end))
 
-    def getPreviousUnitTimeRange(self, unit_lookup_table):
+    def returnSelectionEndToPrevUnitEnd(self, unit_lookup_table):
         selection_start, selection_end = self.project.selectedtimeregion.getRegion()
-        next_units = unit_lookup_table[unit_lookup_table['start_time'] < selection_start]
-        try:
-            return next_units[-1]['start_time'], next_units[-1]['end_time']
-        except:
-            return None
+        new_selection_end = self.project.getPrevUnitEndTime(unit_lookup_table,selection_end)
+        if new_selection_end and new_selection_end > selection_start:
+            self.project.selectedtimeregion.setRegion((selection_start,new_selection_end))
 
+    def advanceSelectionStartToNextUnitStart(self, unit_lookup_table):
+        selection_start, selection_end = self.project.selectedtimeregion.getRegion()
+        new_selection_start = self.project.getNextUnitStartTime(unit_lookup_table, selection_start)
+        if new_selection_start and new_selection_start < selection_end:
+            self.project.selectedtimeregion.setRegion((new_selection_start, selection_end))
+
+    def returnSelectionStartToPrevUnitStart(self, unit_lookup_table):
+        selection_start, selection_end = self.project.selectedtimeregion.getRegion()
+        new_selection_start = self.project.getPrevUnitStartTime(unit_lookup_table, selection_start)
+        if new_selection_start:
+            self.project.selectedtimeregion.setRegion((new_selection_start, selection_end))
+    # <<<<<<
+
+    # >>>>>>
+    # SERIES based selection region actions
     def selectNextSampleSeries(self):
-        seriestimerange = self.getNextUnitTimeRange(self.project.series_boundaries)
+        seriestimerange = self.project.getNextUnitTimeRange(self.project.series_boundaries)
         if seriestimerange:
             self.project.selectedtimeregion.setRegion(seriestimerange)
 
     def selectPrevSampleSeries(self):
-        seriestimerange = self.getPreviousUnitTimeRange(self.project.series_boundaries)
+        seriestimerange = self.project.getPreviousUnitTimeRange(self.project.series_boundaries)
         if seriestimerange:
             self.project.selectedtimeregion.setRegion(seriestimerange)
 
+    def advanceSelectionEndToNextSeriesEnd(self):
+        self.advanceSelectionEndToNextUnitEnd(self.project.series_boundaries)
 
+    def returnSelectionEndToPrevSeriesEnd(self):
+        self.returnSelectionEndToPrevUnitEnd(self.project.series_boundaries)
+
+    def advanceSelectionStartToNextSeriesStart(self):
+        self.advanceSelectionStartToNextUnitStart(self.project.series_boundaries)
+
+    def returnSelectionStartToPrevSeriesStart(self):
+        self.returnSelectionStartToPrevUnitStart(self.project.series_boundaries)
+    # <<<<<<
+
+    # >>>>>>
+    # RUN based selection region actions
     def selectNextPressedRun(self):
-        runtimerange = self.getNextUnitTimeRange(self.project.press_period_boundaries)
+        runtimerange = self.project.getNextUnitTimeRange(self.project.press_period_boundaries)
         if runtimerange:
             self.project.selectedtimeregion.setRegion(runtimerange)
-
 
     def selectPrevPressedRun(self):
-        runtimerange = self.getPreviousUnitTimeRange(self.project.press_period_boundaries)
+        runtimerange = self.project.getPreviousUnitTimeRange(self.project.press_period_boundaries)
         if runtimerange:
             self.project.selectedtimeregion.setRegion(runtimerange)
 
+    def advanceSelectionEndToNextRunEnd(self):
+        self.advanceSelectionEndToNextUnitEnd(self.project.press_period_boundaries)
+
+    def returnSelectionEndToPrevRunEnd(self):
+        self.returnSelectionEndToPrevUnitEnd(self.project.press_period_boundaries)
+
+    def advanceSelectionStartToNextRunStart(self):
+        self.advanceSelectionStartToNextUnitStart(self.project.press_period_boundaries)
+
+    def returnSelectionStartToPrevRunStart(self):
+        self.returnSelectionStartToPrevUnitStart(self.project.press_period_boundaries)
+    # <<<<<<
+
+    # >>>>>>
+    # STROKE based selection region actions
     def selectNextStroke(self):
-        stroketimerange = self.getNextUnitTimeRange(self.project.stroke_boundaries)
+        stroketimerange = self.project.getNextUnitTimeRange(self.project.stroke_boundaries)
         if stroketimerange:
             self.project.selectedtimeregion.setRegion(stroketimerange)
 
     def selectPrevStroke(self):
-        stroketimerange = self.getPreviousUnitTimeRange(self.project.stroke_boundaries)
+        stroketimerange = self.project.getPreviousUnitTimeRange(self.project.stroke_boundaries)
         if stroketimerange:
             self.project.selectedtimeregion.setRegion(stroketimerange)
 
+    def advanceSelectionEndToNextStrokeEnd(self):
+        self.advanceSelectionEndToNextUnitEnd(self.project.stroke_boundaries)
+
+    def returnSelectionEndToPrevStrokeEnd(self):
+        self.returnSelectionEndToPrevUnitEnd(self.project.stroke_boundaries)
+
+    def advanceSelectionStartToNextStrokeStart(self):
+        self.advanceSelectionStartToNextUnitStart(self.project.stroke_boundaries)
+
+    def returnSelectionStartToPrevStrokeStart(self):
+        self.returnSelectionStartToPrevUnitStart(self.project.stroke_boundaries)
+    # <<<<<<
 
     def closeEvent(self, event):
         if event == u'FORCE_EXIT':
