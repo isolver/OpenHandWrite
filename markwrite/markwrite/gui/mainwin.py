@@ -43,7 +43,7 @@ DEFAULT_DOCK_PLACEMENT = {
 shortcutkey2action=dict()
 
 ABOUT_DIALOG_TEXT = """
-<b> MarkWrite v0.1</b> <br>
+<b> MarkWrite v0.2.1</b> <br>
 This software is GLP v3 licensed.<br>
 <br>
 See licence.txt for license details.
@@ -393,7 +393,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         # Next/Prev Sample Series Actions
         #
         atext = 'Select Next Sample Series'
-        aicon = 'nextstroke&24.png'
+        aicon = 'next_series&32.png'
         self.selectNextSampleSeriesAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             'Select Next Sample Series',
@@ -405,7 +405,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_select_next_series'] = self.selectNextSampleSeriesAction
 
         atext = 'Select Previous Sample Series'
-        aicon = 'prevstroke&24.png'
+        aicon = 'prev_series&32.png'
         self.selectPrevSampleSeriesAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             'Select Previous Sample Series',
@@ -417,7 +417,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_select_previous_series'] = self.selectPrevSampleSeriesAction
 
         atext = 'Move Selection End to Next Series End'
-        aicon = 'help&32.png'
+        aicon = 'selectend_to_next_seriesend&32.png'
         self.advanceSelectionEndToNextSeriesEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -429,7 +429,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_selection_end_to_next_series_end'] =self.advanceSelectionEndToNextSeriesEndAction
 
         atext = 'Move Selection End to Previous Series End'
-        aicon = 'help&32.png'
+        aicon = 'selectend_to_prev_seriesend&32.png'
         self.returnSelectionEndToPrevSeriesEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -441,7 +441,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_selection_end_to_prev_series_end'] = self.returnSelectionEndToPrevSeriesEndAction
 
         atext = 'Move Selection Start to Next Series Start'
-        aicon = 'help&32.png'
+        aicon = 'selectstart_to_next_seriesstart&32.png'
         self.advanceSelectionStartToNextSeriesStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -453,7 +453,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_selection_start_to_next_series_start'] = self.advanceSelectionStartToNextSeriesStartAction
 
         atext = 'Move Selection Start to Previous Series Start'
-        aicon = 'help&32.png'
+        aicon = 'selectstart_to_prev_seriesstart&32.png'
         self.returnSelectionStartToPrevSeriesStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -468,7 +468,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         # Next/Prev Pen Pressed Run Actions
         #
         atext = 'Selected Next Pressed Sample Run'
-        aicon = 'nextstroke&24.png'
+        aicon = 'next_run&32.png'
         self.selectNextPressedRunAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -480,7 +480,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_select_next_run'] =self.selectNextPressedRunAction
 
         atext = 'Selected Previous Pressed Sample Run'
-        aicon = 'prevstroke&24.png'
+        aicon = 'prev_run&32.png'
         self.selectPrevPressedRunAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -492,7 +492,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_select_previous_run'] = self.selectPrevPressedRunAction
 
         atext = 'Move Selection End to Next Pressed Run End'
-        aicon = 'help&32.png'
+        aicon = 'selectend_to_next_runend&32.png'
         self.advanceSelectionEndToNextRunEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -504,7 +504,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_selection_end_to_next_run_end'] = self.advanceSelectionEndToNextRunEndAction
 
         atext = 'Move Selection End to Previous Pressed Run End'
-        aicon = 'help&32.png'
+        aicon = 'selectend_to_prev_runend&32.png'
         self.returnSelectionEndToPrevRunEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -516,7 +516,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_selection_end_to_prev_run_end'] = self.returnSelectionEndToPrevRunEndAction
 
         atext = 'Move Selection Start to Next Pressed Run Start'
-        aicon = 'help&32.png'
+        aicon = 'selectstart_to_next_runstart&32.png'
         self.advanceSelectionStartToNextRunStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -528,7 +528,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_selection_start_to_next_run_start'] = self.advanceSelectionStartToNextRunStartAction
 
         atext = 'Move Selection Start to Previous Pressed Run Start'
-        aicon = 'help&32.png'
+        aicon = 'selectstart_to_prev_runstart&32.png'
         self.returnSelectionStartToPrevRunStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -543,7 +543,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         # Next/Prev Stroke Actions
         #
         atext = 'Select the Next Pen Stroke'
-        aicon = 'nextstroke&24.png'
+        aicon = 'next_stroke&32.png'
         self.selectNextStrokeAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             'Next Pen Stroke',
@@ -555,7 +555,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_select_next_stroke'] = self.selectNextStrokeAction
 
         atext = 'Select the Previous Pen Stroke'
-        aicon = 'prevstroke&24.png'
+        aicon = 'prev_stroke&32.png'
         self.selectPrevStrokeAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             'Previous Pen Stroke',
@@ -567,7 +567,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_select_previous_stroke'] = self.selectPrevStrokeAction
 
         atext = 'Move Selection End to Next Stroke End'
-        aicon = 'help&32.png'
+        aicon = 'selectend_to_next_strokeend&32.png'
         self.advanceSelectionEndToNextStrokeEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -579,7 +579,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_selection_end_to_next_stroke_end'] = self.advanceSelectionEndToNextStrokeEndAction
 
         atext = 'Move Selection End to Previous Stroke End'
-        aicon = 'help&32.png'
+        aicon = 'selectend_to_prev_strokeend&32.png'
         self.returnSelectionEndToPrevStrokeEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -591,7 +591,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_selection_end_to_prev_stroke_end'] =self.returnSelectionEndToPrevStrokeEndAction
 
         atext = 'Move Selection Start to Next Stroke Start'
-        aicon = 'help&32.png'
+        aicon = 'selectstart_to_next_strokestart&32.png'
         self.advanceSelectionStartToNextStrokeStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -603,7 +603,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_selection_start_to_next_stroke_start'] = self.advanceSelectionStartToNextStrokeStartAction
 
         atext = 'Move Selection Start to Previous Stroke Start'
-        aicon = 'help&32.png'
+        aicon = 'selectstart_to_prev_strokestart&32.png'
         self.returnSelectionStartToPrevStrokeStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
@@ -712,40 +712,41 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.toolbarsegment.addAction(self.createSegmentAction)
         self.toolbarsegment.addAction(self.removeSegmentAction)
 
-        self.toolbartimelineview = self.addToolBar('Timeline View')
-        self.toolbartimelineview.addAction(self.zoomInTimelineAction)
-        self.toolbartimelineview.addAction(self.zoomOutTimelineAction)
+        self.toolbarselecttimeperiod = self.addToolBar('Selected Time Period')
+        self.toolbarselecttimeperiod.addAction(self.zoomInTimelineAction)
+        self.toolbarselecttimeperiod.addAction(self.zoomOutTimelineAction)
+        self.toolbarselecttimeperiod.addAction(self.gotoSelectedTimePeriodAction)
+        self.toolbarselecttimeperiod.addAction(self.decreaseSelectionStartPointAction)
+        self.toolbarselecttimeperiod.addAction(self.increaseSelectionStartPointAction)
+        self.toolbarselecttimeperiod.addAction(self.backwardSelectionAction)
+        self.toolbarselecttimeperiod.addAction(self.forwardSelectionAction)
+        self.toolbarselecttimeperiod.addAction(self.decreaseSelectionEndPointAction)
+        self.toolbarselecttimeperiod.addAction(self.increaseSelectionEndPointAction)
 
-        self.toolbarsegment = self.addToolBar('Timeline Selection')
-        self.toolbarsegment.addAction(self.gotoSelectedTimePeriodAction)
-        self.toolbarsegment.addAction(self.decreaseSelectionStartPointAction)
-        self.toolbarsegment.addAction(self.increaseSelectionStartPointAction)
-        self.toolbarsegment.addAction(self.backwardSelectionAction)
-        self.toolbarsegment.addAction(self.forwardSelectionAction)
-        self.toolbarsegment.addAction(self.decreaseSelectionEndPointAction)
-        self.toolbarsegment.addAction(self.increaseSelectionEndPointAction)
+        self.toolbarseriesselect = self.addToolBar('Sample Series Selection')
+        self.toolbarseriesselect.addAction(self.returnSelectionStartToPrevSeriesStartAction)
+        self.toolbarseriesselect.addAction(self.advanceSelectionStartToNextSeriesStartAction)
+        self.toolbarseriesselect.addAction(self.selectPrevSampleSeriesAction)
+        self.toolbarseriesselect.addAction(self.selectNextSampleSeriesAction)
+        self.toolbarseriesselect.addAction(self.returnSelectionEndToPrevSeriesEndAction)
+        self.toolbarseriesselect.addAction(self.advanceSelectionEndToNextSeriesEndAction)
 
-        self.toolbarsegment.addAction(self.selectPrevSampleSeriesAction)
-        self.toolbarsegment.addAction(self.selectNextSampleSeriesAction)
-        self.toolbarsegment.addAction(self.advanceSelectionEndToNextSeriesEndAction)
-        self.toolbarsegment.addAction(self.returnSelectionEndToPrevSeriesEndAction)
-        self.toolbarsegment.addAction(self.advanceSelectionStartToNextSeriesStartAction)
-        self.toolbarsegment.addAction(self.returnSelectionStartToPrevSeriesStartAction)
-
-        self.toolbarsegment.addAction(self.selectPrevPressedRunAction)
-        self.toolbarsegment.addAction(self.selectNextPressedRunAction)
-        self.toolbarsegment.addAction(self.advanceSelectionEndToNextRunEndAction)
-        self.toolbarsegment.addAction(self.returnSelectionEndToPrevRunEndAction)
-        self.toolbarsegment.addAction(self.advanceSelectionStartToNextRunStartAction)
-        self.toolbarsegment.addAction(self.returnSelectionStartToPrevRunStartAction)
+        self.toolbarrunselect = self.addToolBar('Pressed Run Selection')
+        self.toolbarrunselect.addAction(self.returnSelectionStartToPrevRunStartAction)
+        self.toolbarrunselect.addAction(self.advanceSelectionStartToNextRunStartAction)
+        self.toolbarrunselect.addAction(self.selectPrevPressedRunAction)
+        self.toolbarrunselect.addAction(self.selectNextPressedRunAction)
+        self.toolbarrunselect.addAction(self.returnSelectionEndToPrevRunEndAction)
+        self.toolbarrunselect.addAction(self.advanceSelectionEndToNextRunEndAction)
 
 
-        self.toolbarsegment.addAction(self.selectPrevStrokeAction)
-        self.toolbarsegment.addAction(self.selectNextStrokeAction)
-        self.toolbarsegment.addAction(self.advanceSelectionEndToNextStrokeEndAction)
-        self.toolbarsegment.addAction(self.returnSelectionEndToPrevStrokeEndAction)
-        self.toolbarsegment.addAction(self.advanceSelectionStartToNextStrokeStartAction)
-        self.toolbarsegment.addAction(self.returnSelectionStartToPrevStrokeStartAction)
+        self.toolbarstrokeselect = self.addToolBar('Pen Stroke Selection')
+        self.toolbarstrokeselect.addAction(self.returnSelectionStartToPrevStrokeStartAction)
+        self.toolbarstrokeselect.addAction(self.advanceSelectionStartToNextStrokeStartAction)
+        self.toolbarstrokeselect.addAction(self.selectPrevStrokeAction)
+        self.toolbarstrokeselect.addAction(self.selectNextStrokeAction)
+        self.toolbarstrokeselect.addAction(self.returnSelectionEndToPrevStrokeEndAction)
+        self.toolbarstrokeselect.addAction(self.advanceSelectionEndToNextStrokeEndAction)
 
         self.toolbarHelp = self.addToolBar('Help')
         self.toolbarHelp.addAction(self.aboutAction)
