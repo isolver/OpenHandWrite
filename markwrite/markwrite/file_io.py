@@ -20,7 +20,7 @@ from util import getSegmentTagsFilePath
 import codecs
 import os
 
-markwrite_pendata_format = [('time', np.float32),
+markwrite_pendata_format = [('time', np.float64),
                     ('x', np.int32),
                     ('y', np.int32),
                     ('pressure', np.int16),
@@ -265,7 +265,7 @@ class XmlDataImporter(DataImporter):
         xml_root = ET.parse(file_path).getroot()
         for stroke_set in xml_root.iter(u'strokes'):
             for stroke in stroke_set.iter(u'stroke'):
-                list_result.append((float(stroke.get("Time"))/1000.0,
+                list_result.append((long(stroke.get("Time"))/1000.0,
                                 int(stroke.get("X")),
                                 int(stroke.get("Y")),
                                 1, # pressure, always 1
