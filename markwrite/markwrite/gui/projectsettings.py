@@ -62,39 +62,40 @@ flattenned_settings_dict['stroke_detect_edge_type'] =  {'name': 'Detect Edge Typ
 
 flattenned_settings_dict['series_detect_max_isi_msec'] = {'name': 'Maximum Series ISI (msec)', 'type': 'int', 'value': 0, 'limits': (0, 100)}
 
+
 flattenned_settings_dict['kbshortcut_create_segment'] = {'name': 'Create Segment', 'type': 'str', 'value': QtGui.QKeySequence('Return').toString()}
 flattenned_settings_dict['kbshortcut_delete_segment'] = {'name': 'Delete Segment', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+D').toString()}
 flattenned_settings_dict['kbshortcut_timeplot_increase_mag'] = {'name': 'Increase Timeplot Magnification 2x', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl++').toString()}
 flattenned_settings_dict['kbshortcut_timeplot_decrease_mag'] = {'name': 'Decrease Timeplot Magnification 2x', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+-').toString()}
 flattenned_settings_dict['kbshortcut_move_plots_to_selection'] = {'name': 'Reposition Views on Selected Time Period', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Home').toString()}
-flattenned_settings_dict['kbshortcut_selected_timeperiod_forward'] = {'name': 'Move Selected Time Period Forward', 'type': 'str', 'value': QtGui.QKeySequence('Right').toString()}
-flattenned_settings_dict['kbshortcut_selected_timeperiod_backward'] = {'name': 'Move Selected Time Period Backward', 'type': 'str', 'value': QtGui.QKeySequence('Left').toString()}
-flattenned_settings_dict['kbshortcut_increase_selected_end_time'] = {'name': 'Increase Selected End Time', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Right').toString()}
-flattenned_settings_dict['kbshortcut_decrease_selected_end_time'] = {'name': 'Decrease Selected End Time', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Left').toString()}
-flattenned_settings_dict['kbshortcut_increase_selected_start_time'] = {'name': 'Increase Selected Start Time', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Right').toString()}
-flattenned_settings_dict['kbshortcut_decrease_selected_start_time'] = {'name': 'Decrease Selected Start Time', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Left').toString()}
+flattenned_settings_dict['kbshortcut_selected_timeperiod_forward'] = {'name': 'Move Selected Time Period Forward', 'type': 'str', 'value': QtGui.QKeySequence('PgUp').toString()}
+flattenned_settings_dict['kbshortcut_selected_timeperiod_backward'] = {'name': 'Move Selected Time Period Backward', 'type': 'str', 'value': QtGui.QKeySequence('PgDown').toString()}
+flattenned_settings_dict['kbshortcut_increase_selected_end_time'] = {'name': 'Increase Selected End Time', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+PgUp').toString()}
+flattenned_settings_dict['kbshortcut_decrease_selected_end_time'] = {'name': 'Decrease Selected End Time', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+PgDown').toString()}
+flattenned_settings_dict['kbshortcut_increase_selected_start_time'] = {'name': 'Increase Selected Start Time', 'type': 'str', 'value': QtGui.QKeySequence('Alt+PgUp').toString()}
+flattenned_settings_dict['kbshortcut_decrease_selected_start_time'] = {'name': 'Decrease Selected Start Time', 'type': 'str', 'value': QtGui.QKeySequence('Alt+PgDown').toString()}
 
 #>>>TODO: Add default shortcut key values for below settings
-flattenned_settings_dict['kbshortcut_select_next_series'] = {'name': 'Select Next Sample Series', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_select_previous_series'] = {'name': 'Select Previous Sample Series', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_selection_end_to_next_series_end'] = {'name': 'Move Selection End to Next Series End', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_selection_end_to_prev_series_end'] = {'name': 'Move Selection End to Previous Series End', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_selection_start_to_next_series_start'] = {'name': 'Move Selection Start to Next Series Start', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_selection_start_to_prev_series_start'] = {'name': 'Move Selection Start to Previous Series Start', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
+flattenned_settings_dict['kbshortcut_select_next_series'] = {'name': 'Select Next Sample Series', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Up').toString()}
+flattenned_settings_dict['kbshortcut_select_previous_series'] = {'name': 'Select Previous Sample Series', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Down').toString()}
+flattenned_settings_dict['kbshortcut_selection_end_to_next_series_end'] = {'name': 'Move Selection End to Next Series End', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Right').toString()}
+flattenned_settings_dict['kbshortcut_selection_end_to_prev_series_end'] = {'name': 'Move Selection End to Previous Series End', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Left').toString()}
+flattenned_settings_dict['kbshortcut_selection_start_to_next_series_start'] = {'name': 'Move Selection Start to Next Series Start', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Shift+Right').toString()}
+flattenned_settings_dict['kbshortcut_selection_start_to_prev_series_start'] = {'name': 'Move Selection Start to Previous Series Start', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Shift+Left').toString()}
 
-flattenned_settings_dict['kbshortcut_select_next_run'] = {'name': 'Select Next Sample Run', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_select_previous_run'] = {'name': 'Select Previous Sample Run', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_selection_end_to_next_run_end'] = {'name': 'Move Selection End to Next Run End', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_selection_end_to_prev_run_end'] = {'name': 'Move Selection End to Previous Run End', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_selection_start_to_next_run_start'] = {'name': 'Move Selection Start to Next Run Start', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_selection_start_to_prev_run_start'] = {'name': 'Move Selection Start to Previous Run Start', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
+flattenned_settings_dict['kbshortcut_select_next_run'] = {'name': 'Select Next Sample Run', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Up').toString()}
+flattenned_settings_dict['kbshortcut_select_previous_run'] = {'name': 'Select Previous Sample Run', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Down').toString()}
+flattenned_settings_dict['kbshortcut_selection_end_to_next_run_end'] = {'name': 'Move Selection End to Next Run End', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Right').toString()}
+flattenned_settings_dict['kbshortcut_selection_end_to_prev_run_end'] = {'name': 'Move Selection End to Previous Run End', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Left').toString()}
+flattenned_settings_dict['kbshortcut_selection_start_to_next_run_start'] = {'name': 'Move Selection Start to Next Run Start', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Shift+Right').toString()}
+flattenned_settings_dict['kbshortcut_selection_start_to_prev_run_start'] = {'name': 'Move Selection Start to Previous Run Start', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Shift+Left').toString()}
 
-flattenned_settings_dict['kbshortcut_select_next_stroke'] = {'name': 'Select Next Stroke', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_select_previous_stroke'] = {'name': 'Select Previous Stroke', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_selection_end_to_next_stroke_end'] = {'name': 'Move Selection End to Next Stroke End', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_selection_end_to_prev_stroke_end'] = {'name': 'Move Selection End to Previous Stroke End', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_selection_start_to_next_stroke_start'] = {'name': 'Move Selection Start to Next Stroke Start', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
-flattenned_settings_dict['kbshortcut_selection_start_to_prev_stroke_start'] = {'name': 'Move Selection Start to Previous Stroke Start', 'type': 'str', 'value': QtGui.QKeySequence('').toString()}
+flattenned_settings_dict['kbshortcut_select_next_stroke'] = {'name': 'Select Next Stroke', 'type': 'str', 'value': QtGui.QKeySequence('Up').toString()}
+flattenned_settings_dict['kbshortcut_select_previous_stroke'] = {'name': 'Select Previous Stroke', 'type': 'str', 'value': QtGui.QKeySequence('Down').toString()}
+flattenned_settings_dict['kbshortcut_selection_end_to_next_stroke_end'] = {'name': 'Move Selection End to Next Stroke End', 'type': 'str', 'value': QtGui.QKeySequence('Right').toString()}
+flattenned_settings_dict['kbshortcut_selection_end_to_prev_stroke_end'] = {'name': 'Move Selection End to Previous Stroke End', 'type': 'str', 'value': QtGui.QKeySequence('Left').toString()}
+flattenned_settings_dict['kbshortcut_selection_start_to_next_stroke_start'] = {'name': 'Move Selection Start to Next Stroke Start', 'type': 'str', 'value': QtGui.QKeySequence('Shift+Right').toString()}
+flattenned_settings_dict['kbshortcut_selection_start_to_prev_stroke_start'] = {'name': 'Move Selection Start to Previous Stroke Start', 'type': 'str', 'value': QtGui.QKeySequence('Shift+Left').toString()}
 #<<<
 
 
@@ -287,10 +288,12 @@ class ProjectSettingsDialog(QtGui.QDialog):
                 setting_key = self.path2key[childName]
                 if setting_key.startswith('kbshortcut_'):
                     qks=QtGui.QKeySequence(data)
-                    if len(data)>0 and qks.isEmpty():
+                    if (len(data)>0 and qks.isEmpty()) or qks.toString() in SETTINGS.values():
+                        #print "Setting invalid: [{}], [{}]".format(data, qks.toString())
                         self._invalid_settings[setting_key]=param
                         continue
                     else:
+                        #print "Setting shortcut: [{}], [{}]".format(data, qks.toString())
                         data = qks.toString()
                 SETTINGS[setting_key]=data
                 self._updated_settings[setting_key] = data
