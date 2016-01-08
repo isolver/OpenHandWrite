@@ -26,6 +26,9 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
 
         self._lastSelectedData=[]
 
+        self.qtpenbrushs = dict()
+        self.createPenBrushCache()
+
         self.getPlotItem().invertY(SETTINGS['spatialplot_invert_y_axis'])
         self.getPlotItem().setAspectLocked(True, 1)
         self.getPlotItem().hideAxis('left')
@@ -40,62 +43,65 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
         MarkWriteMainWindow.instance().sigSelectedPenDataUpdate.connect(
             self.handlePenDataSelectionChanged)
 
+    def createPenBrushCache(self):
+        self.qtpenbrushs.clear()
+        self.qtpenbrushs['selected_valid_pressed_pen']=pg.mkPen(SETTINGS['spatialplot_selectedvalid_color'],
+                               width=SETTINGS['spatialplot_selectedpoint_size'])
+        self.qtpenbrushs['selected_valid_hover_pen']=pg.mkPen(SETTINGS['spatialplot_selectedvalid_color'].darker(300),
+                               width=SETTINGS['spatialplot_selectedpoint_size'])
+        self.qtpenbrushs['selected_valid_pressed_brush'] = pg.mkBrush(SETTINGS['spatialplot_selectedvalid_color'])
+        self.qtpenbrushs['selected_valid_hover_brush'] = pg.mkBrush(SETTINGS['spatialplot_selectedvalid_color'].darker(300))
+
+        self.qtpenbrushs['selected_invalid_pressed_pen']=pg.mkPen(SETTINGS['spatialplot_selectedinvalid_color'],
+                               width=SETTINGS['spatialplot_selectedpoint_size'])
+        self.qtpenbrushs['selected_invalid_hover_pen']=pg.mkPen(SETTINGS['spatialplot_selectedinvalid_color'].darker(300),
+                               width=SETTINGS['spatialplot_selectedpoint_size'])
+        self.qtpenbrushs['selected_invalid_pressed_brush'] = pg.mkBrush(SETTINGS['spatialplot_selectedinvalid_color'])
+        self.qtpenbrushs['selected_invalid_hover_brush'] = pg.mkBrush(SETTINGS['spatialplot_selectedinvalid_color'].darker(300))
+        if SETTINGS['pen_stroke_boundary_size'] > 0:
+            self.qtpenbrushs['stroke_boundary_pen']=pg.mkPen(SETTINGS['pen_stroke_boundary_color'],
+                               width=SETTINGS['pen_stroke_boundary_size'])
+            self.qtpenbrushs['stroke_boundary_brush'] = pg.mkBrush(SETTINGS['pen_stroke_boundary_color'])
+
     def handlePenDataSelectionChanged(self, timeperiod, pendata):
         self._lastSelectedData = pendata
         if len(pendata):
-            pen=pen2=None
-            brush=brush2=None
+
             psize=SETTINGS['spatialplot_selectedpoint_size']
 
-            if MarkWriteMainWindow.instance().project.isSelectedDataValidForNewSegment():
-                pen = pg.mkPen(SETTINGS['spatialplot_selectedvalid_color'],
-                               width=SETTINGS['spatialplot_selectedpoint_size'])
-                pen2 = pg.mkPen(SETTINGS['spatialplot_selectedvalid_color'].darker(300),
-                               width=SETTINGS['spatialplot_selectedpoint_size'])
-                brush = pg.mkBrush(SETTINGS['spatialplot_selectedvalid_color'])
-                brush2 = pg.mkBrush(SETTINGS['spatialplot_selectedvalid_color'].darker(300))
-            else:
-                pen = pg.mkPen(SETTINGS['spatialplot_selectedinvalid_color'],
-                               width=SETTINGS['spatialplot_selectedpoint_size'])
-                brush = pg.mkBrush(SETTINGS['spatialplot_selectedinvalid_color'])
-                pen2 = pg.mkPen(SETTINGS['spatialplot_selectedinvalid_color'].darker(300),
-                               width=SETTINGS['spatialplot_selectedpoint_size'])
-                brush2 = pg.mkBrush(SETTINGS['spatialplot_selectedinvalid_color'].darker(300))
-
             penarray = np.empty(pendata.shape[0], dtype=object)
-            penarray[:] = pen
-            penarray[pendata['pressure'] == 0] = pen2
             brusharray = np.empty(pendata.shape[0], dtype=object)
-            brusharray[:] = brush
-            brusharray[pendata['pressure'] == 0] = brush2
+
+            if MarkWriteMainWindow.instance().project.isSelectedDataValidForNewSegment():
+                penarray[:] = self.qtpenbrushs['selected_valid_pressed_pen']
+                penarray[pendata['pressure'] == 0] = self.qtpenbrushs['selected_valid_hover_pen']
+                brusharray[:] = self.qtpenbrushs['selected_valid_pressed_brush']
+                brusharray[pendata['pressure'] == 0] = self.qtpenbrushs['selected_valid_hover_brush']
+            else:
+                penarray[:] = self.qtpenbrushs['selected_invalid_pressed_pen']
+                penarray[pendata['pressure'] == 0] = self.qtpenbrushs['selected_invalid_hover_pen']
+                brusharray[:] = self.qtpenbrushs['selected_invalid_pressed_brush']
+                brusharray[pendata['pressure'] == 0] = self.qtpenbrushs['selected_invalid_hover_brush']
 
             self.plotDataItem.setData(x=pendata[X_FIELD],
                                               y=pendata[Y_FIELD], pen=None,
                                               symbol='o', symbolSize=psize,
                                               symbolBrush=brusharray, symbolPen=penarray)
 
+            ssize = SETTINGS['pen_stroke_boundary_size']
             if self.strokeBoundaryPoints is None:
-                ssize = SETTINGS['pen_stroke_boundary_size']
-                if ssize:
-                    scolor = SETTINGS['pen_stroke_boundary_color']
-                    pen = pg.mkPen(scolor,width=ssize)
-                    brush = pg.mkBrush(scolor)
-                    self.strokeBoundaryPoints = pg.ScatterPlotItem(size=ssize, pen=pen, brush=brush)
+                if ssize > 0:
+                    self.strokeBoundaryPoints = pg.ScatterPlotItem(size=ssize, pen=self.qtpenbrushs['stroke_boundary_pen'], brush=self.qtpenbrushs['stroke_boundary_brush'])
                     self.getPlotItem().addItem(self.strokeBoundaryPoints)
             else:
-                ssize = SETTINGS['pen_stroke_boundary_size']
                 if ssize == 0:
                     self.strokeBoundaryPoints.clear()
                 else:
-                    scolor = SETTINGS['pen_stroke_boundary_color']
-                    pen = pg.mkPen(scolor,width=ssize)
-                    brush = pg.mkBrush(scolor)
-
                     proj = MarkWriteMainWindow.instance().project
                     pstart, pend = pendata['time'][[0,-1]]
                     vms_times = proj.velocity_minima_samples['time']
                     vmpoints = proj.velocity_minima_samples[(vms_times >= pstart) & (vms_times <= pend)]
-                    self.strokeBoundaryPoints.setData(x=vmpoints[X_FIELD], y=vmpoints[Y_FIELD], size=ssize, pen=pen, brush=brush)
+                    self.strokeBoundaryPoints.setData(x=vmpoints[X_FIELD], y=vmpoints[Y_FIELD], size=ssize, pen=self.qtpenbrushs['stroke_boundary_pen'], brush=self.qtpenbrushs['stroke_boundary_brush'])
 
         else:
             self.plotDataItem.setData(x=[],y=[])
@@ -107,5 +113,7 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
             self.getPlotItem().invertY(SETTINGS['spatialplot_invert_y_axis'])
 
         for k in updates.keys():
-            if k.startswith('pen_stroke_boundary'):
+            if k.startswith('pen_stroke_boundary') or k.startswith('spatialplot_selected'):
+                self.createPenBrushCache()
                 self.handlePenDataSelectionChanged(None,self._lastSelectedData)
+                break
