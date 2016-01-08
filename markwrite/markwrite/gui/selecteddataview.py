@@ -18,6 +18,7 @@ import pyqtgraph as pg
 from markwrite.gui import X_FIELD, Y_FIELD
 from markwrite.gui.mainwin import MarkWriteMainWindow
 from markwrite.gui.projectsettings import SETTINGS
+import numpy as np
 
 class SelectedPointsPlotWidget(pg.PlotWidget):
     def __init__(self):
@@ -41,9 +42,38 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
 
     def handlePenDataSelectionChanged(self, timeperiod, pendata):
         self._lastSelectedData = pendata
-        self.plotDataItem.setData(x=pendata[X_FIELD], y=pendata[Y_FIELD], )
-
         if len(pendata):
+            pen=pen2=None
+            brush=brush2=None
+            psize=SETTINGS['spatialplot_selectedpoint_size']
+
+            if MarkWriteMainWindow.instance().project.isSelectedDataValidForNewSegment():
+                pen = pg.mkPen(SETTINGS['spatialplot_selectedvalid_color'],
+                               width=SETTINGS['spatialplot_selectedpoint_size'])
+                pen2 = pg.mkPen(SETTINGS['spatialplot_selectedvalid_color'].darker(300),
+                               width=SETTINGS['spatialplot_selectedpoint_size'])
+                brush = pg.mkBrush(SETTINGS['spatialplot_selectedvalid_color'])
+                brush2 = pg.mkBrush(SETTINGS['spatialplot_selectedvalid_color'].darker(300))
+            else:
+                pen = pg.mkPen(SETTINGS['spatialplot_selectedinvalid_color'],
+                               width=SETTINGS['spatialplot_selectedpoint_size'])
+                brush = pg.mkBrush(SETTINGS['spatialplot_selectedinvalid_color'])
+                pen2 = pg.mkPen(SETTINGS['spatialplot_selectedinvalid_color'].darker(300),
+                               width=SETTINGS['spatialplot_selectedpoint_size'])
+                brush2 = pg.mkBrush(SETTINGS['spatialplot_selectedinvalid_color'].darker(300))
+
+            penarray = np.empty(pendata.shape[0], dtype=object)
+            penarray[:] = pen
+            penarray[pendata['pressure'] == 0] = pen2
+            brusharray = np.empty(pendata.shape[0], dtype=object)
+            brusharray[:] = brush
+            brusharray[pendata['pressure'] == 0] = brush2
+
+            self.plotDataItem.setData(x=pendata[X_FIELD],
+                                              y=pendata[Y_FIELD], pen=None,
+                                              symbol='o', symbolSize=psize,
+                                              symbolBrush=brusharray, symbolPen=penarray)
+
             if self.strokeBoundaryPoints is None:
                 ssize = SETTINGS['pen_stroke_boundary_size']
                 if ssize:
@@ -67,6 +97,8 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
                     vmpoints = proj.velocity_minima_samples[(vms_times >= pstart) & (vms_times <= pend)]
                     self.strokeBoundaryPoints.setData(x=vmpoints[X_FIELD], y=vmpoints[Y_FIELD], size=ssize, pen=pen, brush=brush)
 
+        else:
+            self.plotDataItem.setData(x=[],y=[])
 
         self.getPlotItem().enableAutoRange(x=True, y=True)
 
