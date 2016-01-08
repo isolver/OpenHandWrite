@@ -828,30 +828,35 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         if file_path:
             file_path = file_path[0]
             if len(file_path) > 0:
+
                 try:
-                    wmproj = MarkWriteProject(file_path=file_path,mwapp=self)
+                    import os
+                    _, fname = os.path.split(file_path)
+                    with pg.ProgressDialog("Loading Pen Data from: {}".format(fname), 0, maximum=100, parent=self, busyCursor=False) as dlg:
+                        self._progressdlg=dlg
+                        wmproj = MarkWriteProject(file_path=file_path, mwapp=self)
 
-                    wmproj.selectedtimeregion.setBounds(bounds=(wmproj.pendata['time'][0], wmproj.pendata['time'][-1]))
+                        wmproj.selectedtimeregion.setBounds(bounds=(wmproj.pendata['time'][0], wmproj.pendata['time'][-1]))
 
 
-                    self.sigProjectChanged.emit(wmproj)
-                    self.sigResetProjectData.emit(wmproj)
+                        self.sigProjectChanged.emit(wmproj)
+                        self.sigResetProjectData.emit(wmproj)
 
-                    if wmproj._trialtimes is not None:
-                        for i, (tstart, tend) in enumerate(wmproj._trialtimes):
-                            self.createSegmentAction.setEnabled(True)
-                            self.project.selectedtimeregion.setRegion((tstart, tend))
-                            seg = self.createSegment("Trial%d"%(i+1),trim_time_region=False)
-                            if seg:
-                                seg.locked = True
-                            else:
-                                print("!! Error: Unable to create segment for trial %d, with time period [%.3f, %.3f]."%(i,tstart, tend))
-                        self.setActiveObject(self.project.segmentset.children[0])
-                    else:
-                        wmproj.selectedtimeregion.setRegion([wmproj.pendata['time'][0], wmproj.pendata['time'][0] + 1.0])
+                        if wmproj._trialtimes is not None:
+                            for i, (tstart, tend) in enumerate(wmproj._trialtimes):
+                                self.createSegmentAction.setEnabled(True)
+                                self.project.selectedtimeregion.setRegion((tstart, tend))
+                                seg = self.createSegment("Trial%d"%(i+1),trim_time_region=False)
+                                if seg:
+                                    seg.locked = True
+                                else:
+                                    print("!! Error: Unable to create segment for trial %d, with time period [%.3f, %.3f]."%(i,tstart, tend))
+                            self.setActiveObject(self.project.segmentset.children[0])
+                        else:
+                            wmproj.selectedtimeregion.setRegion([wmproj.pendata['time'][0], wmproj.pendata['time'][0] + 1.0])
 
-                    #self.displayAllDataChannelsTimePlot()
-
+                        dlg.setValue(dlg.maximum())
+                        dlg.hide()
                 except:
                     import traceback
 
@@ -862,6 +867,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                     file_path)
                     ErrorDialog().display()
                     self.closeEvent(u'FORCE_EXIT')
+                finally:
+                    self._progressdlg=None
 
     def createPenSampleLevelReportFile(self):
         default_file_name = u"pen_samples_{0}.txt".format(self.project.name)

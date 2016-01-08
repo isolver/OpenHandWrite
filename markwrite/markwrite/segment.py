@@ -28,6 +28,12 @@ class PenDataSegmentCategory(object):
     totalsegmentcount=0
     id2obj=WeakValueDictionary()
     _project = None
+    _serialize_attributes=(
+                            '_name',
+                            '_id',
+                            '_childsegment_ids',
+                            '_locked'
+                          )
     def __init__(self, name=None, parent=None, clear_lookup=True, project = None):
         self._name=name
         if name is None:
@@ -345,6 +351,9 @@ class PenDataSegmentCategory(object):
         return project_properties
 
 class PenDataSegment(PenDataSegmentCategory):
+    _serialize_attributes=list(PenDataSegmentCategory._serialize_attributes)
+    _serialize_attributes.extend(('_timerange',))
+    _serialize_attributes=tuple(_serialize_attributes)
     def __init__(self, name=None, pendata=None, parent=None, fulltimerange=None):
         """
 

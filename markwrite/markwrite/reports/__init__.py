@@ -135,8 +135,8 @@ class ReportExporter(object):
     # The separator to use between each column of the report file.
     sep=u'\t'
 
-    # The new line character(s) that sould be used to terminate each line of the
-    # report.
+    # The new line character(s) that should be used to terminate each line of
+    # the report.
     nl=u'\n'
 
     # Specifies the value to use for missing data in a report. This attribute

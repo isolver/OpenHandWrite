@@ -132,44 +132,92 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
 
         return props
 
+def updateDataFileLoadingProgressDialog(mwapp, inc_val=2):
+    if mwapp:
+        progressdlg = mwapp._progressdlg
+        if progressdlg.value()+inc_val >= progressdlg.maximum():
+            progressdlg.setValue(progressdlg.minimum())
+        else:
+            mwapp._progressdlg += inc_val
+        if mwapp._progressdlg.wasCanceled():
+            # TODO: close out incomplete project load...
+            pass
+
 class MarkWriteProject(object):
     project_file_extension = u'mwp'
+    serialize_attributes = (
+                            '_name',
+                            '_schema_version',
+                            '_original_timebase_offset',
+                            '_autosegl1',
+                            '_trialtimes',
+                            '_trialindices',
+                            '_stimevar',
+                            '_etimevar',
+                            '_expcondvars',
+                            'autodetected_segment_tags',
+                            '_pendata',
+                            'nonzero_pressure_mask',
+                            'nonzero_region_ix',
+                            'sampling_interval',
+                            'sample_dts',
+                            'series_boundaries',
+                            'press_period_boundaries',
+                            'sample_velocity_minima_ix',
+                            'velocity_minima_samples',
+                            'stroke_boundaries',
+                            '_segmentset',
+                            '_selectedtimeregion'
+                            )
     input_file_loaders=dict(xml=XmlDataImporter,
                             txyp=EyePenDataImporter,
                             hdf5=HubDatastoreImporter)
     _selectedtimeregion=None
-    def __init__(self, name=u"New", file_path=None, mwapp=None):
+    def __init__(self, name=u"New", file_path=None, mwapp=None, tstart_cond_name = None, tend_cond_name = None):
         """
         The MarkWriteProject class represents a MarkWrite project created using
-        the MarkWrite Application. Information about imported data, etc. (TBD)
+        the MarkWrite Application. Information about imported data, etc.,
         is stored in the class for use while MarkWrite is running.
 
-        A MarkWriteProject instance can be saved to a .wmpd file. The
-        saved .wmpd file can be reopened from within the MarkWrite application
+        A MarkWriteProject instance can be saved to a .mwp file. The
+        saved .mwp file can be reopened from within the MarkWrite application
         at a later time to continue working on the project.
 
         The MarkWrite Application supports a single MarkWriteProject open
         at a time. To switch between different MarkWriteProject's, use File->Open
-        and select the .wmpd file to open.
+        and select the .mwp file to open.
 
         :param name: str
         :param kwargs: dict
         :return: MarkWriteProject instance
         """
+
+        #
+        ## >>> Attributes to save to serialized project file are all
+        ## listed in MarkWriteProject.serialize_attributes
+        #
+
+        self._name = u"Unknown"
+        self._schema_version = None
+        self._original_timebase_offset=0
+        self._autosegl1=False
+        self._trialtimes = None
+        self._trialindices = None
+        self._stimevar = tstart_cond_name
+        self._etimevar = tend_cond_name
+        self._expcondvars = []
+        self.autodetected_segment_tags=[]
         self._pendata = []
         self.nonzero_pressure_mask = []
         self.nonzero_region_ix=[]
         self.sampling_interval = 0
         self.sample_dts = []
         self.series_boundaries = []
+        self.press_period_boundaries=[]
+        self.sample_velocity_minima_ix=[]
+        self.velocity_minima_samples = None
+        self.stroke_boundaries = []
         self._segmentset=None
-        self.autodetected_segment_tags=[]
-        self._name = u"Unknown"
-        self._original_timebase_offset=0
-        self._autosegl1=False
-        self._trialtimes = None
-        self._trialindices = None
-        self._expcondvars = []
 
         self._mwapp = None
         if mwapp:
@@ -184,6 +232,8 @@ class MarkWriteProject(object):
                 self.autodetected_segment_tags=self.detectAssociatedSegmentTagsFile(dir_path,fname,fext)
                 pdata = fimporter.asarray(file_path)
 
+                updateDataFileLoadingProgressDialog(self._mwapp)
+
                 # If file opened was an iohub hdf5 file, and had a
                 # cond var table, get the cond var table as a ndarray.
                 expcondvars = None
@@ -197,12 +247,12 @@ class MarkWriteProject(object):
                 # split data into trial segments and remove any between trial
                 # data.
 
-                tstartvar = None
-                tendvar = None
+                tstartvar = self._stimevar
+                tendvar = self._etimevar
                 self._autosegl1 = SETTINGS['auto_generate_l1segments']
 
                 if self._autosegl1:
-                    if expcondvars is not None:
+                    if expcondvars is not None and (tstartvar is None and tendvar is None):
                         trial_start_var_select_filter = SETTINGS['hdf5_trial_start_var_select_filter'].strip()
                         trial_end_var_select_filter = SETTINGS['hdf5_trial_end_var_select_filter'].strip()
 
@@ -237,6 +287,9 @@ class MarkWriteProject(object):
                             tstartvar = tvarlists["Start Time Variable"]
                             tendvar = tvarlists["End Time Variable"]
                 #print "cREATING PROJECT WITH DATA:",pdata.shape, pdata['time'][0],pdata['time'][-1]
+
+                updateDataFileLoadingProgressDialog(self._mwapp)
+
                 self.createNewProject(fname, pdata, expcondvars, tstartvar, tendvar, fext)
             else:
                 print "Unsupported file type:",file_path
@@ -263,7 +316,7 @@ class MarkWriteProject(object):
     def createNewProject(self, file_name, pen_data, condvars=None, stime_var=None, etime_var=None, file_type=None):
             PenDataSegmentCategory.clearSegmentCache()
 
-            self._project_settings = None
+            self._schema_version = None
 
             self._name = file_name
             self._filetype = file_type
@@ -321,6 +374,8 @@ class MarkWriteProject(object):
                 # x range limits.
                 self._autosegl1 = False
 
+            updateDataFileLoadingProgressDialog(self._mwapp,10)
+
             # Normalize pen sample times so first sample starts at 0.0 sec.
             self._original_timebase_offset=pen_data['time'][0]
             pen_data['time']-=self._original_timebase_offset
@@ -335,6 +390,8 @@ class MarkWriteProject(object):
             self.nonzero_region_ix=contiguous_regions(self.nonzero_pressure_mask)
             self._segmentset=PenDataSegmentCategory(name=self.name,project=self)
             self._pendata['segment_id']=self._segmentset.id
+
+            updateDataFileLoadingProgressDialog(self._mwapp,5)
 
             # inter sample intervals, used for sampling rate calc and
             # vel / accell measures.
@@ -363,6 +420,8 @@ class MarkWriteProject(object):
             self.velocity_minima_samples = None
             self.stroke_boundaries = []
             press_run_count=0
+
+            updateDataFileLoadingProgressDialog(self._mwapp,5)
 
             # filter data
             for series_bounds in self.series_boundaries:
@@ -404,6 +463,8 @@ class MarkWriteProject(object):
                     # for whole series
                     self.findstrokes(pseries, psb_start_ix, series_bounds['id'])
 
+                updateDataFileLoadingProgressDialog(self._mwapp)
+
             self.press_period_boundaries = np.asarray(self.press_period_boundaries, dtype=series_part_dtype)
             self.stroke_boundaries = np.asarray(self.stroke_boundaries, dtype=series_part_dtype)
             self.velocity_minima_samples = self.pendata[self.sample_velocity_minima_ix]
@@ -412,6 +473,9 @@ class MarkWriteProject(object):
                 MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)
             else:
                 MarkWriteProject._selectedtimeregion.project = self
+
+            updateDataFileLoadingProgressDialog(self._mwapp,5)
+
 
     def findstrokes(self, searchsamplearray, obsolute_offset, parent_id):
         edge_type = SETTINGS['stroke_detect_edge_type']
