@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import division
+__version__ = "0.2.1"
 #
 # This file is part of the open-source MarkWrite application.
 #
@@ -14,5 +16,22 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import division
-__version__ = "0.2.1"
+
+# Need to import pyTables module before pyqt imports pyh5 or error occurs when
+# openning an iohub datastore file.
+import tables
+import sys
+from appdirs import AppDirs
+from file_io import readPickle, writePickle
+
+appdirs = AppDirs("MarkWrite")
+usersettings = readPickle(appdirs.user_config_dir,u'usersettings.pkl')
+
+from pyqtgraph.Qt import QtGui
+app = QtGui.QApplication(sys.argv)
+
+from gui.projectsettings import ProjectSettingsDialog
+_ = ProjectSettingsDialog(savedstate=usersettings)
+from gui.projectsettings import SETTINGS
+writePickle(appdirs.user_config_dir,u'usersettings.pkl', SETTINGS)
+print "Updated usersettings.pkl in:",appdirs.user_config_dir
