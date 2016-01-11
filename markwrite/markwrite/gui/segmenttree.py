@@ -125,8 +125,8 @@ class SegmentInfoDockArea(DockArea):
         self.segid2treenode.clear()
         # Create Project Tree Node
         projecttreeitem = QtGui.QTreeWidgetItem([project.name])
-        projecttreeitem._pydat = proxy(project.segmentset)
-        self.segid2treenode[project.segmentset.id] = projecttreeitem
+        projecttreeitem._pydat = proxy(project.segmenttree)
+        self.segid2treenode[project.segmenttree.id] = projecttreeitem
         self.project_tree.addTopLevelItem(projecttreeitem)
 
     def handleSegmentCreated(self, segment):

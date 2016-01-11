@@ -10,6 +10,7 @@ import markwrite
 import os
 from markwrite.project import MarkWriteProject
 from markwrite.reports import PenSampleReportExporter
+from customreports import RawSampleDataReportExporter
 
 # list of data files to create reports for. relative or absolute
 # paths can be used

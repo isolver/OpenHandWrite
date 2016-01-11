@@ -25,7 +25,7 @@ import numpy as np
 import pyqtgraph as pg
 from pyqtgraph import OrderedDict
 
-from file_io import EyePenDataImporter, XmlDataImporter, HubDatastoreImporter
+from file_io import EyePenDataImporter, XmlDataImporter, HubDatastoreImporter, readPickle, writePickle
 from segment import PenDataSegment, PenDataSegmentCategory
 from util import contiguous_regions
 from gui.projectsettings import SETTINGS
@@ -132,6 +132,9 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
 
         return props
 
+    def toDict(self):
+        return dict(timerange=self.getRegion())
+
 def updateDataFileLoadingProgressDialog(mwapp, inc_val=2):
     if mwapp:
         progressdlg = mwapp._progressdlg
@@ -146,17 +149,18 @@ def updateDataFileLoadingProgressDialog(mwapp, inc_val=2):
 class MarkWriteProject(object):
     project_file_extension = u'mwp'
     serialize_attributes = (
-                            '_name',
-                            '_schema_version',
-                            '_original_timebase_offset',
-                            '_autosegl1',
+                            'name',
+                            'samplefileinfo',
+                            'schema_version',
+                            'original_timebase_offset',
+                            'autosegl1',
                             '_trialtimes',
                             '_trialindices',
                             '_stimevar',
                             '_etimevar',
                             '_expcondvars',
                             'autodetected_segment_tags',
-                            '_pendata',
+                            'pendata',
                             'nonzero_pressure_mask',
                             'nonzero_region_ix',
                             'sampling_interval',
@@ -166,7 +170,7 @@ class MarkWriteProject(object):
                             'sample_velocity_minima_ix',
                             'velocity_minima_samples',
                             'stroke_boundaries',
-                            '_segmentset',
+                            'segmenttree',
                             '_selectedtimeregion'
                             )
     input_file_loaders=dict(xml=XmlDataImporter,
@@ -197,17 +201,22 @@ class MarkWriteProject(object):
         ## listed in MarkWriteProject.serialize_attributes
         #
 
-        self._name = u"Unknown"
-        self._schema_version = None
-        self._original_timebase_offset=0
-        self._autosegl1=False
+        self.name = u"Unknown"
+        self.samplefileinfo = dict(abspath=file_path,
+                                   folder=None,
+                                   name=None,
+                                   shortname=None,
+                                   extension=None)
+        self.schema_version = None
+        self.original_timebase_offset=0
+        self.autosegl1=False
         self._trialtimes = None
         self._trialindices = None
         self._stimevar = tstart_cond_name
         self._etimevar = tend_cond_name
         self._expcondvars = []
         self.autodetected_segment_tags=[]
-        self._pendata = []
+        self.pendata = []
         self.nonzero_pressure_mask = []
         self.nonzero_region_ix=[]
         self.sampling_interval = 0
@@ -217,19 +226,22 @@ class MarkWriteProject(object):
         self.sample_velocity_minima_ix=[]
         self.velocity_minima_samples = None
         self.stroke_boundaries = []
-        self._segmentset=None
+        self.segmenttree=None
 
         self._mwapp = None
         if mwapp:
             self._mwapp = proxy(mwapp)
 
         if file_path and os.path.exists(file_path) and os.path.isfile(file_path):
-            dir_path, file_name = os.path.split(file_path)
+            self.samplefileinfo['folder'], self.samplefileinfo['name'] = os.path.split(file_path)
             # Load raw data from file for use in project
-            fname, fext=file_name.rsplit(u'.',1)
-            fimporter = self.input_file_loaders.get(fext)
+            self.samplefileinfo['shortname'], self.samplefileinfo['extension'] = self.samplefileinfo['name'].rsplit(u'.',1)
+
+            # Load raw data from file for use in project
+
+            fimporter = self.input_file_loaders.get(self.samplefileinfo['extension'])
             if fimporter:
-                self.autodetected_segment_tags=self.detectAssociatedSegmentTagsFile(dir_path,fname,fext)
+                self.autodetected_segment_tags=self.detectAssociatedSegmentTagsFile(self.samplefileinfo['folder'],self.samplefileinfo['shortname'], self.samplefileinfo['extension'])
                 pdata = fimporter.asarray(file_path)
 
                 updateDataFileLoadingProgressDialog(self._mwapp)
@@ -249,9 +261,9 @@ class MarkWriteProject(object):
 
                 tstartvar = self._stimevar
                 tendvar = self._etimevar
-                self._autosegl1 = SETTINGS['auto_generate_l1segments']
+                self.autosegl1 = SETTINGS['auto_generate_l1segments']
 
-                if self._autosegl1:
+                if self.autosegl1:
                     if expcondvars is not None and (tstartvar is None and tendvar is None):
                         trial_start_var_select_filter = SETTINGS['hdf5_trial_start_var_select_filter'].strip()
                         trial_end_var_select_filter = SETTINGS['hdf5_trial_end_var_select_filter'].strip()
@@ -286,15 +298,33 @@ class MarkWriteProject(object):
                         if dictDlg.OK:
                             tstartvar = tvarlists["Start Time Variable"]
                             tendvar = tvarlists["End Time Variable"]
-                #print "cREATING PROJECT WITH DATA:",pdata.shape, pdata['time'][0],pdata['time'][-1]
 
                 updateDataFileLoadingProgressDialog(self._mwapp)
 
-                self.createNewProject(fname, pdata, expcondvars, tstartvar, tendvar, fext)
+                self.createNewProject(pdata, expcondvars, tstartvar, tendvar)
             else:
                 print "Unsupported file type:",file_path
         else:
             raise IOError("Invalid File Path: %s"%(file_path))
+
+    def toDict(self):
+        # check that all attributes to include in dict actually exist
+        projdict = dict()
+        for a in self.serialize_attributes:
+            if hasattr(self, a):
+                pa = getattr(self,a)
+                if callable(pa):
+                    pa = pa()
+                if hasattr(pa, 'toDict'):
+                    pa = pa.toDict()
+                projdict[a] = pa
+            else:
+                print "MarkWriteProject.toDict Error: %s is not a member of the project class"%a
+        return projdict
+
+    @classmethod
+    def fromDict(cls, d):
+        print cls, ".fromDict not yet implemented."
 
     def detectAssociatedSegmentTagsFile(self,dir_path,fname,fext):
         tag_list=[]
@@ -313,13 +343,12 @@ class MarkWriteProject(object):
                     tag_list.append(seg_line)
         return tag_list
 
-    def createNewProject(self, file_name, pen_data, condvars=None, stime_var=None, etime_var=None, file_type=None):
+    def createNewProject(self, pen_data, condvars=None, stime_var=None, etime_var=None):
             PenDataSegmentCategory.clearSegmentCache()
 
-            self._schema_version = None
+            self.schema_version = None
 
-            self._name = file_name
-            self._filetype = file_type
+            self.name = self.samplefileinfo['shortname']
 
             self._expcondvars = condvars
             self._stimevar = stime_var
@@ -372,30 +401,30 @@ class MarkWriteProject(object):
                 # Set this to false regardless of project setting so that
                 # user defined L1 segments do not result in limiting timeplot
                 # x range limits.
-                self._autosegl1 = False
+                self.autosegl1 = False
 
             updateDataFileLoadingProgressDialog(self._mwapp,10)
 
             # Normalize pen sample times so first sample starts at 0.0 sec.
-            self._original_timebase_offset=pen_data['time'][0]
-            pen_data['time']-=self._original_timebase_offset
+            self.original_timebase_offset=pen_data['time'][0]
+            pen_data['time']-=self.original_timebase_offset
             if trial_times is not None:
-                trial_times-=self._original_timebase_offset
+                trial_times-=self.original_timebase_offset
                 self._trialtimes = trial_times
 
-            self._pendata = pen_data
-            self.nonzero_pressure_mask=self._pendata['pressure']>0
+            self.pendata = pen_data
+            self.nonzero_pressure_mask=self.pendata['pressure']>0
 
             # nonzero_regions_ix will be a tuple of (starts, stops, lengths) arrays
             self.nonzero_region_ix=contiguous_regions(self.nonzero_pressure_mask)
-            self._segmentset=PenDataSegmentCategory(name=self.name,project=self)
-            self._pendata['segment_id']=self._segmentset.id
+            self.segmenttree=PenDataSegmentCategory(name=self.name,project=self)
+            self.pendata['segment_id']=self.segmenttree.id
 
             updateDataFileLoadingProgressDialog(self._mwapp,5)
 
             # inter sample intervals, used for sampling rate calc and
             # vel / accell measures.
-            self.sample_dts = self._pendata['time'][1:]-self._pendata['time'][:-1]
+            self.sample_dts = self.pendata['time'][1:]-self.pendata['time'][:-1]
 
             # Calculate what the sampling interval (1000.0 / hz_rate) for the device was in sec.msec
             self.sampling_interval = np.percentile(self.sample_dts,5.0,interpolation='nearest')
@@ -469,7 +498,7 @@ class MarkWriteProject(object):
             self.stroke_boundaries = np.asarray(self.stroke_boundaries, dtype=series_part_dtype)
             self.velocity_minima_samples = self.pendata[self.sample_velocity_minima_ix]
 
-            if self._selectedtimeregion is None:
+            if self._selectedtimeregion is None and self._mwapp:
                 MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)
             else:
                 MarkWriteProject._selectedtimeregion.project = self
@@ -497,14 +526,14 @@ class MarkWriteProject(object):
                     next_abs_vmin_ix = obsolute_offset+len(searchsamplearray)-1
                 else:
                     next_abs_vmin_ix = obsolute_offset+ppp_minima[s+1]
-                if next_abs_vmin_ix >= len(self._pendata):
-                    next_abs_vmin_ix=len(self._pendata)-1
-                st, et = self._pendata['time'][[abs_vmin_ix, next_abs_vmin_ix]]
+                if next_abs_vmin_ix >= len(self.pendata):
+                    next_abs_vmin_ix=len(self.pendata)-1
+                st, et = self.pendata['time'][[abs_vmin_ix, next_abs_vmin_ix]]
                 self.stroke_boundaries.append((len(self.stroke_boundaries),parent_id,abs_vmin_ix,st,next_abs_vmin_ix,et))
                 self.sample_velocity_minima_ix.append(abs_vmin_ix)
             next_abs_vmin_ix = obsolute_offset+len(searchsamplearray)-1
-            if next_abs_vmin_ix >= len(self._pendata):
-                next_abs_vmin_ix=len(self._pendata)-1
+            if next_abs_vmin_ix >= len(self.pendata):
+                next_abs_vmin_ix=len(self.pendata)-1
             self.sample_velocity_minima_ix.append(next_abs_vmin_ix)
         else:
             # add full run as one stroke
@@ -587,34 +616,23 @@ class MarkWriteProject(object):
             return None
 
     def getNextUnitTimeRange(self, unit_lookup_table):
-        selection_start, selection_end = self.selectedtimeregion.getRegion()
-        next_units = unit_lookup_table[unit_lookup_table['start_time'] > selection_start]
-        try:
-            return next_units[0]['start_time'], next_units[0]['end_time']
-        except:
-            return None
+        if self.selectedtimeregion:
+            selection_start, selection_end = self.selectedtimeregion.getRegion()
+            next_units = unit_lookup_table[unit_lookup_table['start_time'] > selection_start]
+            try:
+                return next_units[0]['start_time'], next_units[0]['end_time']
+            except:
+                return None
 
     def getPreviousUnitTimeRange(self, unit_lookup_table):
-        selection_start, selection_end = self.selectedtimeregion.getRegion()
-        next_units = unit_lookup_table[unit_lookup_table['start_time'] < selection_start]
-        try:
-            return next_units[-1]['start_time'], next_units[-1]['end_time']
-        except:
-            return None
+        if self.selectedtimeregion:
+            selection_start, selection_end = self.selectedtimeregion.getRegion()
+            next_units = unit_lookup_table[unit_lookup_table['start_time'] < selection_start]
+            try:
+                return next_units[-1]['start_time'], next_units[-1]['end_time']
+            except:
+                return None
 
-    def getPressedRunsForSeries(self, series_id):
-        ppbmask = self.press_period_boundaries['parent_id']==series_id
-        return self.press_period_boundaries[ppbmask]
-
-    #def getPressedRunForTime(self, atime, positions='current'):
-    #    print "TODO: getPressedRunForTime"
-
-    def getStrokesForPressedRun(self, run_id):
-        ppbmask = self.stroke_boundaries['parent_id']==run_id
-        return self.stroke_boundaries[ppbmask]
-
-    #def getStrokeForTime(self, atime, positions='current'):
-    #    print "TODO: getStrokeForTime"
     def getSeriesForSample(self, sample_index):
         starts = self.series_boundaries['start_ix']
         ends = self.series_boundaries['end_ix']
@@ -640,9 +658,13 @@ class MarkWriteProject(object):
         ends = self.stroke_boundaries['end_ix']
         stroke = self.stroke_boundaries[(sample_index >= starts) & (sample_index <= ends)]
         if len(stroke)>1:
-            print "Error, > 1 stroke found:",sample_index, stroke
-        elif len(stroke)==1:
-            return stroke['id'][0]+1
+            print ">>>>>>>>\nError, %d strokes found for sample ix %d:"%(len(stroke), sample_index)
+            for i, s in enumerate(stroke):
+                print "\tSelected Stroke %d: "%(i), s
+            print "Using last detected stroke for report.\n<<<<<<<"
+
+        if len(stroke)>0 and len(stroke)<=2:
+            return stroke['id'][-1]+1
         return 0
 
     def getSelectedDataSegmentIDs(self):
@@ -661,7 +683,7 @@ class MarkWriteProject(object):
         :param parent_id:
         :return:
         """
-        sparent = self._segmentset.id2obj[parent_id]
+        sparent = self.segmenttree.id2obj[parent_id]
         new_segment = PenDataSegment(name=tag, pendata=self.selectedpendata, parent=sparent, fulltimerange=self.selectedtimeperiod)
         pendata = self.pendata
         mask = (pendata['time'] >= new_segment.starttime) & (pendata['time'] <= new_segment.endtime)
@@ -669,28 +691,16 @@ class MarkWriteProject(object):
         return new_segment
 
     @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, n):
-        self._name = n
-
-    @property
-    def pendata(self):
-        return self._pendata
-
-    @property
     def allpendata(self):
-        return self._pendata
+        return self.pendata
 
     @property
     def unsegmentedpendata(self):
-        return self._pendata[self._pendata['segment_id']==0]
+        return self.pendata[self.pendata['segment_id']==0]
 
     @property
     def segmentedpendata(self):
-        return self._pendata[self._pendata['segment_id']>0]
+        return self.pendata[self.pendata['segment_id']>0]
 
     @property
     def selectedtimeregion(self):
@@ -698,7 +708,9 @@ class MarkWriteProject(object):
 
     @property
     def selectedtimeperiod(self):
-        return self._selectedtimeregion.getRegion()
+        if self._selectedtimeregion:
+            return self._selectedtimeregion.getRegion()
+        return [0.0,0.0]
 
     @property
     def selecteddatatimerange(self):
@@ -707,7 +719,9 @@ class MarkWriteProject(object):
 
     @property
     def selectedpendata(self):
-        return self._selectedtimeregion.selectedpendata
+        if self._selectedtimeregion:
+            return self._selectedtimeregion.selectedpendata
+        return []
 
     def isSelectedDataValidForNewSegment(self):
         if len(self.selectedpendata)>0:
@@ -715,13 +729,25 @@ class MarkWriteProject(object):
             if len(sids)==1:
                 if sids[0] == 0:
                     return True
-                if self.segmentset.id2obj[sids[0]].pointcount > self.selectedpendata.shape[0]:
+                if self.segmenttree.id2obj[sids[0]].pointcount > self.selectedpendata.shape[0]:
                     return True
         return False
 
-    @property
-    def segmentset(self):
-        return self._segmentset
+    def save(self,tofile=None):
+        if tofile is None:
+            tofile = os.path.abspath('.',u"%s.%s"%(self.name, self.project_file_extension))
+        print "Saving project to:",tofile
+
+        projdict = self.toDict()
+
+        pdir, pfile = os.path.split(tofile)
+
+        print ">>>> PROJECT DATA:"
+        for aname, aval in projdict:
+            print "\t",aname,"\t",type(aval),"\t",aval
+        print "<<<<"
+
+        writePickle(pdir, pfile, projdict)
 
     def close(self):
         """
@@ -730,7 +756,7 @@ class MarkWriteProject(object):
 
         :return: bool
         """
-        self._pendata = None
+        self.pendata = None
         self._selectedtimeregion = None
         return True
 

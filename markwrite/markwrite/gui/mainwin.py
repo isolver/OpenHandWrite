@@ -560,7 +560,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             QtGui.QIcon(getIconFilePath(aicon)),
             'Previous Pen Stroke',
             self)
-        self.selectNextStrokeAction.setShortcut(SETTINGS['kbshortcut_select_previous_stroke'])
+        self.selectPrevStrokeAction.setShortcut(SETTINGS['kbshortcut_select_previous_stroke'])
         self.selectPrevStrokeAction.setEnabled(False)
         self.selectPrevStrokeAction.setStatusTip(atext)
         self.selectPrevStrokeAction.triggered.connect(self.selectPrevStroke)
@@ -851,7 +851,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                                     seg.locked = True
                                 else:
                                     print("!! Error: Unable to create segment for trial %d, with time period [%.3f, %.3f]."%(i,tstart, tend))
-                            self.setActiveObject(self.project.segmentset.children[0])
+                            self.setActiveObject(self.project.segmenttree.children[0])
                         else:
                             wmproj.selectedtimeregion.setRegion([wmproj.pendata['time'][0], wmproj.pendata['time'][0] + 1.0])
 
@@ -907,7 +907,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             if trim_time_region is False:
                 SETTINGS['new_segment_trim_0_pressure_points']=False
 
-            pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*timeperiod)
+            pendata_ix_range = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(*timeperiod)
             new_segment = None
             if len(pendata_ix_range)>0:
                 if trim_time_region:
@@ -999,7 +999,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     def jumpTimeSelectionForward(self):
         # TODO: Move method to _penDataTimeLineWidget
         xmin, xmax = self.project.selectedtimeregion.getRegion()
-        pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
+        pendata_ix_range = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
         if len(pendata_ix_range):
             nix_min = pendata_ix_range[1]+1
             if self.project.pendata['pressure'][nix_min]==0.0:
@@ -1027,7 +1027,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             xmin, xmax = self.project.selectedtimeregion.getRegion()
             nxmax =xmin-0.001
             nxmin = max(nxmax-(xmax-xmin),0.0)
-            pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(nxmin,nxmax)
+            pendata_ix_range = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(nxmin,nxmax)
             if len(pendata_ix_range):
                 segmenttimeperiod = self.project.pendata['time'][pendata_ix_range]
                 self.project.selectedtimeregion.setRegion(segmenttimeperiod)
@@ -1037,7 +1037,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                     self._penDataTimeLineWidget.translateViewBy(x=(nxmin-vmin)*1.25)
         else:
             xmin, xmax = self.project.selectedtimeregion.getRegion()
-            pendata_ix_range = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
+            pendata_ix_range = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
             if len(pendata_ix_range):
                 nix_max = pendata_ix_range[0]-1
                 if nix_max<=0:
@@ -1065,7 +1065,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     def increaseSelectionEndPointTime(self):
         # TODO: Move method to _penDataTimeLineWidget
         xmin, xmax = self.project.selectedtimeregion.getRegion()
-        ix_bounds = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
+        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
         if len(ix_bounds)>0:
             min_ix, max_ix = ix_bounds
             start_ixs,stop_ixs,lengths=self.project.nonzero_region_ix
@@ -1074,7 +1074,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             #print 'new start , end samples: ',self.project.pendata[[min_ix, next_max_ix]]
             if next_max_ix < self.project.pendata.shape[0]:
                 segmenttimeperiod = self.project.pendata['time'][[min_ix, next_max_ix]]
-                min_ix, next_max_ix = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
+                min_ix, next_max_ix = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
                 self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, next_max_ix]])
                 _,nxmax=segmenttimeperiod
                 (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()
@@ -1087,7 +1087,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     def decreaseSelectionEndPointTime(self):
         # TODO: Move method to _penDataTimeLineWidget
         xmin, xmax = self.project.selectedtimeregion.getRegion()
-        ix_bounds = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
+        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
         if len(ix_bounds)>0:
             min_ix, max_ix = ix_bounds
             if np.all(self.project.nonzero_pressure_mask[min_ix:max_ix]):
@@ -1099,7 +1099,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 if prev_maxs[-1] > min_ix:
                     prev_max_ix = prev_maxs[-1]
                     segmenttimeperiod = self.project.pendata['time'][[min_ix, prev_max_ix]]
-                    min_ix, max_ix = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
+                    min_ix, max_ix = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
                     self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
                 else:
                     infoDlg(title=u"Action Aborted", prompt=u"The end time of the selected time period can not be decreased further<br>without it being equal to the selected periods start time.")
@@ -1107,7 +1107,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     def increaseSelectionStartPointTime(self):
         # TODO: Move method to _penDataTimeLineWidget
         xmin, xmax = self.project.selectedtimeregion.getRegion()
-        ix_bounds = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
+        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
         if len(ix_bounds)>0:
             min_ix, max_ix = ix_bounds
             if np.all(self.project.nonzero_pressure_mask[min_ix:max_ix]):
@@ -1126,7 +1126,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     def decreaseSelectionStartPointTime(self):
         # TODO: Move method to _penDataTimeLineWidget
         xmin, xmax = self.project.selectedtimeregion.getRegion()
-        ix_bounds = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
+        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
         if len(ix_bounds)>0:
             min_ix, max_ix = ix_bounds
             start_ixs, stop_ixs, lengths=self.project.nonzero_region_ix
@@ -1134,7 +1134,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             if len(prev_starts)>0 and prev_starts[-1] >= 0:
                     prev_start_ix = prev_starts[-1]
                     segmenttimeperiod = self.project.pendata['time'][[prev_start_ix, max_ix]]
-                    min_ix, max_ix = self.project.segmentset.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
+                    min_ix, max_ix = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
                     self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
                     nxmin,_=segmenttimeperiod
                     (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()

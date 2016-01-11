@@ -276,7 +276,7 @@ class PenDataSegmentCategory(object):
 
     @property
     def pendata(self):
-        return self._project._pendata
+        return self._project.pendata
 
     @property
     def starttime(self):
@@ -316,7 +316,7 @@ class PenDataSegmentCategory(object):
         :param endt:
         :return:
         """
-        pendata = cls._project._pendata
+        pendata = cls._project.pendata
         mask = None
         if SETTINGS['new_segment_trim_0_pressure_points']:
             mask = (pendata['time'] >= starttime) & (pendata['time'] <=endtime) & (pendata['pressure'] > 0)

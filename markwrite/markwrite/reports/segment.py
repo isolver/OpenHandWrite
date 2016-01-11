@@ -70,19 +70,19 @@ class SegmentLevelReportExporter(ReportExporter):
 
     @classmethod
     def datarowcount(cls):
-        return cls.project.segmentset.totalsegmentcount
+        return cls.project.segmenttree.totalsegmentcount
 
     @classmethod
     def datarows(cls):
         pendata = cls.project.pendata
         pointcount=pendata.shape[0]
         nonzero_pressure_ixs = np.nonzero(pendata['pressure'])[0]
-        segment_tree = cls.project.segmentset
+        segment_tree = cls.project.segmenttree
 
         catname = segment_tree.name
         filename=catname=segment_tree.name
 
-        for level_num, segment_list in cls.project.segmentset.getLeveledSegments().items():
+        for level_num, segment_list in cls.project.segmenttree.getLeveledSegments().items():
             for segment in segment_list:
                 segpath = cls.segpathsep.join(segment.path)
 

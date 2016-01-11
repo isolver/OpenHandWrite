@@ -176,7 +176,7 @@ class ReportExporter(object):
     #
 
     # Can be used within your report code to access the project object,
-    # usually the pendata and segmentset project attributes.
+    # usually the pendata and segmenttree project attributes.
     project = None
 
     def __init__(self):

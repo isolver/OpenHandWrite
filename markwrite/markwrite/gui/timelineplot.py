@@ -135,7 +135,7 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                 del self.dataplots['acceleration_plot']
 
     def handleSelectedObjectChanged(self, newobj, oldobj):
-        if MarkWriteMainWindow.instance().project._autosegl1 is True:
+        if MarkWriteMainWindow.instance().project.autosegl1 is True:
             if isinstance(newobj, PenDataSegment):
                     l1seg=newobj.l1seg
                     if l1seg and l1seg != self._level1Segment:

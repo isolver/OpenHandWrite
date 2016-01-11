@@ -29,7 +29,7 @@ class PenSampleReportExporter(ReportExporter):
     @classmethod
     def columnnames(cls):
         column_names=['file','index','time','x','y','pressure','cat1']
-        ss = cls.project.segmentset
+        ss = cls.project.segmenttree
         lvls = range(1,ss.getLevelCount()+1)
         column_names.extend([u'cat1.L%d'%l for l in lvls])
 
@@ -43,7 +43,7 @@ class PenSampleReportExporter(ReportExporter):
     def datarows(cls):
         pendata = cls.project.pendata
 
-        ss = cls.project.segmentset
+        ss = cls.project.segmenttree
         sfile=ss.name
 
         lvls = range(1,ss.getLevelCount()+1)
