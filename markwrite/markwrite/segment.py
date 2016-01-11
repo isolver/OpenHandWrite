@@ -32,6 +32,8 @@ class PenDataSegmentCategory(object):
                             '_name',
                             '_id',
                             '_childsegment_ids',
+                            'timerange',
+                            #'children', # children is filled directly by toDict()
                             '_locked'
                           )
     def __init__(self, name=None, parent=None, clear_lookup=True, project = None):
@@ -328,8 +330,26 @@ class PenDataSegmentCategory(object):
         return []
 
     def toDict(self):
-        print "TODO:", self.__class__.__name__, ".toDict() needs to be implemented for attributes:",self._serialize_attributes
+        segdict = dict()
+        for a in self._serialize_attributes:
+            if hasattr(self, a):
+                pa = getattr(self,a)
+                if callable(pa):
+                    pa = pa()
+                if hasattr(pa, 'toDict'):
+                    pa = pa.toDict()
+                segdict[a] = pa
+            else:
+                print "### Segment.toDict Error: %s is not a member of the segment class"%a
 
+        segdict['child_segments']=[]
+        for cs in self.children:
+            segdict['child_segments'].append(cs.toDict())
+
+    @classmethod
+    def fromDict(cls, d):
+        print cls, ".fromDict not yet implemented."
+        
     def propertiesTableData(self):
         """
         Return a dict of segment properties to display in the Selected Project
@@ -354,9 +374,6 @@ class PenDataSegmentCategory(object):
         return project_properties
 
 class PenDataSegment(PenDataSegmentCategory):
-    _serialize_attributes=list(PenDataSegmentCategory._serialize_attributes)
-    _serialize_attributes.extend(('_timerange',))
-    _serialize_attributes=tuple(_serialize_attributes)
     def __init__(self, name=None, pendata=None, parent=None, fulltimerange=None):
         """
 
@@ -402,9 +419,6 @@ class PenDataSegment(PenDataSegmentCategory):
     @pendata.setter
     def pendata(self, n):
         self._pendata = n
-
-    def toDict(self):
-        print "TODO:", self.__class__.__name__, ".toDict() needs to be implemented for attributes:",self._serialize_attributes
 
     def propertiesTableData(self):
         """

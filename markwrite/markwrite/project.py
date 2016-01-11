@@ -321,7 +321,7 @@ class MarkWriteProject(object):
                     pa = pa.toDict()
                 projdict[a] = pa
             else:
-                print "MarkWriteProject.toDict Error: %s is not a member of the project class"%a
+                print "### MarkWriteProject.toDict Error: %s is not a member of the project class"%a
         return projdict
 
     @classmethod
@@ -741,19 +741,18 @@ class MarkWriteProject(object):
                     return True
         return False
 
-    def save(self,tofile=None):
+    def save(self, tofile=None):
         if tofile is None:
             tofile = os.path.abspath('.',u"%s.%s"%(self.name, self.project_file_extension))
-        print "Saving project to:",tofile
+        #print "Saving project to:",tofile
 
         projdict = self.toDict()
-
         pdir, pfile = os.path.split(tofile)
 
-        print ">>>> SAVING PROJECT DATA:"
-        for aname, aval in projdict.items():
-            print "\t",aname,"\t",type(aval)
-        print "<<<<"
+        #print ">>>> SAVING PROJECT DATA:"
+        #for aname, aval in projdict.items():
+        #    print "\t",aname,"\t",type(aval)
+        #print "<<<<"
 
         writePickle(pdir, pfile, projdict)
         self.modified = False
