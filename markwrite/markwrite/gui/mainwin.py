@@ -173,8 +173,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         #
         # File Menu / Toolbar Related Actions
         #
-        atext = 'Open a supported digitized pen position ' \
-                'file format.'
+        atext = 'Open a supported pen data ' \
+                'file format or previously saved MarkWrite project.'
         aicon = 'folder&32.png'
         self.openFileAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
@@ -185,16 +185,16 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.openFileAction.setStatusTip(atext)
         self.openFileAction.triggered.connect(self.openFile)
 
-        #atext = 'Save Current Project.'
-        #aicon = 'save&32.png'
-        #self.saveProjectAction = ContextualStateAction(
-        #    QtGui.QIcon(getIconFilePath(aicon)),
-        #    'Save',
-        #    self)
-        #self.saveProjectAction.setShortcut('Ctrl+S')
-        #self.saveProjectAction.setEnabled(False)
-        #self.saveProjectAction.setStatusTip(atext)
-        #self.saveProjectAction.triggered.connect(self.saveProject)
+        atext = 'Save Project.'
+        aicon = 'save&32.png'
+        self.saveProjectAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            '&Save',
+            self)
+        self.saveProjectAction.setShortcut('Ctrl+S')
+        self.saveProjectAction.setEnabled(False)
+        self.saveProjectAction.setStatusTip(atext)
+        self.saveProjectAction.triggered.connect(self.saveProject)
 
         atext = 'Export Pen Sample Level Report to a File.'
         aicon = 'sample_report&32.png'
@@ -214,7 +214,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             QtGui.QIcon(getIconFilePath(aicon)),
             'Segment Report',
             self)
-        #self.exportSampleReportAction.setShortcut('Ctrl+S')
         self.exportSegmentReportAction.setEnabled(False)
         self.exportSegmentReportAction.setStatusTip(atext)
         self.exportSegmentReportAction.triggered.connect(
@@ -676,7 +675,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(self.openFileAction)
-        #fileMenu.addAction(self.saveProjectAction)
+        fileMenu.addAction(self.saveProjectAction)
         fileMenu.addAction(self.showProjectSettingsDialogAction)
         fileMenu.addSeparator()
         exportMenu = fileMenu.addMenu("&Export")
@@ -702,7 +701,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         self.toolbarFile = self.addToolBar('File')
         self.toolbarFile.addAction(self.openFileAction)
-        #self.toolbarFile.addAction(self.saveProjectAction)
+        self.toolbarFile.addAction(self.saveProjectAction)
         self.toolbarFile.addAction(self.showProjectSettingsDialogAction)
         self.toolbarFile.addAction(self.exportSampleReportAction)
         self.toolbarFile.addAction(self.exportSegmentReportAction)
@@ -870,6 +869,23 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 finally:
                     self._progressdlg=None
 
+    def saveProject(self):
+        if self.project is None:
+            return
+
+        print "TODO: Implement save project action."
+
+        save_to_path=fileSaveDlg(initFilePath="",
+                    initFileName=u"%s.%s"%(self.project.name,
+                                           self.project.project_file_extension),
+                        prompt=u"Save MarkWrite Project",
+                        allowed="MarkWrite Project files "
+                                "(*.%s)"%self.project.project_file_extension,
+                        parent=self)
+
+        if save_to_path:
+            self.project.save(save_to_path)
+
     def createPenSampleLevelReportFile(self):
         default_file_name = u"pen_samples_{0}.txt".format(self.project.name)
         file_path = fileSaveDlg(initFileName=default_file_name,
@@ -959,6 +975,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             self.setActiveObject(self.project.selectedtimeregion)
             self.handleSelectedPenDataUpdate(None,None)
             self.sigSegmentRemoved.emit(segment, seg_ix)
+            self.project.modified = True
 
             segment.parent.removeChild(segment)
         else:
@@ -971,7 +988,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self._current_project = project
         self.setActiveObject(self.project.selectedtimeregion)
         self.updateAppTitle()
-        #self.saveProjectAction.setEnabled(project.modified)
+        self.saveProjectAction.setEnabled(project.modified)
         self.exportSampleReportAction.setEnabled(True)
 
     def zoomInTimeline(self):

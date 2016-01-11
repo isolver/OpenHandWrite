@@ -327,6 +327,9 @@ class PenDataSegmentCategory(object):
             return nonzero_ixs[[0,-1]]
         return []
 
+    def toDict(self):
+        print "TODO:", self.__class__.__name__, ".toDict() needs to be implemented for attributes:",self._serialize_attributes
+
     def propertiesTableData(self):
         """
         Return a dict of segment properties to display in the Selected Project
@@ -399,6 +402,9 @@ class PenDataSegment(PenDataSegmentCategory):
     @pendata.setter
     def pendata(self, n):
         self._pendata = n
+
+    def toDict(self):
+        print "TODO:", self.__class__.__name__, ".toDict() needs to be implemented for attributes:",self._serialize_attributes
 
     def propertiesTableData(self):
         """

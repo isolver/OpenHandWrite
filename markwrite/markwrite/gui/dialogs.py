@@ -25,8 +25,8 @@ import string, os, sys, json
 OK = QtGui.QDialogButtonBox.Ok
 
 def fileSaveDlg(initFilePath="", initFileName="",
-                prompt=u"Select file to save",
-                allowed=None):
+                prompt=u"Save MarkWrite Project",
+                allowed=None, parent=None):
     """A simple dialogue allowing write access to the file system.
 
     :parameters:
@@ -52,7 +52,7 @@ def fileSaveDlg(initFilePath="", initFileName="",
         allowed = "All files (*.*);;" \
                   "Text files (*.txt)"
 
-    r = QtGui.QFileDialog.getSaveFileName(parent=None,
+    r = QtGui.QFileDialog.getSaveFileName(parent=parent,
                                           caption=prompt,
                                           directory=os.path.join(initFilePath,
                                                                  initFileName),

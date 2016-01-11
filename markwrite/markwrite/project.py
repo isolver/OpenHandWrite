@@ -177,6 +177,7 @@ class MarkWriteProject(object):
                             txyp=EyePenDataImporter,
                             hdf5=HubDatastoreImporter)
     _selectedtimeregion=None
+    schema_version = "0.1"
     def __init__(self, name=u"New", file_path=None, mwapp=None, tstart_cond_name = None, tend_cond_name = None):
         """
         The MarkWriteProject class represents a MarkWrite project created using
@@ -207,7 +208,6 @@ class MarkWriteProject(object):
                                    name=None,
                                    shortname=None,
                                    extension=None)
-        self.schema_version = None
         self.original_timebase_offset=0
         self.autosegl1=False
         self._trialtimes = None
@@ -229,6 +229,8 @@ class MarkWriteProject(object):
         self.segmenttree=None
 
         self._mwapp = None
+        self._modified = True
+
         if mwapp:
             self._mwapp = proxy(mwapp)
 
@@ -345,8 +347,6 @@ class MarkWriteProject(object):
 
     def createNewProject(self, pen_data, condvars=None, stime_var=None, etime_var=None):
             PenDataSegmentCategory.clearSegmentCache()
-
-            self.schema_version = None
 
             self.name = self.samplefileinfo['shortname']
 
@@ -504,7 +504,6 @@ class MarkWriteProject(object):
                 MarkWriteProject._selectedtimeregion.project = self
 
             updateDataFileLoadingProgressDialog(self._mwapp,5)
-
 
     def findstrokes(self, searchsamplearray, obsolute_offset, parent_id):
         edge_type = SETTINGS['stroke_detect_edge_type']
@@ -688,7 +687,16 @@ class MarkWriteProject(object):
         pendata = self.pendata
         mask = (pendata['time'] >= new_segment.starttime) & (pendata['time'] <= new_segment.endtime)
         self.pendata['segment_id'][mask]=new_segment.id
+        self.modified = True
         return new_segment
+
+    @property
+    def modified(self):
+        return self._modified
+
+    @modified.setter
+    def modified(self, v):
+        self._modified = bool(v)
 
     @property
     def allpendata(self):
@@ -742,12 +750,22 @@ class MarkWriteProject(object):
 
         pdir, pfile = os.path.split(tofile)
 
-        print ">>>> PROJECT DATA:"
-        for aname, aval in projdict:
-            print "\t",aname,"\t",type(aval),"\t",aval
+        print ">>>> SAVING PROJECT DATA:"
+        for aname, aval in projdict.items():
+            print "\t",aname,"\t",type(aval)
         print "<<<<"
 
         writePickle(pdir, pfile, projdict)
+        self.modified = False
+
+    def openFromProjectFile(self, proj_file_path):
+        print "TODO: Implement markwrite project.openFromProjectFile."
+        if os.path.exists(proj_file_path) and os.path.isfile(proj_file_path):
+            projdict = readPickle(*os.path.split(proj_file_path))
+            print ">>>> OPENNED PROJECT DATA:"
+            for aname, aval in projdict.items():
+                print "\t",aname,"\t",type(aval)
+            print "<<<<"
 
     def close(self):
         """
