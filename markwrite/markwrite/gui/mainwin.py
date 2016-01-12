@@ -841,15 +841,15 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                         self.sigProjectChanged.emit(wmproj)
                         self.sigResetProjectData.emit(wmproj)
 
-                        if wmproj._trialtimes is not None:
-                            for i, (tstart, tend) in enumerate(wmproj._trialtimes):
+                        if wmproj.autosegl1 is True:
+                            for i, atrial in enumerate(wmproj.trial_boundaries):
                                 self.createSegmentAction.setEnabled(True)
-                                self.project.selectedtimeregion.setRegion((tstart, tend))
+                                self.project.selectedtimeregion.setRegion((atrial['start_time'], atrial['end_time']))
                                 seg = self.createSegment("Trial%d"%(i+1),trim_time_region=False)
                                 if seg:
                                     seg.locked = True
                                 else:
-                                    print("!! Error: Unable to create segment for trial %d, with time period [%.3f, %.3f]."%(i,tstart, tend))
+                                    print("!! Error: Unable to create segment for trial %d, with time period [%.3f, %.3f]."%(i,atrial['start_time'], atrial['end_time']))
                             self.setActiveObject(self.project.segmenttree.children[0])
                         else:
                             wmproj.selectedtimeregion.setRegion([wmproj.pendata['time'][0], wmproj.pendata['time'][0] + 1.0])

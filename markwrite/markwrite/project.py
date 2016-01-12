@@ -154,11 +154,10 @@ class MarkWriteProject(object):
                             'schema_version',
                             'original_timebase_offset',
                             'autosegl1',
-                            '_trialtimes',
-                            '_trialindices',
                             '_stimevar',
                             '_etimevar',
                             '_expcondvars',
+                            'trial_boundaries',
                             'autodetected_segment_tags',
                             'pendata',
                             'nonzero_pressure_mask',
@@ -210,11 +209,11 @@ class MarkWriteProject(object):
                                    extension=None)
         self.original_timebase_offset=0
         self.autosegl1=False
-        self._trialtimes = None
-        self._trialindices = None
         self._stimevar = tstart_cond_name
         self._etimevar = tend_cond_name
         self._expcondvars = []
+        self.trial_boundaries = []
+
         self.autodetected_segment_tags=[]
         self.pendata = []
         self.nonzero_pressure_mask = []
@@ -358,45 +357,60 @@ class MarkWriteProject(object):
             # the trial period, add the trials sample array to list of trial
             # sample data.
             samples_by_trial = []
-            trial_times = None
-            self._trialindices=[]
+            trials=[]   #list of tuples; each being (cvrow_index, start_sample_ix, start_sample_time, end_sample_ix, end_sample_time)
+
             if self._expcondvars is not None and self._stimevar is not None and self._etimevar is not None:
-                trial_times = []
-                for t in self._expcondvars:
+                CVROW_IX = 0
+                TS_IX_IX = 1
+                TS_TIME_IX = 2
+                TE_IX_IX = 3
+                TE_TIME_IX = 4
+
+                samplecount = 0
+                for tix, t in enumerate(self._expcondvars):
+                    tbounds=[tix, 0, 0.0, 0, 0.0]
                     try:
                         trialstart = float(t[self._stimevar])
                         trialend = float(t[self._etimevar])
+
                         if trialend - trialstart <= 0:
                             raise ValueError("Trial end time must be greater than trial start time: [{}, {}]".format(trialstart,trialend))
 
-                        trial_time_mask = (pen_data['time'] >= trialstart) & (pen_data['time'] <= trialend)
+                        tbounds[TS_TIME_IX] = trialstart
+                        tbounds[TE_TIME_IX] = trialend
+
+                        trial_time_mask = (pen_data['time'] >= trialstart) & (pen_data['time'] < trialend)
                         start_ix, end_ix, trial_length = contiguous_regions(trial_time_mask)
-                        #print "start_ix, end_ix, trial_length:",start_ix, end_ix, trial_length
-                        #start_ix, end_ix = np.asarray(np.where(trial_time_mask))[[0, -1]]
+                        start_ix, end_ix = start_ix[0], end_ix[0]
 
                         # check for trial overlap
-                        for ts, te in self._trialindices:
-                            if (start_ix >= ts and start_ix <= te) or (end_ix >= ts and  end_ix <= te):
+                        for _, ts, _, te, _ in trials:
+                            if (start_ix >= ts and start_ix < te) or (end_ix >= ts and  end_ix <= te):
                                 raise ValueError("Trial sample range overlaps with existing trial: current=[{}, {}], existing=[{}, {}]".format(start_ix, end_ix, ts, te))
 
                         trial_samples = pen_data[trial_time_mask]
                         if len(trial_samples)>0:
-                            trial_times.append((trialstart,trialend))
-                            self._trialindices.append([start_ix, end_ix-1])
+                            tbounds[TS_IX_IX] = start_ix
+                            tbounds[TE_IX_IX] = end_ix
                             samples_by_trial.append(trial_samples)
                     except:
                         print("Error getting trial time period: [{}, {}] = [{}, {}]".format(self._stimevar, self._etimevar, t[self._stimevar], t[self._etimevar]))
                         import traceback
                         traceback.print_exc()
+                    finally:
+                        trials.append(tuple(tbounds))
             else:
-                self._trialindices=[[0,len(pen_data)-1],]
+                trials.append((-1, 0, pen_data['time'][0], len(pen_data)-1, pen_data['time'][-1]))
+
+            trial_dtype = np.dtype({'names':['cvrow_ix','start_ix','start_time','end_ix','end_time'], 'formats':[np.int32,np.uint32,np.float64,np.uint32,np.float64]})
+            self.trial_boundaries=np.asarray(trials,dtype=trial_dtype)
 
             if samples_by_trial:
                 # make pen_data == concat'ed samples_by_trial
                 pen_data = np.concatenate(samples_by_trial)
-
-                # turn trial start, stop time list into np array
-                trial_times = np.asarray(trial_times)
+                print "******************"
+                print "!!! FIXME: trial_boundaries 'start_ix' and 'start_ix' are WRONG: they use sample index prior to samples between trials being removed from array."
+                print "******************"
             else:
                 # Set this to false regardless of project setting so that
                 # user defined L1 segments do not result in limiting timeplot
@@ -408,9 +422,14 @@ class MarkWriteProject(object):
             # Normalize pen sample times so first sample starts at 0.0 sec.
             self.original_timebase_offset=pen_data['time'][0]
             pen_data['time']-=self.original_timebase_offset
-            if trial_times is not None:
-                trial_times-=self.original_timebase_offset
-                self._trialtimes = trial_times
+
+            self.trial_boundaries['start_time']-=self.original_timebase_offset
+            self.trial_boundaries['end_time']-=self.original_timebase_offset
+
+            print "------------------"
+            for t in self.trial_boundaries:
+                print t
+            print "------------------"
 
             self.pendata = pen_data
             self.nonzero_pressure_mask=self.pendata['pressure']>0
@@ -440,10 +459,10 @@ class MarkWriteProject(object):
                 si, ei = series_starts_ix[i],series_stops_ix[i]
                 st, et = pen_data['time'][[si, ei]]
                 slist.append((i,si,st,ei,et))
-            series_dtype = np.dtype({'names':['id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint32,np.float32,np.uint32,np.float32]})
+            series_dtype = np.dtype({'names':['id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint32,np.float64,np.uint32,np.float64]})
             self.series_boundaries = np.asarray(slist,dtype=series_dtype)
 
-            series_part_dtype = np.dtype({'names':['id','parent_id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint16,np.uint32,np.float32,np.uint32,np.float32]})
+            series_part_dtype = np.dtype({'names':['id','parent_id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint16,np.uint32,np.float64,np.uint32,np.float64]})
             self.press_period_boundaries=[]
             self.sample_velocity_minima_ix=[]
             self.velocity_minima_samples = None
