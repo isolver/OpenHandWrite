@@ -90,7 +90,7 @@ def fileOpenDlg(tryFilePath="",
     """
 
     if allowed is None:
-        allowed = "Supported Input Files (*.txyp *.xml *.hdf5);;"
+        allowed = "Supported files (*.txyp *.xml *.hdf5 *.mwp);;"
                   #"Data Files (*.txyp *.xml);;"
                   #"Project Files (*.mwp);;"
     fdlg = QtGui.QFileDialog.getOpenFileName

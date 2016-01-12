@@ -172,7 +172,8 @@ class MarkWriteProject(object):
                             )
     input_file_loaders=dict(xml=XmlDataImporter,
                             txyp=EyePenDataImporter,
-                            hdf5=HubDatastoreImporter)
+                            hdf5=HubDatastoreImporter,
+                            mwp=readPickle)
     _selectedtimeregion=None
     schema_version = "0.1"
     def __init__(self, name=u"New", file_path=None, mwapp=None, tstart_cond_name=None, tend_cond_name=None):
@@ -229,13 +230,15 @@ class MarkWriteProject(object):
 
         if mwapp:
             self._mwapp = proxy(mwapp)
+            self._mwapp._current_project = self
 
         if file_path and os.path.exists(file_path) and os.path.isfile(file_path):
 
             fext=file_path.rsplit(u'.',1)[-1]
             fimporter = self.input_file_loaders.get(fext)
             if fimporter:
-                if fext is not self.project_file_extension:
+                if fext != self.project_file_extension:
+                    print fext, self.project_file_extension, self.project_file_extension == fext
                     # Load raw data from file for use in project
                     self.createNewProject(file_path, fimporter)
                 else:
@@ -772,8 +775,26 @@ class MarkWriteProject(object):
         print "TODO: Implement markwrite project.openFromProjectFile."
         projdict = fimporter(*os.path.split(proj_file_path))
         print ">>>> OPENNED PROJECT DATA:"
+
+        # Handle segment tree specially
+        segmenttree = projdict.get('segmenttree')
+        del projdict['segmenttree']
+
+        selectedtimerange = projdict.get('_selectedtimeregion').get('timerange')
+        del projdict['_selectedtimeregion']
+
         for aname, aval in projdict.items():
             print "\t",aname,"\t",type(aval)
+            setattr(self,aname,aval)
+
+        print "PROJECT LOADING : TODO, RESTORE SEGMENT TREE!!"
+
+        if self._selectedtimeregion is None and self._mwapp:
+            MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)
+        else:
+            MarkWriteProject._selectedtimeregion.project = self
+        self._selectedtimeregion.setRegion(selectedtimerange)
+
         print "<<<<"
         self.modified = False
 
