@@ -104,7 +104,7 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
                     self.strokeBoundaryPoints.setData(x=vmpoints[X_FIELD], y=vmpoints[Y_FIELD], size=ssize, pen=self.qtpenbrushs['stroke_boundary_pen'], brush=self.qtpenbrushs['stroke_boundary_brush'])
 
         else:
-            self.plotDataItem.setData(x=[],y=[])
+            self.plotDataItem.clear()#setData(x=[],y=[],pen='black', brush='')
 
         self.getPlotItem().enableAutoRange(x=True, y=True)
 
