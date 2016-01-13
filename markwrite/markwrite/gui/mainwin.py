@@ -841,7 +841,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                         self.sigProjectChanged.emit(wmproj)
                         self.sigResetProjectData.emit(wmproj)
 
-                        if wmproj.autosegl1 is True:
+                        if wmproj.autosegl1 is True and len(wmproj.segmenttree.children) == 0:
                             for i, atrial in enumerate(wmproj.trial_boundaries):
                                 self.createSegmentAction.setEnabled(True)
                                 self.project.selectedtimeregion.setRegion((atrial['start_time'], atrial['end_time']))
@@ -936,6 +936,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 name = unicode(name).strip().replace('\t', "#")
 
                 if len(name) > 0 and ok:
+                    print 'getSelectedDataSegmentIDs:', self.project.getSelectedDataSegmentIDs()
                     psid = self.project.getSelectedDataSegmentIDs()[0]
                     new_segment = self.project.createSegmentFromSelectedPenData(name, psid)
                     self.handleSelectedPenDataUpdate(None,None)

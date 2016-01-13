@@ -30,17 +30,20 @@ class PenDataSegmentCategory(object):
     _project = None
     _serialize_attributes=(
                             '_name',
-                            '_id',
+                            'id',
                             '_childsegment_ids',
                             'timerange',
                             #'children', # children is filled directly by toDict()
-                            '_locked'
+                            '_locked',
+                            'totalsegmentcount'
                           )
-    def __init__(self, name=None, parent=None, clear_lookup=True, project = None):
+    def __init__(self, name=None, parent=None, clear_lookup=True, project = None, id=None):
         self._name=name
         if name is None:
             self._name = u"Default Segment Category"
 
+        if id is not None:
+            self.id = id
         self._id = self.nextid
         if clear_lookup:
             self.id2obj.clear()
@@ -101,6 +104,8 @@ class PenDataSegmentCategory(object):
         :return:
         """
         self._id = n
+        if self._nextid <= n:
+            PenDataSegmentCategory._nextid = n+1
 
     @property
     def name(self):
@@ -296,6 +301,10 @@ class PenDataSegmentCategory(object):
     def timerange(self):
         return self.pendata['time'][[0,-1]]
 
+    @timerange.setter
+    def timerange(self, v):
+        pass
+
     @property
     def pointcount(self):
         return self.pendata.shape[0]
@@ -345,11 +354,25 @@ class PenDataSegmentCategory(object):
         segdict['child_segments']=[]
         for cs in self.children:
             segdict['child_segments'].append(cs.toDict())
+        return segdict
 
     @classmethod
-    def fromDict(cls, d):
-        print cls, ".fromDict not yet implemented."
-        
+    def fromDict(cls, d, project=None, parent = None):
+        if parent is None:
+            seg = PenDataSegmentCategory(name=d['_name'], project=project, id=d['id'])
+            PenDataSegmentCategory.totalsegmentcount=d['totalsegmentcount']
+        else:
+            pd = parent.project.getPenDataForTimePeriod(*d['timerange'])
+            seg = PenDataSegment(name=d['_name'], pendata=pd, parent=parent, fulltimerange=d['timerange'], id=d['id'])
+
+        seg._childsegment_ids=d['_childsegment_ids']
+        seg._locked=d['_locked']
+
+        for cs in d['child_segments']:
+           seg._childsegments.append(PenDataSegment.fromDict(cs, project, seg))
+
+        return seg
+
     def propertiesTableData(self):
         """
         Return a dict of segment properties to display in the Selected Project
@@ -374,14 +397,14 @@ class PenDataSegmentCategory(object):
         return project_properties
 
 class PenDataSegment(PenDataSegmentCategory):
-    def __init__(self, name=None, pendata=None, parent=None, fulltimerange=None):
+    def __init__(self, name=None, pendata=None, parent=None, fulltimerange=None, id=None):
         """
 
         :param name:
         :param pendata:
         :return:
         """
-        PenDataSegmentCategory.__init__(self,name, parent, False)
+        PenDataSegmentCategory.__init__(self,name, parent, False, id=id)
 
         if fulltimerange is None:
             fulltimerange = pendata['time'][[0,-1]]
@@ -415,6 +438,10 @@ class PenDataSegment(PenDataSegmentCategory):
     @property
     def timerange(self):
         return self._timerange
+
+    @timerange.setter
+    def timerange(self, tr):
+        self._timerange = tr
 
     @pendata.setter
     def pendata(self, n):

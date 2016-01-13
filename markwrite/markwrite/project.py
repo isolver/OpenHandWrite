@@ -96,9 +96,8 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
 
     @property
     def selectedpendata(self):
-        minT, maxT = self.getRegion()
-        allpendata = self.allpendata
-        return allpendata[(allpendata['time'] >= minT) & (allpendata['time'] <= maxT)]
+        _, _, spendata = self.selectedtimerangeanddata
+        return spendata
 
     @property
     def selectedtimerangeanddata(self):
@@ -428,6 +427,7 @@ class MarkWriteProject(object):
             print "------------------"
 
             self.pendata = pen_data
+
             self.nonzero_pressure_mask=self.pendata['pressure']>0
             # nonzero_regions_ix will be a tuple of (starts, stops, lengths) arrays
             self.nonzero_region_ix=contiguous_regions(self.nonzero_pressure_mask)
@@ -685,6 +685,30 @@ class MarkWriteProject(object):
             return np.unique(self.selectedpendata['segment_id'])
         return []
 
+    def getPenDataForTimePeriod(self,tstart, tend, pendata=None):
+        if pendata is None:
+            pendata = self.pendata
+        return pendata[(pendata['time'] >= tstart) & (pendata['time'] <=tend)]
+
+    def createSegmentForTimePeriod(self, tag, parent_id, tstart, tend, id=None,
+                                   update_segid_field = False):
+        """
+
+        :param tag:
+        :param parent_id:
+        :param tstart:
+        :param tend:
+        :return:
+        """
+        sparent = self.segmenttree.id2obj[parent_id]
+        spendata = self.getPenDataForTimePeriod(tstart, tend)
+        new_segment = PenDataSegment(name=tag, pendata=spendata, parent=sparent, id =id)
+        if update_segid_field is True:
+            spendata['segment_id']=new_segment.id
+        self.modified = True
+        return new_segment
+
+
     def createSegmentFromSelectedPenData(self, tag, parent_id):
         """
         Only called if the currently selected pen data can make a valid segment.
@@ -698,6 +722,7 @@ class MarkWriteProject(object):
         """
         sparent = self.segmenttree.id2obj[parent_id]
         new_segment = PenDataSegment(name=tag, pendata=self.selectedpendata, parent=sparent, fulltimerange=self.selectedtimeperiod)
+        print 'new segment id:',new_segment.id
         pendata = self.pendata
         mask = (pendata['time'] >= new_segment.starttime) & (pendata['time'] <= new_segment.endtime)
         self.pendata['segment_id'][mask]=new_segment.id
@@ -772,28 +797,36 @@ class MarkWriteProject(object):
         self.modified = False
 
     def openFromProjectFile(self, proj_file_path, fimporter):
-        print "TODO: Implement markwrite project.openFromProjectFile."
+        PenDataSegmentCategory.clearSegmentCache()
         projdict = fimporter(*os.path.split(proj_file_path))
-        print ">>>> OPENNED PROJECT DATA:"
+        projattrnames = projdict.keys()
 
         # Handle segment tree specially
         segmenttree = projdict.get('segmenttree')
-        del projdict['segmenttree']
+        projattrnames.remove('segmenttree')
 
         selectedtimerange = projdict.get('_selectedtimeregion').get('timerange')
-        del projdict['_selectedtimeregion']
+        projattrnames.remove('_selectedtimeregion')
 
-        for aname, aval in projdict.items():
+        for aname in projattrnames:
+            aval = projdict[aname]
             print "\t",aname,"\t",type(aval)
             setattr(self,aname,aval)
+            projdict[aname]=None
+
+        del projdict
 
         print "PROJECT LOADING : TODO, RESTORE SEGMENT TREE!!"
+        import pprint
+        print "segmenttree:"
+        pprint.pprint(segmenttree)
+        self.segmenttree = PenDataSegmentCategory.fromDict(segmenttree, self, None)
 
         if self._selectedtimeregion is None and self._mwapp:
             MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)
         else:
             MarkWriteProject._selectedtimeregion.project = self
-        self._selectedtimeregion.setRegion(selectedtimerange)
+        #self._selectedtimeregion.setRegion(selectedtimerange)
 
         print "<<<<"
         self.modified = False

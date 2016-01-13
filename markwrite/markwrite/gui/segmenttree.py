@@ -129,6 +129,10 @@ class SegmentInfoDockArea(DockArea):
         self.segid2treenode[project.segmenttree.id] = projecttreeitem
         self.project_tree.addTopLevelItem(projecttreeitem)
 
+        for seg in project.segmenttree.children:
+            self.handleSegmentCreated(seg)
+
+
     def handleSegmentCreated(self, segment):
         #print '>>TREE.handleSegmentCreated:',segment
         self.doNotSetActiveObject = True
@@ -145,6 +149,9 @@ class SegmentInfoDockArea(DockArea):
         self.project_tree.setCurrentItem(segtreeitem)
         #print '<< TREE.handleSegmentCreated'
         self.doNotSetActiveObject = False
+
+        for seg in segment.children:
+            self.handleSegmentCreated(seg)
 
     def handleSegmentRemoved(self, segment, segment_index):
         #print '>> TREE.handleSegmentRemoved:',segment,segment_index
