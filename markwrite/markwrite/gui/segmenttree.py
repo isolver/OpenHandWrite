@@ -218,8 +218,8 @@ class SegmentInfoDockArea(DockArea):
                     ao=MarkWriteMainWindow.instance().setActiveObject(selectedsegment)
                 #print "Set active object:",ao
         except Exception, e:
-            import traceback
-            traceback.print_exc()
+            #import traceback
+            #traceback.print_exc()
             self.properties_table.clear()
 #        print "<< currentTreeItemChangedEvent"
 

@@ -149,7 +149,7 @@ class MarkWriteProject(object):
     project_file_extension = u'mwp'
     serialize_attributes = (
                             'name',
-                            'samplefileinfo',
+                            'pendatafileinfo',
                             'schema_version',
                             'timebase_offset',
                             'autosegl1',
@@ -163,7 +163,7 @@ class MarkWriteProject(object):
                             'nonzero_region_ix',
                             'sampling_interval',
                             'series_boundaries',
-                            'press_period_boundaries',
+                            'run_boundaries',
                             'velocity_minima_samples',
                             'stroke_boundaries',
                             'segmenttree',
@@ -200,11 +200,18 @@ class MarkWriteProject(object):
         #
 
         self.name = u"Unknown"
-        self.samplefileinfo = dict(abspath=None,
+        self.projectfileinfo = dict(saved=False,
+                                   abspath=None,
                                    folder=None,
                                    name=None,
                                    shortname=None,
                                    extension=None)
+
+        self.pendatafileinfo = dict(abspath=None,
+                                   folder=None,
+                                   name=None,
+                                   utcdateloaded=None)
+
         self.timebase_offset=0
         self.autosegl1=False
         self._stimevar = tstart_cond_name
@@ -218,7 +225,7 @@ class MarkWriteProject(object):
         self.nonzero_region_ix=[]
         self.sampling_interval = 0
         self.series_boundaries = []
-        self.press_period_boundaries=[]
+        self.run_boundaries=[]
         self.velocity_minima_samples = None
         self.stroke_boundaries = []
         self.segmenttree=None
@@ -283,15 +290,29 @@ class MarkWriteProject(object):
                     tag_list.append(seg_line)
         return tag_list
 
+    def updateProjectFileInfo(self, file_path, saved=True):
+            self.projectfileinfo['saved']= saved
+            self.projectfileinfo['abspath'] = file_path
+            self.projectfileinfo['folder'], self.projectfileinfo['name'] = os.path.split(file_path)
+            # Load raw data from file for use in project
+            self.projectfileinfo['shortname'], fext =  self.projectfileinfo['name'].rsplit(u'.',1)
+            self.projectfileinfo['extension'] = self.project_file_extension
+            self.name = self.projectfileinfo['shortname']
+
+    def updatePenDataFileInfo(self, file_path):
+            self.pendatafileinfo['abspath'] = file_path
+            self.pendatafileinfo['folder'], self.pendatafileinfo['name'] = os.path.split(file_path)
+            # Load raw data from file for use in project
+            import datetime
+            self.pendatafileinfo['utcdateloaded'] = datetime.datetime.utcnow()
+
     def createNewProject(self, file_path, fimporter):#, condvars=None, stime_var=None, etime_var=None):
             PenDataSegmentCategory.clearSegmentCache()
-            self.samplefileinfo['abspath'] = file_path
-            self.samplefileinfo['folder'], self.samplefileinfo['name'] = os.path.split(file_path)
-            # Load raw data from file for use in project
-            self.samplefileinfo['shortname'], self.samplefileinfo['extension'] = self.samplefileinfo['name'].rsplit(u'.',1)
-            self.name = self.samplefileinfo['shortname']
 
-            self.autodetected_segment_tags=self.detectAssociatedSegmentTagsFile(self.samplefileinfo['folder'],self.samplefileinfo['shortname'], self.samplefileinfo['extension'])
+            self.updateProjectFileInfo(file_path, saved=False)
+            self.updatePenDataFileInfo(file_path)
+
+            self.autodetected_segment_tags=self.detectAssociatedSegmentTagsFile(self.projectfileinfo['folder'],self.projectfileinfo['shortname'], self.projectfileinfo['extension'])
             pen_data = fimporter.asarray(file_path)
 
             updateDataFileLoadingProgressDialog(self._mwapp)
@@ -457,8 +478,7 @@ class MarkWriteProject(object):
             series_dtype = np.dtype({'names':['id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint32,np.float64,np.uint32,np.float64]})
             self.series_boundaries = np.asarray(slist,dtype=series_dtype)
 
-            series_part_dtype = np.dtype({'names':['id','parent_id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint16,np.uint32,np.float64,np.uint32,np.float64]})
-            self.press_period_boundaries=[]
+            self.run_boundaries=[]
             self._velocity_minima_ixs=[]
             self.velocity_minima_samples = None
             self.stroke_boundaries = []
@@ -495,7 +515,7 @@ class MarkWriteProject(object):
 
                     curr_press_series_id = press_run_count
                     press_run_count+=1
-                    self.press_period_boundaries.append((curr_press_series_id,series_bounds['id'],psb_start_ix+si,st,psb_start_ix+ei,et))
+                    self.run_boundaries.append((curr_press_series_id,series_bounds['id'],psb_start_ix+si,st,psb_start_ix+ei,et))
                     if SETTINGS['stroke_detect_pressed_runs_only'] is True:
                         # Create/extend list of all velocity minima points found
                         # for current pressed sample run
@@ -508,8 +528,9 @@ class MarkWriteProject(object):
 
                 updateDataFileLoadingProgressDialog(self._mwapp)
 
-            self.press_period_boundaries = np.asarray(self.press_period_boundaries, dtype=series_part_dtype)
-            self.stroke_boundaries = np.asarray(self.stroke_boundaries, dtype=series_part_dtype)
+            run_dtype = np.dtype({'names':['id','parent_id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint16,np.uint32,np.float64,np.uint32,np.float64]})
+            self.run_boundaries = np.asarray(self.run_boundaries, dtype=run_dtype)
+            self.stroke_boundaries = np.asarray(self.stroke_boundaries, dtype=run_dtype)
             self.velocity_minima_samples = self.pendata[self._velocity_minima_ixs]
 
             if self._selectedtimeregion is None and self._mwapp:
@@ -657,9 +678,9 @@ class MarkWriteProject(object):
         return 0
 
     def getPressedRunForSample(self, sample_index):
-        starts = self.press_period_boundaries['start_ix']
-        ends = self.press_period_boundaries['end_ix']
-        run = self.press_period_boundaries[(sample_index >= starts) & (sample_index <= ends)]
+        starts = self.run_boundaries['start_ix']
+        ends = self.run_boundaries['end_ix']
+        run = self.run_boundaries[(sample_index >= starts) & (sample_index <= ends)]
         if len(run)>1:
             print "Error, > 1 stroke found:",sample_index, run
         elif len(run)==1:
@@ -702,9 +723,12 @@ class MarkWriteProject(object):
         """
         sparent = self.segmenttree.id2obj[parent_id]
         spendata = self.getPenDataForTimePeriod(tstart, tend)
-        new_segment = PenDataSegment(name=tag, pendata=spendata, parent=sparent, id =id)
+        new_segment = PenDataSegment(name=tag, pendata=spendata, parent=sparent, fulltimerange=(tstart, tend), id=id)
+
         if update_segid_field is True:
-            spendata['segment_id']=new_segment.id
+            pendata = self.pendata
+            mask = (pendata['time'] >= new_segment.starttime) & (pendata['time'] <= new_segment.endtime)
+            self.pendata['segment_id'][mask]=new_segment.id
         self.modified = True
         return new_segment
 
@@ -722,7 +746,7 @@ class MarkWriteProject(object):
         """
         sparent = self.segmenttree.id2obj[parent_id]
         new_segment = PenDataSegment(name=tag, pendata=self.selectedpendata, parent=sparent, fulltimerange=self.selectedtimeperiod)
-        print 'new segment id:',new_segment.id
+
         pendata = self.pendata
         mask = (pendata['time'] >= new_segment.starttime) & (pendata['time'] <= new_segment.endtime)
         self.pendata['segment_id'][mask]=new_segment.id
@@ -780,26 +804,29 @@ class MarkWriteProject(object):
                     return True
         return False
 
-    def save(self, tofile=None):
-        if tofile is None:
-            tofile = os.path.abspath('.',u"%s.%s"%(self.name, self.project_file_extension))
-        #print "Saving project to:",tofile
+    def save(self):
+        if os.path.exists(self.projectfileinfo['abspath']):
+            return self.saveAs(self.projectfileinfo['abspath'])
+        return False
 
-        projdict = self.toDict()
-        pdir, pfile = os.path.split(tofile)
 
-        #print ">>>> SAVING PROJECT DATA:"
-        #for aname, aval in projdict.items():
-        #    print "\t",aname,"\t",type(aval)
-        #print "<<<<"
-
-        writePickle(pdir, pfile, projdict)
-        self.modified = False
+    def saveAs(self, tofile):
+        try:
+            self.updateProjectFileInfo(tofile, saved=True)
+            projdict = self.toDict()
+            pdir, pfile = os.path.split(tofile)
+            writePickle(pdir, pfile, projdict)
+            self.modified = False
+            return True
+        except:
+            return False
 
     def openFromProjectFile(self, proj_file_path, fimporter):
         PenDataSegmentCategory.clearSegmentCache()
         projdict = fimporter(*os.path.split(proj_file_path))
         projattrnames = projdict.keys()
+
+        self.updateProjectFileInfo(proj_file_path)
 
         # Handle segment tree specially
         segmenttree = projdict.get('segmenttree')
@@ -808,18 +835,17 @@ class MarkWriteProject(object):
         selectedtimerange = projdict.get('_selectedtimeregion').get('timerange')
         projattrnames.remove('_selectedtimeregion')
 
+        #import pprint
+        #print "Project Data Loaded:"
+        #pprint.pprint(projdict)
+        #print"_____________________________"
+
         for aname in projattrnames:
             aval = projdict[aname]
-            print "\t",aname,"\t",type(aval)
             setattr(self,aname,aval)
             projdict[aname]=None
-
         del projdict
 
-        print "PROJECT LOADING : TODO, RESTORE SEGMENT TREE!!"
-        import pprint
-        print "segmenttree:"
-        pprint.pprint(segmenttree)
         self.segmenttree = PenDataSegmentCategory.fromDict(segmenttree, self, None)
 
         if self._selectedtimeregion is None and self._mwapp:
@@ -827,8 +853,6 @@ class MarkWriteProject(object):
         else:
             MarkWriteProject._selectedtimeregion.project = self
         #self._selectedtimeregion.setRegion(selectedtimerange)
-
-        print "<<<<"
         self.modified = False
 
     def close(self):
@@ -838,8 +862,9 @@ class MarkWriteProject(object):
 
         :return: bool
         """
-        self.pendata = None
         self._selectedtimeregion = None
+        for a in self.serialize_attributes:
+            setattr(self,a,None)
         return True
 
     def __del__(self):

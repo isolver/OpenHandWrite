@@ -93,8 +93,11 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             self._level1Segment = None
 
     def getCurrentPenData(self):
-        if self._level1Segment:
-            return self._level1Segment.pendata
+        try:
+            if self._level1Segment:
+                return self._level1Segment.pendata
+        except:
+            pass
         return MarkWriteMainWindow.instance().project.pendata
 
     def handleResetPenData(self, project):

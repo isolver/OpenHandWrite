@@ -44,9 +44,12 @@ class PenDataSegmentCategory(object):
 
         if id is not None:
             self.id = id
-        self._id = self.nextid
+        else:
+            self._id = self.nextid
+
         if clear_lookup:
             self.id2obj.clear()
+
         self.id2obj[self._id]=self
         # weakref.proxy to this segment's parent segment.
         # If segment is child of project node in gui tree, then parent

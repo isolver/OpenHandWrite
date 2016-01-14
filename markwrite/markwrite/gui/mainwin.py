@@ -196,6 +196,17 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.saveProjectAction.setStatusTip(atext)
         self.saveProjectAction.triggered.connect(self.saveProject)
 
+        atext = 'Save New or Copy Project .'
+        aicon = 'save&32.png'
+        self.saveAsProjectAction = ContextualStateAction(
+            'Save As...',
+            self)
+        #self.saveAsProjectAction.setShortcut('Ctrl+S')
+        self.saveAsProjectAction.setEnabled(False)
+        #self.saveAsProjectAction.setStatusTip(atext)
+        self.saveAsProjectAction.triggered.connect(self.saveAsProject)
+
+
         atext = 'Export Pen Sample Level Report to a File.'
         aicon = 'sample_report&32.png'
         self.exportSampleReportAction = ContextualStateAction(
@@ -257,7 +268,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.createSegmentAction.setShortcut(SETTINGS['kbshortcut_create_segment'])
         self.createSegmentAction.setEnabled(False)
         self.createSegmentAction.setStatusTip(atext)
-        self.createSegmentAction.triggered.connect(self.createSegment)
+        self.createSegmentAction.triggered.connect(self.createSegmentFromSelectedTimePeriod)
         shortcutkey2action['kbshortcut_create_segment'] = self.createSegmentAction
 
         atext = 'Delete the Selected Segment and any of the segments children.'
@@ -615,6 +626,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         #---
 
+        self.exportSampleReportAction.enableActionsList.append(self.saveProjectAction)
+        self.exportSampleReportAction.enableActionsList.append(self.saveAsProjectAction)
         self.exportSampleReportAction.enableActionsList.append(self.zoomInTimelineAction)
         self.exportSampleReportAction.enableActionsList.append(self.zoomOutTimelineAction)
         self.exportSampleReportAction.enableActionsList.append(self.gotoSelectedTimePeriodAction)
@@ -676,6 +689,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(self.openFileAction)
         fileMenu.addAction(self.saveProjectAction)
+        fileMenu.addAction(self.saveAsProjectAction)
         fileMenu.addAction(self.showProjectSettingsDialogAction)
         fileMenu.addSeparator()
         exportMenu = fileMenu.addMenu("&Export")
@@ -841,15 +855,11 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                         self.sigProjectChanged.emit(wmproj)
                         self.sigResetProjectData.emit(wmproj)
 
-                        if wmproj.autosegl1 is True and len(wmproj.segmenttree.children) == 0:
-                            for i, atrial in enumerate(wmproj.trial_boundaries):
-                                self.createSegmentAction.setEnabled(True)
-                                self.project.selectedtimeregion.setRegion((atrial['start_time'], atrial['end_time']))
-                                seg = self.createSegment("Trial%d"%(i+1),trim_time_region=False)
-                                if seg:
-                                    seg.locked = True
-                                else:
-                                    print("!! Error: Unable to create segment for trial %d, with time period [%.3f, %.3f]."%(i,atrial['start_time'], atrial['end_time']))
+                        if wmproj.autosegl1 is True:
+                            if len(wmproj.segmenttree.children) == 0:
+                                for i, atrial in enumerate(wmproj.trial_boundaries):
+                                    self.createTrialSegment("Trial%d"%(i+1),(atrial['start_time'],atrial['end_time']))
+                        if len(wmproj.segmenttree.children) > 0:
                             self.setActiveObject(self.project.segmenttree.children[0])
                         else:
                             wmproj.selectedtimeregion.setRegion([wmproj.pendata['time'][0], wmproj.pendata['time'][0] + 1.0])
@@ -872,19 +882,36 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     def saveProject(self):
         if self.project is None:
             return
+        if self.project.projectfileinfo['saved'] is False:
+            self.saveAsProject()
+        else:
+            if not self.project.save():
+                print
+                print "Error Saving Project: "
+                print self.project.projectfileinfo
+                print
+            else:
+                self.updateAppTitle()
 
-        print "TODO: Implement save project action."
-
-        save_to_path=fileSaveDlg(initFilePath="",
-                    initFileName=u"%s.%s"%(self.project.name,
+    def saveAsProject(self):
+        if self.project is None:
+            return
+        save_to_path=fileSaveDlg(
+                        initFilePath=self.project.projectfileinfo['folder'],
+                        initFileName=u"%s.%s"%(self.project.name,
                                            self.project.project_file_extension),
                         prompt=u"Save MarkWrite Project",
                         allowed="MarkWrite Project files "
                                 "(*.%s)"%self.project.project_file_extension,
                         parent=self)
-
         if save_to_path:
-            self.project.save(save_to_path)
+            if not self.project.saveAs(save_to_path):
+                print
+                print "Error Saving Project As: "
+                print self.project.projectfileinfo
+                print
+            else:
+                self.updateAppTitle()
 
     def createPenSampleLevelReportFile(self):
         default_file_name = u"pen_samples_{0}.txt".format(self.project.name)
@@ -907,7 +934,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         if file_path:
             reportcls().export(file_path, self.project)
 
-    def createSegment(self, name=None, trim_time_region = True):
+    def createSegmentFromSelectedTimePeriod(self, name=None, trim_time_region = True):
         """
         Displays the Create Segment dialog. If dialog is not cancelled and
         segment name length >0, then create a new segment and add to the
@@ -936,12 +963,12 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 name = unicode(name).strip().replace('\t', "#")
 
                 if len(name) > 0 and ok:
-                    print 'getSelectedDataSegmentIDs:', self.project.getSelectedDataSegmentIDs()
                     psid = self.project.getSelectedDataSegmentIDs()[0]
                     new_segment = self.project.createSegmentFromSelectedPenData(name, psid)
                     self.handleSelectedPenDataUpdate(None,None)
                     self.sigSegmentCreated.emit(new_segment)
                     self.setActiveObject(new_segment)
+                    self.saveProjectAction.setEnabled(True)
                 else:
                     # If segment creation was cancelled or failed, then reset
                     # timeline selection region to original time period.
@@ -954,6 +981,24 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             ErrorDialog.info_text = u"Segment Creation Failed.\nNo selected " \
                                     u"pen data."
             ErrorDialog().display()
+
+    def createTrialSegment(self, name, timeperiod):
+        """
+
+        :param name:
+        :param timeperiod:
+        :return:
+        """
+        new_segment = self.project.createSegmentForTimePeriod(name,
+                                                  self.project.segmenttree.id,
+                                                  timeperiod[0],
+                                                  timeperiod[1],
+                                                  None,
+                                                  True)
+        new_segment.locked=True
+        self.sigSegmentCreated.emit(new_segment)
+        self.saveProjectAction.setEnabled(True)
+        return new_segment
 
     def removeSegment(self):
         ConfirmAction.text = 'Delete Segment Confirmation'
@@ -977,7 +1022,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             self.handleSelectedPenDataUpdate(None,None)
             self.sigSegmentRemoved.emit(segment, seg_ix)
             self.project.modified = True
-
+            self.saveProjectAction.setEnabled(True)
             segment.parent.removeChild(segment)
         else:
             print "   - Remove action IGNORED"
@@ -1229,26 +1274,26 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     # >>>>>>
     # RUN based selection region actions
     def selectNextPressedRun(self):
-        runtimerange = self.project.getNextUnitTimeRange(self.project.press_period_boundaries)
+        runtimerange = self.project.getNextUnitTimeRange(self.project.run_boundaries)
         if runtimerange:
             self.project.selectedtimeregion.setRegion(runtimerange)
 
     def selectPrevPressedRun(self):
-        runtimerange = self.project.getPreviousUnitTimeRange(self.project.press_period_boundaries)
+        runtimerange = self.project.getPreviousUnitTimeRange(self.project.run_boundaries)
         if runtimerange:
             self.project.selectedtimeregion.setRegion(runtimerange)
 
     def advanceSelectionEndToNextRunEnd(self):
-        self.advanceSelectionEndToNextUnitEnd(self.project.press_period_boundaries)
+        self.advanceSelectionEndToNextUnitEnd(self.project.run_boundaries)
 
     def returnSelectionEndToPrevRunEnd(self):
-        self.returnSelectionEndToPrevUnitEnd(self.project.press_period_boundaries)
+        self.returnSelectionEndToPrevUnitEnd(self.project.run_boundaries)
 
     def advanceSelectionStartToNextRunStart(self):
-        self.advanceSelectionStartToNextUnitStart(self.project.press_period_boundaries)
+        self.advanceSelectionStartToNextUnitStart(self.project.run_boundaries)
 
     def returnSelectionStartToPrevRunStart(self):
-        self.returnSelectionStartToPrevUnitStart(self.project.press_period_boundaries)
+        self.returnSelectionStartToPrevUnitStart(self.project.run_boundaries)
     # <<<<<<
 
     # >>>>>>
