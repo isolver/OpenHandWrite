@@ -1221,15 +1221,18 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
     # >>>>>>
     # Generic Unit based selection region actions
-    def advanceSelectionEndToNextUnitEnd(self, unit_lookup_table):
+    def advanceSelectionEndToNextUnitEnd(self, unit_lookup_table, adjust_end_time=False):
         selection_start, selection_end = self.project.selectedtimeregion.getRegion()
-        new_selection_end = self.project.getNextUnitEndTime(unit_lookup_table,selection_end)
+        new_selection_end = self.project.getNextUnitEndTime(unit_lookup_table,selection_end,adjust_end_time)
         if new_selection_end:
+            if adjust_end_time and selection_end == new_selection_end:
+                new_selection_end = self.project.getNextUnitStartTime(unit_lookup_table, new_selection_end)
+                new_selection_end = self.project.getNextUnitEndTime(unit_lookup_table,new_selection_end,adjust_end_time)
             self.project.selectedtimeregion.setRegion((selection_start,new_selection_end))
 
-    def returnSelectionEndToPrevUnitEnd(self, unit_lookup_table):
+    def returnSelectionEndToPrevUnitEnd(self, unit_lookup_table, adjust_end_time=False):
         selection_start, selection_end = self.project.selectedtimeregion.getRegion()
-        new_selection_end = self.project.getPrevUnitEndTime(unit_lookup_table,selection_end)
+        new_selection_end = self.project.getPrevUnitEndTime(unit_lookup_table, selection_end, adjust_end_time)
         if new_selection_end and new_selection_end > selection_start:
             self.project.selectedtimeregion.setRegion((selection_start,new_selection_end))
 
@@ -1275,6 +1278,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     # RUN based selection region actions
     def selectNextPressedRun(self):
         runtimerange = self.project.getNextUnitTimeRange(self.project.run_boundaries)
+
         if runtimerange:
             self.project.selectedtimeregion.setRegion(runtimerange)
 
@@ -1299,20 +1303,20 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     # >>>>>>
     # STROKE based selection region actions
     def selectNextStroke(self):
-        stroketimerange = self.project.getNextUnitTimeRange(self.project.stroke_boundaries)
+        stroketimerange = self.project.getNextUnitTimeRange(self.project.stroke_boundaries, adjust_end_time = True)
         if stroketimerange:
             self.project.selectedtimeregion.setRegion(stroketimerange)
 
     def selectPrevStroke(self):
-        stroketimerange = self.project.getPreviousUnitTimeRange(self.project.stroke_boundaries)
+        stroketimerange = self.project.getPreviousUnitTimeRange(self.project.stroke_boundaries, adjust_end_time = True)
         if stroketimerange:
             self.project.selectedtimeregion.setRegion(stroketimerange)
 
     def advanceSelectionEndToNextStrokeEnd(self):
-        self.advanceSelectionEndToNextUnitEnd(self.project.stroke_boundaries)
+        self.advanceSelectionEndToNextUnitEnd(self.project.stroke_boundaries, adjust_end_time=True)
 
     def returnSelectionEndToPrevStrokeEnd(self):
-        self.returnSelectionEndToPrevUnitEnd(self.project.stroke_boundaries)
+        self.returnSelectionEndToPrevUnitEnd(self.project.stroke_boundaries, adjust_end_time=True)
 
     def advanceSelectionStartToNextStrokeStart(self):
         self.advanceSelectionStartToNextUnitStart(self.project.stroke_boundaries)

@@ -442,10 +442,10 @@ class MarkWriteProject(object):
 
             updateDataFileLoadingProgressDialog(self._mwapp,10)
 
-            print "------------------"
-            for t in self.trial_boundaries:
-                print t
-            print "------------------"
+            #print "------------------"
+            #for t in self.trial_boundaries:
+            #    print t
+            #print "------------------"
 
             self.pendata = pen_data
 
@@ -628,9 +628,11 @@ class MarkWriteProject(object):
         except:
             return None
 
-    def getNextUnitEndTime(self,unit_lookup_table, current_time):
+    def getNextUnitEndTime(self,unit_lookup_table, current_time, adjust_end_time = False):
         next_unit_ends = unit_lookup_table[unit_lookup_table['end_time'] > current_time]
         try:
+            if adjust_end_time is True:
+                return self.pendata['time'][next_unit_ends[0]['end_ix']-1]
             return next_unit_ends[0]['end_time']
         except:
             return None
@@ -642,28 +644,34 @@ class MarkWriteProject(object):
         except:
             return None
 
-    def getPrevUnitEndTime(self,unit_lookup_table, current_time):
-        prev_unit_starts = unit_lookup_table[unit_lookup_table['end_time'] < current_time]
+    def getPrevUnitEndTime(self,unit_lookup_table, current_time, adjust_end_time = False):
+        prev_unit_ends = unit_lookup_table[unit_lookup_table['end_time'] < current_time]
         try:
-            return prev_unit_starts[-1]['end_time']
+            if adjust_end_time is True:
+                return self.pendata['time'][prev_unit_ends[-1]['end_ix']-1]
+            return prev_unit_ends[-1]['end_time']
         except:
             return None
 
-    def getNextUnitTimeRange(self, unit_lookup_table):
+    def getNextUnitTimeRange(self, unit_lookup_table, adjust_end_time=False):
         if self.selectedtimeregion:
             selection_start, selection_end = self.selectedtimeregion.getRegion()
             next_units = unit_lookup_table[unit_lookup_table['start_time'] > selection_start]
             try:
+                if adjust_end_time is True:
+                    return next_units[0]['start_time'], self.pendata['time'][next_units[0]['end_ix']-1]
                 return next_units[0]['start_time'], next_units[0]['end_time']
             except:
                 return None
 
-    def getPreviousUnitTimeRange(self, unit_lookup_table):
+    def getPreviousUnitTimeRange(self, unit_lookup_table, adjust_end_time=False):
         if self.selectedtimeregion:
             selection_start, selection_end = self.selectedtimeregion.getRegion()
-            next_units = unit_lookup_table[unit_lookup_table['start_time'] < selection_start]
+            prev_units = unit_lookup_table[unit_lookup_table['start_time'] < selection_start]
             try:
-                return next_units[-1]['start_time'], next_units[-1]['end_time']
+                if adjust_end_time is True:
+                    return prev_units[-1]['start_time'], self.pendata['time'][prev_units[-1]['end_ix']-1]
+                return prev_units[-1]['start_time'], prev_units[-1]['end_time']
             except:
                 return None
 
@@ -689,7 +697,7 @@ class MarkWriteProject(object):
 
     def getStrokeForSample(self, sample_index):
         starts = self.stroke_boundaries['start_ix']
-        ends = self.stroke_boundaries['end_ix']
+        ends = self.stroke_boundaries['end_ix']-1
         stroke = self.stroke_boundaries[(sample_index >= starts) & (sample_index <= ends)]
         if len(stroke)>1:
             print ">>>>>>>>\nError, %d strokes found for sample ix %d:"%(len(stroke), sample_index)
