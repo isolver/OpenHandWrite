@@ -350,54 +350,54 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.backwardSelectionAction.triggered.connect(self.jumpTimeSelectionBackward)
         shortcutkey2action['kbshortcut_selected_timeperiod_backward'] = self.backwardSelectionAction
 
-        atext = 'Increase Timeline Selection End Time'
-        aicon = 'increase_select_endtime&32.png'
-        self.increaseSelectionEndPointAction = ContextualStateAction(
-            QtGui.QIcon(getIconFilePath(aicon)),
-            'Increase Selection End',
-            self)
-        self.increaseSelectionEndPointAction.setShortcut(SETTINGS['kbshortcut_increase_selected_end_time'])
-        self.increaseSelectionEndPointAction.setEnabled(False)
-        self.increaseSelectionEndPointAction.setStatusTip(atext)
-        self.increaseSelectionEndPointAction.triggered.connect(self.increaseSelectionEndPointTime)
-        shortcutkey2action['kbshortcut_increase_selected_end_time'] = self.increaseSelectionEndPointAction
+#        atext = 'Increase Timeline Selection End Time'
+#        aicon = 'increase_select_endtime&32.png'
+#        self.increaseSelectionEndPointAction = ContextualStateAction(
+#            QtGui.QIcon(getIconFilePath(aicon)),
+#            'Increase Selection End',
+#            self)
+#        self.increaseSelectionEndPointAction.setShortcut(SETTINGS['kbshortcut_increase_selected_end_time'])
+#        self.increaseSelectionEndPointAction.setEnabled(False)
+#        self.increaseSelectionEndPointAction.setStatusTip(atext)
+#        self.increaseSelectionEndPointAction.triggered.connect(self.increaseSelectionEndPointTime)
+#        shortcutkey2action['kbshortcut_increase_selected_end_time'] = self.increaseSelectionEndPointAction
 
-        atext = 'Decrease Timeline Selection End Time'
-        aicon = 'descrease_select_endtime&32.png'
-        self.decreaseSelectionEndPointAction = ContextualStateAction(
-            QtGui.QIcon(getIconFilePath(aicon)),
-            'Decrease Selection End',
-            self)
-        self.decreaseSelectionEndPointAction.setShortcut(SETTINGS['kbshortcut_decrease_selected_end_time'])
-        self.decreaseSelectionEndPointAction.setEnabled(False)
-        self.decreaseSelectionEndPointAction.setStatusTip(atext)
-        self.decreaseSelectionEndPointAction.triggered.connect(self.decreaseSelectionEndPointTime)
-        shortcutkey2action['kbshortcut_decrease_selected_end_time'] = self.decreaseSelectionEndPointAction
+#        atext = 'Decrease Timeline Selection End Time'
+#        aicon = 'descrease_select_endtime&32.png'
+#        self.decreaseSelectionEndPointAction = ContextualStateAction(
+#            QtGui.QIcon(getIconFilePath(aicon)),
+#            'Decrease Selection End',
+#            self)
+#        self.decreaseSelectionEndPointAction.setShortcut(SETTINGS['kbshortcut_decrease_selected_end_time'])
+#        self.decreaseSelectionEndPointAction.setEnabled(False)
+#        self.decreaseSelectionEndPointAction.setStatusTip(atext)
+#        self.decreaseSelectionEndPointAction.triggered.connect(self.decreaseSelectionEndPointTime)
+#        shortcutkey2action['kbshortcut_decrease_selected_end_time'] = self.decreaseSelectionEndPointAction
 
         #======================================
-        atext = 'Increase Timeline Selection Start Time'
-        aicon = 'increase_select_starttime&32.png'
-        self.increaseSelectionStartPointAction = ContextualStateAction(
-            QtGui.QIcon(getIconFilePath(aicon)),
-            'Increase Selection Start',
-            self)
-        self.increaseSelectionStartPointAction.setShortcut(SETTINGS['kbshortcut_increase_selected_start_time'])
-        self.increaseSelectionStartPointAction.setEnabled(False)
-        self.increaseSelectionStartPointAction.setStatusTip(atext)
-        self.increaseSelectionStartPointAction.triggered.connect(self.increaseSelectionStartPointTime)
-        shortcutkey2action['kbshortcut_increase_selected_start_time'] = self.increaseSelectionStartPointAction
+#        atext = 'Increase Timeline Selection Start Time'
+#        aicon = 'increase_select_starttime&32.png'
+#        self.increaseSelectionStartPointAction = ContextualStateAction(
+#            QtGui.QIcon(getIconFilePath(aicon)),
+#            'Increase Selection Start',
+#            self)
+#        self.increaseSelectionStartPointAction.setShortcut(SETTINGS['kbshortcut_increase_selected_start_time'])
+#        self.increaseSelectionStartPointAction.setEnabled(False)
+#        self.increaseSelectionStartPointAction.setStatusTip(atext)
+#        self.increaseSelectionStartPointAction.triggered.connect(self.increaseSelectionStartPointTime)
+#        shortcutkey2action['kbshortcut_increase_selected_start_time'] = self.increaseSelectionStartPointAction
 
-        atext = 'Decrease Timeline Selection Start Time'
-        aicon = 'decrease_select_starttime&32.png'
-        self.decreaseSelectionStartPointAction = ContextualStateAction(
-            QtGui.QIcon(getIconFilePath(aicon)),
-            'Decrease Selection Start',
-            self)
-        self.decreaseSelectionStartPointAction.setShortcut(SETTINGS['kbshortcut_decrease_selected_start_time'])
-        self.decreaseSelectionStartPointAction.setEnabled(False)
-        self.decreaseSelectionStartPointAction.setStatusTip(atext)
-        self.decreaseSelectionStartPointAction.triggered.connect(self.decreaseSelectionStartPointTime)
-        shortcutkey2action['kbshortcut_decrease_selected_start_time'] = self.decreaseSelectionStartPointAction
+#        atext = 'Decrease Timeline Selection Start Time'
+#        aicon = 'decrease_select_starttime&32.png'
+#        self.decreaseSelectionStartPointAction = ContextualStateAction(
+#            QtGui.QIcon(getIconFilePath(aicon)),
+#            'Decrease Selection Start',
+#            self)
+#        self.decreaseSelectionStartPointAction.setShortcut(SETTINGS['kbshortcut_decrease_selected_start_time'])
+#        self.decreaseSelectionStartPointAction.setEnabled(False)
+#        self.decreaseSelectionStartPointAction.setStatusTip(atext)
+#        self.decreaseSelectionStartPointAction.triggered.connect(self.decreaseSelectionStartPointTime)
+#        shortcutkey2action['kbshortcut_decrease_selected_start_time'] = self.decreaseSelectionStartPointAction
 
         #
         # Next/Prev Sample Series Actions
@@ -631,10 +631,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.exportSampleReportAction.enableActionsList.append(self.zoomInTimelineAction)
         self.exportSampleReportAction.enableActionsList.append(self.zoomOutTimelineAction)
         self.exportSampleReportAction.enableActionsList.append(self.gotoSelectedTimePeriodAction)
-        self.exportSampleReportAction.enableActionsList.append(self.decreaseSelectionEndPointAction)
-        self.exportSampleReportAction.enableActionsList.append(self.increaseSelectionEndPointAction)
-        self.exportSampleReportAction.enableActionsList.append(self.decreaseSelectionStartPointAction)
-        self.exportSampleReportAction.enableActionsList.append(self.increaseSelectionStartPointAction)
+#        self.exportSampleReportAction.enableActionsList.append(self.decreaseSelectionEndPointAction)
+#        self.exportSampleReportAction.enableActionsList.append(self.increaseSelectionEndPointAction)
+#        self.exportSampleReportAction.enableActionsList.append(self.decreaseSelectionStartPointAction)
+#        self.exportSampleReportAction.enableActionsList.append(self.increaseSelectionStartPointAction)
         self.exportSampleReportAction.enableActionsList.append(self.forwardSelectionAction)
         self.exportSampleReportAction.enableActionsList.append(self.backwardSelectionAction)
 
@@ -729,12 +729,12 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.toolbarselecttimeperiod.addAction(self.zoomInTimelineAction)
         self.toolbarselecttimeperiod.addAction(self.zoomOutTimelineAction)
         self.toolbarselecttimeperiod.addAction(self.gotoSelectedTimePeriodAction)
-        self.toolbarselecttimeperiod.addAction(self.decreaseSelectionStartPointAction)
-        self.toolbarselecttimeperiod.addAction(self.increaseSelectionStartPointAction)
+#        self.toolbarselecttimeperiod.addAction(self.decreaseSelectionStartPointAction)
+#        self.toolbarselecttimeperiod.addAction(self.increaseSelectionStartPointAction)
         self.toolbarselecttimeperiod.addAction(self.backwardSelectionAction)
         self.toolbarselecttimeperiod.addAction(self.forwardSelectionAction)
-        self.toolbarselecttimeperiod.addAction(self.decreaseSelectionEndPointAction)
-        self.toolbarselecttimeperiod.addAction(self.increaseSelectionEndPointAction)
+#        self.toolbarselecttimeperiod.addAction(self.decreaseSelectionEndPointAction)
+#        self.toolbarselecttimeperiod.addAction(self.increaseSelectionEndPointAction)
 
         self.toolbarseriesselect = self.addToolBar('Sample Series Selection')
         self.toolbarseriesselect.addAction(self.returnSelectionStartToPrevSeriesStartAction)
@@ -845,7 +845,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 try:
                     import os
                     _, fname = os.path.split(file_path)
-                    with pg.ProgressDialog("Loading Pen Data from: {}".format(fname), 0, maximum=100, parent=self, busyCursor=False) as dlg:
+                    with pg.ProgressDialog("Loading Pen Data from: {}".format(fname), minimum=0, wait=100, maximum=100, parent=self, busyCursor=False) as dlg:
                         self._progressdlg=dlg
                         wmproj = MarkWriteProject(file_path=file_path, mwapp=self)
 
@@ -1125,84 +1125,80 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 if nxmin <= vmin:
                     self._penDataTimeLineWidget.translateViewBy(x=(nxmin-vmin)*1.25)
 
-    def increaseSelectionEndPointTime(self):
-        # TODO: Move method to _penDataTimeLineWidget
-        xmin, xmax = self.project.selectedtimeregion.getRegion()
-        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
-        if len(ix_bounds)>0:
-            min_ix, max_ix = ix_bounds
-            start_ixs,stop_ixs,lengths=self.project.nonzero_region_ix
-            next_max_ix = stop_ixs[stop_ixs>(max_ix+1)][0]
-            #print "org_max_ix, new_max_ix",max_ix,next_max_ix
-            #print 'new start , end samples: ',self.project.pendata[[min_ix, next_max_ix]]
-            if next_max_ix < self.project.pendata.shape[0]:
-                segmenttimeperiod = self.project.pendata['time'][[min_ix, next_max_ix]]
-                min_ix, next_max_ix = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
-                self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, next_max_ix]])
-                _,nxmax=segmenttimeperiod
-                (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()
-                if nxmax >= vmax:
-                    self._penDataTimeLineWidget.translateViewBy(x=(nxmax-vmax)*1.25)
-            else:
-                 infoDlg(title=u"Action Aborted", prompt=u"The selected time period can not be extended<br>as it is at the end of the data samples.")
+#    def increaseSelectionEndPointTime(self):
+#        xmin, xmax = self.project.selectedtimeregion.getRegion()
+#        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
+#        if len(ix_bounds)>0:
+#            min_ix, max_ix = ix_bounds
+#            start_ixs,stop_ixs,lengths=self.project.nonzero_region_ix
+#            next_max_ix = stop_ixs[stop_ixs>(max_ix+1)][0]
+#            #print "org_max_ix, new_max_ix",max_ix,next_max_ix
+#            #print 'new start , end samples: ',self.project.pendata[[min_ix, next_max_ix]]
+#            if next_max_ix < self.project.pendata.shape[0]:
+#                segmenttimeperiod = self.project.pendata['time'][[min_ix, next_max_ix]]
+#                min_ix, next_max_ix = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
+#                self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, next_max_ix]])
+#                _,nxmax=segmenttimeperiod
+#                (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()
+#                if nxmax >= vmax:
+#                    self._penDataTimeLineWidget.translateViewBy(x=(nxmax-vmax)*1.25)
+#            else:
+#                 infoDlg(title=u"Action Aborted", prompt=u"The selected time period can not be extended<br>as it is at the end of the data samples.")
 
 
-    def decreaseSelectionEndPointTime(self):
-        # TODO: Move method to _penDataTimeLineWidget
-        xmin, xmax = self.project.selectedtimeregion.getRegion()
-        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
-        if len(ix_bounds)>0:
-            min_ix, max_ix = ix_bounds
-            if np.all(self.project.nonzero_pressure_mask[min_ix:max_ix]):
-                self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
-                return
-            start_ixs, stop_ixs, lengths=self.project.nonzero_region_ix
-            prev_maxs = stop_ixs[stop_ixs<max_ix]
-            if prev_maxs.shape[0]>0:
-                if prev_maxs[-1] > min_ix:
-                    prev_max_ix = prev_maxs[-1]
-                    segmenttimeperiod = self.project.pendata['time'][[min_ix, prev_max_ix]]
-                    min_ix, max_ix = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
-                    self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
-                else:
-                    infoDlg(title=u"Action Aborted", prompt=u"The end time of the selected time period can not be decreased further<br>without it being equal to the selected periods start time.")
+#    def decreaseSelectionEndPointTime(self):
+#        xmin, xmax = self.project.selectedtimeregion.getRegion()
+#        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
+#        if len(ix_bounds)>0:
+#            min_ix, max_ix = ix_bounds
+#            if np.all(self.project.nonzero_pressure_mask[min_ix:max_ix]):
+#                self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
+#                return
+#            start_ixs, stop_ixs, lengths=self.project.nonzero_region_ix
+#            prev_maxs = stop_ixs[stop_ixs<max_ix]
+#            if prev_maxs.shape[0]>0:
+#                if prev_maxs[-1] > min_ix:
+#                    prev_max_ix = prev_maxs[-1]
+#                    segmenttimeperiod = self.project.pendata['time'][[min_ix, prev_max_ix]]
+#                    min_ix, max_ix = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
+#                    self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
+#                else:
+#                    infoDlg(title=u"Action Aborted", prompt=u"The end time of the selected time period can not be decreased further<br>without it being equal to the selected periods start time.")
 
-    def increaseSelectionStartPointTime(self):
-        # TODO: Move method to _penDataTimeLineWidget
-        xmin, xmax = self.project.selectedtimeregion.getRegion()
-        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
-        if len(ix_bounds)>0:
-            min_ix, max_ix = ix_bounds
-            if np.all(self.project.nonzero_pressure_mask[min_ix:max_ix]):
-                self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
-                return
-            start_ixs,stop_ixs,lengths=self.project.nonzero_region_ix
-            higher_starts=start_ixs[start_ixs>(min_ix)]
-            if len(higher_starts)==0:
-                infoDlg(title=u"Action Aborted", prompt=u"The start time of the selected time period can not be increased<br> any further; it is the last IPS run of the file.")
-            elif higher_starts[0]>=max_ix-1:
-                infoDlg(title=u"Action Aborted", prompt=u"The start time of the selected time period can not be further increased<br> without it exceeding the selected periods end time.")
-            else:
-                segmenttimeperiod = self.project.pendata['time'][[higher_starts[0], max_ix]]
-                self.project.selectedtimeregion.setRegion(segmenttimeperiod)
+#    def increaseSelectionStartPointTime(self):
+#        xmin, xmax = self.project.selectedtimeregion.getRegion()
+#        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
+#        if len(ix_bounds)>0:
+#            min_ix, max_ix = ix_bounds
+#            if np.all(self.project.nonzero_pressure_mask[min_ix:max_ix]):
+#                self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
+#                return
+#            start_ixs,stop_ixs,lengths=self.project.nonzero_region_ix
+#            higher_starts=start_ixs[start_ixs>(min_ix)]
+#            if len(higher_starts)==0:
+#                infoDlg(title=u"Action Aborted", prompt=u"The start time of the selected time period can not be increased<br> any further; it is the last IPS run of the file.")
+#            elif higher_starts[0]>=max_ix-1:
+#                infoDlg(title=u"Action Aborted", prompt=u"The start time of the selected time period can not be further increased<br> without it exceeding the selected periods end time.")
+#            else:
+#                segmenttimeperiod = self.project.pendata['time'][[higher_starts[0], max_ix]]
+#                self.project.selectedtimeregion.setRegion(segmenttimeperiod)
 
-    def decreaseSelectionStartPointTime(self):
-        # TODO: Move method to _penDataTimeLineWidget
-        xmin, xmax = self.project.selectedtimeregion.getRegion()
-        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
-        if len(ix_bounds)>0:
-            min_ix, max_ix = ix_bounds
-            start_ixs, stop_ixs, lengths=self.project.nonzero_region_ix
-            prev_starts = start_ixs[start_ixs<min_ix]
-            if len(prev_starts)>0 and prev_starts[-1] >= 0:
-                    prev_start_ix = prev_starts[-1]
-                    segmenttimeperiod = self.project.pendata['time'][[prev_start_ix, max_ix]]
-                    min_ix, max_ix = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
-                    self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
-                    nxmin,_=segmenttimeperiod
-                    (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()
-                    if nxmin < vmin:
-                        self._penDataTimeLineWidget.translateViewBy(x=(nxmin-vmin)*1.25)
+#    def decreaseSelectionStartPointTime(self):
+#        xmin, xmax = self.project.selectedtimeregion.getRegion()
+#        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
+#        if len(ix_bounds)>0:
+#            min_ix, max_ix = ix_bounds
+#            start_ixs, stop_ixs, lengths=self.project.nonzero_region_ix
+#            prev_starts = start_ixs[start_ixs<min_ix]
+#            if len(prev_starts)>0 and prev_starts[-1] >= 0:
+#                    prev_start_ix = prev_starts[-1]
+#                    segmenttimeperiod = self.project.pendata['time'][[prev_start_ix, max_ix]]
+#                    min_ix, max_ix = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
+#                    self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
+#                    nxmin,_=segmenttimeperiod
+#                    (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()
+#                    if nxmin < vmin:
+#                        self._penDataTimeLineWidget.translateViewBy(x=(nxmin-vmin)*1.25)
 
     def handleSelectedPenDataUpdate(self, timeperiod, pendata):
         #print '>> App.handleSelectedPenDataUpdate:',timeperiod

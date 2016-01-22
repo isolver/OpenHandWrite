@@ -243,12 +243,13 @@ class MarkWriteProject(object):
             fext=file_path.rsplit(u'.',1)[-1]
             fimporter = self.input_file_loaders.get(fext)
             if fimporter:
+                updateDataFileLoadingProgressDialog(self._mwapp, inc_val=1)
                 if fext != self.project_file_extension:
-                    print fext, self.project_file_extension, self.project_file_extension == fext
+                    #print fext, self.project_file_extension, self.project_file_extension == fext
                     # Load raw data from file for use in project
                     self.createNewProject(file_path, fimporter)
                 else:
-                    self.openFromProjectFile(file_path,fimporter)
+                    self.openFromProjectFile(file_path, fimporter)
             else:
                 print "Unsupported file type:",file_path
         else:

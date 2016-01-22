@@ -70,10 +70,10 @@ flattenned_settings_dict['kbshortcut_timeplot_decrease_mag'] = {'name': 'Decreas
 flattenned_settings_dict['kbshortcut_move_plots_to_selection'] = {'name': 'Reposition Views on Selected Time Period', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Home').toString()}
 flattenned_settings_dict['kbshortcut_selected_timeperiod_forward'] = {'name': 'Move Selected Time Period Forward', 'type': 'str', 'value': QtGui.QKeySequence('PgUp').toString()}
 flattenned_settings_dict['kbshortcut_selected_timeperiod_backward'] = {'name': 'Move Selected Time Period Backward', 'type': 'str', 'value': QtGui.QKeySequence('PgDown').toString()}
-flattenned_settings_dict['kbshortcut_increase_selected_end_time'] = {'name': 'Increase Selected End Time', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+PgUp').toString()}
-flattenned_settings_dict['kbshortcut_decrease_selected_end_time'] = {'name': 'Decrease Selected End Time', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+PgDown').toString()}
-flattenned_settings_dict['kbshortcut_increase_selected_start_time'] = {'name': 'Increase Selected Start Time', 'type': 'str', 'value': QtGui.QKeySequence('Alt+PgUp').toString()}
-flattenned_settings_dict['kbshortcut_decrease_selected_start_time'] = {'name': 'Decrease Selected Start Time', 'type': 'str', 'value': QtGui.QKeySequence('Alt+PgDown').toString()}
+#flattenned_settings_dict['kbshortcut_increase_selected_end_time'] = {'name': 'Increase Selected End Time', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+PgUp').toString()}
+#flattenned_settings_dict['kbshortcut_decrease_selected_end_time'] = {'name': 'Decrease Selected End Time', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+PgDown').toString()}
+#flattenned_settings_dict['kbshortcut_increase_selected_start_time'] = {'name': 'Increase Selected Start Time', 'type': 'str', 'value': QtGui.QKeySequence('Alt+PgUp').toString()}
+#flattenned_settings_dict['kbshortcut_decrease_selected_start_time'] = {'name': 'Decrease Selected Start Time', 'type': 'str', 'value': QtGui.QKeySequence('Alt+PgDown').toString()}
 
 #>>>TODO: Add default shortcut key values for below settings
 flattenned_settings_dict['kbshortcut_select_next_series'] = {'name': 'Select Next Sample Series', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Up').toString()}
@@ -162,10 +162,10 @@ settings_params = [
             'kbshortcut_move_plots_to_selection',
             'kbshortcut_selected_timeperiod_forward',
             'kbshortcut_selected_timeperiod_backward',
-            'kbshortcut_increase_selected_end_time',
-            'kbshortcut_decrease_selected_end_time',
-            'kbshortcut_increase_selected_start_time',
-            'kbshortcut_decrease_selected_start_time',
+#            'kbshortcut_increase_selected_end_time',
+#            'kbshortcut_decrease_selected_end_time',
+#            'kbshortcut_increase_selected_start_time',
+#            'kbshortcut_decrease_selected_start_time',
 
             'kbshortcut_select_next_series',
             'kbshortcut_select_previous_series',
