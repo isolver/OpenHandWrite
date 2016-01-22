@@ -27,6 +27,7 @@ REM set QT_API=pyqt
 
 cd "%~dp0getwrite\experiments\BuilderExample"
 
-python.exe "%WINPYDIR%\Lib\site-packages\PsychoPy-1.83.1-py2.7.egg\psychopy\app\psychopyApp.py" -b %*
+python.exe "%WINPYDIR%\Lib\site-packages\PsychoPy-1.83.2-py2.7.egg\psychopy\app\psychopyApp.py" -b %*
 
 PAUSE
+
