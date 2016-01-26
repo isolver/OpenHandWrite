@@ -433,7 +433,7 @@ class MarkWriteProject(object):
             else:
                 # Normalize pen sample times so first sample starts at 0.0 sec.
                 self.timebase_offset = pen_data['time'][0]
-                trials.append((-1, 0, 0.0, len(pen_data)-1, pen_data['time'][-1]-self.timebase_offset))
+                #trials.append((-1, 0, 0.0, len(pen_data)-1, pen_data['time'][-1]-self.timebase_offset))
                 self.autosegl1 = False
 
             # Normalize pen sample times so first sample starts at 0.0 sec.
@@ -443,11 +443,6 @@ class MarkWriteProject(object):
             self.trial_boundaries=np.asarray(trials,dtype=trial_dtype)
 
             updateDataFileLoadingProgressDialog(self._mwapp,10)
-
-            #print "------------------"
-            #for t in self.trial_boundaries:
-            #    print t
-            #print "------------------"
 
             self.pendata = pen_data
 
@@ -583,10 +578,14 @@ class MarkWriteProject(object):
             self.stroke_boundaries = np.asarray(self.stroke_boundaries, dtype=run_dtype)
             self.velocity_minima_samples = self.pendata[self._velocity_minima_ixs]
 
-            if self._selectedtimeregion is None and self._mwapp:
-                MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)
+            if self._mwapp:
+                if self._selectedtimeregion is None:
+                    MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)
+                else:
+                    MarkWriteProject._selectedtimeregion.project = self
             else:
-                MarkWriteProject._selectedtimeregion.project = self
+                for t, tbounds in enumerate(self.trial_boundaries):
+                    self.createSegmentForTimePeriod(u"Trial%d"%(t+1), self.segmenttree.id, tbounds['start_time'], tbounds['end_time'], update_segid_field=True)
 
             updateDataFileLoadingProgressDialog(self._mwapp,5)
 
@@ -906,11 +905,11 @@ class MarkWriteProject(object):
 
         self.segmenttree = PenDataSegmentCategory.fromDict(segmenttree, self, None)
 
-        if self._selectedtimeregion is None and self._mwapp:
-            MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)
-        else:
-            MarkWriteProject._selectedtimeregion.project = self
-        #self._selectedtimeregion.setRegion(selectedtimerange)
+        if self._mwapp:
+            if self._selectedtimeregion is None:
+                MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)
+            else:
+                MarkWriteProject._selectedtimeregion.project = self
         self.modified = False
 
     def close(self):

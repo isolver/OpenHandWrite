@@ -663,12 +663,12 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.exportSampleReportAction.enableActionsList.append(self.forwardSelectionAction)
         self.exportSampleReportAction.enableActionsList.append(self.backwardSelectionAction)
 
-        self.exportSampleReportAction.enableActionsList.append(self.selectNextSampleSeriesAction)
-        self.exportSampleReportAction.enableActionsList.append(self.selectPrevSampleSeriesAction)
-        self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionEndToNextSeriesEndAction)
-        self.exportSampleReportAction.enableActionsList.append(self.returnSelectionEndToPrevSeriesEndAction)
-        self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionStartToNextSeriesStartAction)
-        self.exportSampleReportAction.enableActionsList.append(self.returnSelectionStartToPrevSeriesStartAction)
+#        self.exportSampleReportAction.enableActionsList.append(self.selectNextSampleSeriesAction)
+#        self.exportSampleReportAction.enableActionsList.append(self.selectPrevSampleSeriesAction)
+#        self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionEndToNextSeriesEndAction)
+#        self.exportSampleReportAction.enableActionsList.append(self.returnSelectionEndToPrevSeriesEndAction)
+#        self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionStartToNextSeriesStartAction)
+#        self.exportSampleReportAction.enableActionsList.append(self.returnSelectionStartToPrevSeriesStartAction)
 
 
         self.exportSampleReportAction.enableActionsList.append(self.selectNextPressedRunAction)
@@ -1066,6 +1066,16 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.setActiveObject(self.project.selectedtimeregion)
         self.updateAppTitle()
         self.saveProjectAction.setEnabled(project.modified)
+
+        if self.project:
+            enable_series_actions = len(self.project.series_boundaries)>1
+            self.advanceSelectionStartToNextSeriesStartAction.setEnabled(enable_series_actions)
+            self.advanceSelectionEndToNextSeriesEndAction.setEnabled(enable_series_actions)
+            self.returnSelectionEndToPrevSeriesEndAction.setEnabled(enable_series_actions)
+            self.returnSelectionStartToPrevSeriesStartAction.setEnabled(enable_series_actions)
+            self.selectNextSampleSeriesAction.setEnabled(enable_series_actions)
+            self.selectPrevSampleSeriesAction.setEnabled(enable_series_actions)
+
         self.exportSampleReportAction.setEnabled(True)
 
     def zoomInTimeline(self):
@@ -1155,81 +1165,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()
                 if nxmin <= vmin:
                     self._penDataTimeLineWidget.translateViewBy(x=(nxmin-vmin)*1.25)
-
-#    def increaseSelectionEndPointTime(self):
-#        xmin, xmax = self.project.selectedtimeregion.getRegion()
-#        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
-#        if len(ix_bounds)>0:
-#            min_ix, max_ix = ix_bounds
-#            start_ixs,stop_ixs,lengths=self.project.nonzero_region_ix
-#            next_max_ix = stop_ixs[stop_ixs>(max_ix+1)][0]
-#            #print "org_max_ix, new_max_ix",max_ix,next_max_ix
-#            #print 'new start , end samples: ',self.project.pendata[[min_ix, next_max_ix]]
-#            if next_max_ix < self.project.pendata.shape[0]:
-#                segmenttimeperiod = self.project.pendata['time'][[min_ix, next_max_ix]]
-#                min_ix, next_max_ix = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
-#                self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, next_max_ix]])
-#                _,nxmax=segmenttimeperiod
-#                (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()
-#                if nxmax >= vmax:
-#                    self._penDataTimeLineWidget.translateViewBy(x=(nxmax-vmax)*1.25)
-#            else:
-#                 infoDlg(title=u"Action Aborted", prompt=u"The selected time period can not be extended<br>as it is at the end of the data samples.")
-
-
-#    def decreaseSelectionEndPointTime(self):
-#        xmin, xmax = self.project.selectedtimeregion.getRegion()
-#        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
-#        if len(ix_bounds)>0:
-#            min_ix, max_ix = ix_bounds
-#            if np.all(self.project.nonzero_pressure_mask[min_ix:max_ix]):
-#                self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
-#                return
-#            start_ixs, stop_ixs, lengths=self.project.nonzero_region_ix
-#            prev_maxs = stop_ixs[stop_ixs<max_ix]
-#            if prev_maxs.shape[0]>0:
-#                if prev_maxs[-1] > min_ix:
-#                    prev_max_ix = prev_maxs[-1]
-#                    segmenttimeperiod = self.project.pendata['time'][[min_ix, prev_max_ix]]
-#                    min_ix, max_ix = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
-#                    self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
-#                else:
-#                    infoDlg(title=u"Action Aborted", prompt=u"The end time of the selected time period can not be decreased further<br>without it being equal to the selected periods start time.")
-
-#    def increaseSelectionStartPointTime(self):
-#        xmin, xmax = self.project.selectedtimeregion.getRegion()
-#        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
-#        if len(ix_bounds)>0:
-#            min_ix, max_ix = ix_bounds
-#            if np.all(self.project.nonzero_pressure_mask[min_ix:max_ix]):
-#                self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
-#                return
-#            start_ixs,stop_ixs,lengths=self.project.nonzero_region_ix
-#            higher_starts=start_ixs[start_ixs>(min_ix)]
-#            if len(higher_starts)==0:
-#                infoDlg(title=u"Action Aborted", prompt=u"The start time of the selected time period can not be increased<br> any further; it is the last IPS run of the file.")
-#            elif higher_starts[0]>=max_ix-1:
-#                infoDlg(title=u"Action Aborted", prompt=u"The start time of the selected time period can not be further increased<br> without it exceeding the selected periods end time.")
-#            else:
-#                segmenttimeperiod = self.project.pendata['time'][[higher_starts[0], max_ix]]
-#                self.project.selectedtimeregion.setRegion(segmenttimeperiod)
-
-#    def decreaseSelectionStartPointTime(self):
-#        xmin, xmax = self.project.selectedtimeregion.getRegion()
-#        ix_bounds = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
-#        if len(ix_bounds)>0:
-#            min_ix, max_ix = ix_bounds
-#            start_ixs, stop_ixs, lengths=self.project.nonzero_region_ix
-#            prev_starts = start_ixs[start_ixs<min_ix]
-#            if len(prev_starts)>0 and prev_starts[-1] >= 0:
-#                    prev_start_ix = prev_starts[-1]
-#                    segmenttimeperiod = self.project.pendata['time'][[prev_start_ix, max_ix]]
-#                    min_ix, max_ix = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(*segmenttimeperiod)
-#                    self.project.selectedtimeregion.setRegion(self.project.pendata['time'][[min_ix, max_ix]])
-#                    nxmin,_=segmenttimeperiod
-#                    (vmin,vmax),(_,_)=self._penDataTimeLineWidget.getViewRange()
-#                    if nxmin < vmin:
-#                        self._penDataTimeLineWidget.translateViewBy(x=(nxmin-vmin)*1.25)
 
     def handleSelectedPenDataUpdate(self, timeperiod, pendata):
         #print '>> App.handleSelectedPenDataUpdate:',timeperiod
@@ -1371,79 +1306,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
     def __del__(self):
         pass
-
-    def displayAllDataChannelsTimePlot(self):
-            pw = pg.plot()
-            pw.setWindowTitle('All Pen Samples')
-            pw = pw.plotItem
-            pw.setLabels(left='Pen Position')
-
-            pw.addLegend()
-            pdata=self.project.pendata
-
-
-            def getPenBrushForAxis(axis, penpoints, penarray=None, brusharray=None):
-                if penarray is None:
-                    penarray = np.empty(penpoints.shape[0], dtype=object)
-                    brusharray = np.empty(penpoints.shape[0], dtype=object)
-
-                pen = pg.mkPen(SETTINGS['timeplot_%strace_color'%(axis)],
-                               width=SETTINGS['timeplot_%strace_size'%(axis)])
-                pen2 = pg.mkPen(SETTINGS['timeplot_%strace_color'%(axis)].darker(),
-                                width=SETTINGS['timeplot_%strace_size'%(axis)])
-                penarray[:] = pen
-                penarray[penpoints['pressure'] == 0] = pen2
-
-                brush = pg.mkBrush(SETTINGS['timeplot_%strace_color'%(axis)])
-                brush2 = pg.mkBrush(SETTINGS['timeplot_%strace_color'%(axis)].darker())
-                brusharray[:] = brush
-                brusharray[penpoints['pressure'] == 0] = brush2
-
-                return penarray, brusharray
-
-
-#            left_axis = ('x','y')
-#            penarray=None
-#            brusharray=None
-#            for axis  in left_axis:
-#                penarray, brusharray = getPenBrushForAxis(axis,pdata,penarray,brusharray)
-#                left_plot.plot(x=pdata['time'], y=pdata['%s_filtered'%(axis)],
-#                                pen=None, symbol='o',
-#                                symbolSize=SETTINGS[
-#                                    'timeplot_%strace_size'%(axis)],
-#                                symbolPen=penarray,
-#                                symbolBrush=brusharray,
-#                                name = "%s"%(axis))
-
-
-
-            left_axis = ('v','a')
-            axis2data=dict(v='xy_velocity',a='xy_acceleration')
-
-            ssize= SETTINGS['pen_stroke_boundary_size']
-            scolor = SETTINGS['pen_stroke_boundary_color']
-            pen = pg.mkPen(scolor, width=ssize)
-            brush = pg.mkBrush(scolor)
-            strokeBoundaryPoints = pg.ScatterPlotItem(size=ssize, pen=pen, brush=brush)
-            pw.addItem(strokeBoundaryPoints)
-            strokeboundries=self.project.velocity_minima_samples
-            for axis in left_axis:
-                strokeBoundaryPoints.addPoints(x=strokeboundries['time'],
-                                               y=strokeboundries[axis2data[axis]])
-
-
-            penarray=None
-            brusharray=None
-            for axis  in left_axis:
-                penarray, brusharray = getPenBrushForAxis(axis,pdata,penarray, brusharray)
-                pw.addItem(pg.PlotCurveItem(x=pdata['time'],
-                                                    y=pdata[axis2data[axis]],
-                                                    pen=None, symbol='o',
-                                                    symbolSize=SETTINGS[
-                                                        'timeplot_%strace_size'%(axis)],
-                                                    symbolPen=penarray,
-                                                    symbolBrush=brusharray,
-                                                    name = "%s"%(axis)))
 
 #
 ## Main App Helpers
