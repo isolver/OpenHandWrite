@@ -25,7 +25,7 @@ import numpy as np
 import pyqtgraph as pg
 from pyqtgraph import OrderedDict
 
-from file_io import EyePenDataImporter, XmlDataImporter, HubDatastoreImporter, readPickle, writePickle
+from file_io import EyePenDataImporter, XmlDataImporter, HubDatastoreImporter, readPickle, writePickle,SAMPLE_STATES
 from segment import PenDataSegment, PenDataSegmentCategory
 from util import contiguous_regions
 from gui.projectsettings import SETTINGS
@@ -161,7 +161,7 @@ class MarkWriteProject(object):
                             'pendata',
                             'nonzero_pressure_mask',
                             'nonzero_region_ix',
-                            'sampling_interval',
+                            #'sampling_interval',
                             'series_boundaries',
                             'run_boundaries',
                             'velocity_minima_samples',
@@ -210,6 +210,7 @@ class MarkWriteProject(object):
         self.pendatafileinfo = dict(abspath=None,
                                    folder=None,
                                    name=None,
+                                   extension=None,
                                    utcdateloaded=None)
 
         self.timebase_offset=0
@@ -223,7 +224,7 @@ class MarkWriteProject(object):
         self.pendata = []
         self.nonzero_pressure_mask = []
         self.nonzero_region_ix=[]
-        self.sampling_interval = 0
+        #self.sampling_interval = 0
         self.series_boundaries = []
         self.run_boundaries=[]
         self.velocity_minima_samples = None
@@ -295,7 +296,6 @@ class MarkWriteProject(object):
             self.projectfileinfo['saved']= saved
             self.projectfileinfo['abspath'] = file_path
             self.projectfileinfo['folder'], self.projectfileinfo['name'] = os.path.split(file_path)
-            # Load raw data from file for use in project
             self.projectfileinfo['shortname'], fext =  self.projectfileinfo['name'].rsplit(u'.',1)
             self.projectfileinfo['extension'] = self.project_file_extension
             self.name = self.projectfileinfo['shortname']
@@ -303,7 +303,8 @@ class MarkWriteProject(object):
     def updatePenDataFileInfo(self, file_path):
             self.pendatafileinfo['abspath'] = file_path
             self.pendatafileinfo['folder'], self.pendatafileinfo['name'] = os.path.split(file_path)
-            # Load raw data from file for use in project
+            _, fext =  self.projectfileinfo['name'].rsplit(u'.',1)
+            self.projectfileinfo['extension'] = fext
             import datetime
             self.pendatafileinfo['utcdateloaded'] = datetime.datetime.utcnow()
 
@@ -460,22 +461,34 @@ class MarkWriteProject(object):
 
             # inter sample intervals, used for sampling rate calc and
             # series boundary detection
-            sample_dts = self.pendata['time'][1:]-self.pendata['time'][:-1]
+            #sample_dts = self.pendata['time'][1:]-self.pendata['time'][:-1]
 
             # Calculate what the sampling interval (1000.0 / hz_rate) for the device was in sec.msec
-            self.sampling_interval = np.percentile(sample_dts,5.0,interpolation='nearest')
-            self.max_series_isi = 3.0*self.sampling_interval
-            if SETTINGS['series_detect_max_isi_msec'] > 0:
-                self.max_series_isi = SETTINGS['series_detect_max_isi_msec']/1000.0
-            # Find pen sample series boundaries, using calculated
-            # sampling_interval. Filtering and velocity alg's are applied to
-            # the pen samples within each series.
+            #self.sampling_interval = np.percentile(sample_dts,5.0,interpolation='nearest')
+            #self.max_series_isi = 3.0*self.sampling_interval
+            #if SETTINGS['series_detect_max_isi_msec'] > 0:
+            #    self.max_series_isi = SETTINGS['series_detect_max_isi_msec']/1000.0
+
+            # Find pen sample Series boundaries, using status
+            # field state FIRST_ENTER. If none exist, create a single Series
+            # that covers whole file.
             slist=[]
-            series_starts_ix, series_stops_ix, series_lengths = contiguous_regions(sample_dts < self.max_series_isi)#2.0*self.sampling_interval)
-            for i in xrange(len(series_starts_ix)):
-                si, ei = series_starts_ix[i],series_stops_ix[i]
+            festatus = SAMPLE_STATES['FIRST_ENTER']
+            series_starts_ix =  list(*(self.pendata['state'] & festatus == festatus).nonzero())
+
+            if len(series_starts_ix) == 0 or series_starts_ix[0]!=0:
+                series_starts_ix.insert(0,0)
+            series_stops_ix=series_starts_ix[1:]
+            series_stops_ix.append(len(self.pendata))
+            #print 'series_starts_ix:',series_starts_ix
+            #print "sample count:",len(self.pendata)
+            for i in range(len(series_starts_ix)):
+                si, ei = series_starts_ix[i], series_stops_ix[i]
+                ei=ei-1
                 st, et = pen_data['time'][[si, ei]]
                 slist.append((i,si,st,ei,et))
+                #print 'series:',(i,si,st,ei,et)
+
             series_dtype = np.dtype({'names':['id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint32,np.float64,np.uint32,np.float64]})
             self.series_boundaries = np.asarray(slist,dtype=series_dtype)
 
@@ -492,35 +505,71 @@ class MarkWriteProject(object):
                 # get sample array for current series
                 pseries = self.pendata[
                         series_bounds['start_ix']:series_bounds['end_ix']+1]
+                psb_start_ix = series_bounds['start_ix']
 
-                # Filter and valc velocity for all samples in the series,
+                # Filter and calc velocity for all samples in the series,
                 # regardless of pressure state.
                 filter_pen_sample_series(pseries)
                 calculate_velocity(pseries)
 
                 # For current series, get boundaries for
                 # pen pressed periods (pressure > 0)
-                press_starts, press_stops, press_lenths = contiguous_regions(pseries['pressure'] > 0)
 
-                # Add pressed period boundaries array for current series to
-                # the list of series pen pressed boundaries.
-                psb_start_ix = series_bounds['start_ix']
-                for i in xrange(len(press_starts)):
-                    si, ei = press_starts[i], press_stops[i]
-                    try:
-                        st, et = pseries['time'][[si, ei]]
-                    except IndexError, err:
-                        ei = ei-1
-                        st, et = pseries['time'][[si, ei]]
-                        press_stops[i]=ei
+                fpstatus = SAMPLE_STATES['FIRST_PRESS']
+                press_starts = list(*(pseries['state'] & fpstatus == fpstatus).nonzero())
 
-                    curr_press_series_id = press_run_count
-                    press_run_count+=1
-                    self.run_boundaries.append((curr_press_series_id,series_bounds['id'],psb_start_ix+si,st,psb_start_ix+ei,et))
-                    if SETTINGS['stroke_detect_pressed_runs_only'] is True:
-                        # Create/extend list of all velocity minima points found
-                        # for current pressed sample run
-                        self.findstrokes(pseries[si:ei+1], psb_start_ix+si, curr_press_series_id)
+                if len(press_starts) != 0:
+                    if pseries['pressure'][0] > 0 and press_starts[0] != 0:
+                        press_starts.insert(0,0)
+                    press_stops=press_starts[1:]
+                    press_stops.append(len(pseries))
+
+
+                    #print '-------\npress_starts:',press_starts
+                    #print '-------\npress_stops:',press_stops
+                    #print "sample count:",len(pseries)
+                    for i in range(len(press_starts)):
+                        si = press_starts[i]
+                        pressed_run_ixs = (pseries[si:press_stops[i]]['pressure']>0).nonzero()[0]
+                        if len(pressed_run_ixs):
+                            #print 'pressed_run_ixs:',len(run_start_to_series_end),pressed_run_ixs
+                            ei=si+pressed_run_ixs[-1]
+                            st, et = pseries['time'][[si, ei]]
+                            curr_press_series_id = press_run_count
+                            press_run_count+=1
+                            #print 'run:',series_bounds['id'], press_run_count,(si,st,ei,et)
+                            self.run_boundaries.append((curr_press_series_id,series_bounds['id'],psb_start_ix+si,st,psb_start_ix+ei,et))
+
+                            if len(pressed_run_ixs) > 1 and SETTINGS['stroke_detect_pressed_runs_only'] is True:
+                                # Create/extend list of all velocity minima points found
+                                # for current pressed sample run
+                                self.findstrokes(pseries[si:ei+1], psb_start_ix+si, curr_press_series_id)
+
+                        updateDataFileLoadingProgressDialog(self._mwapp)
+
+                else:
+                    press_starts, press_stops, press_lenths = contiguous_regions(pseries['pressure'] > 0)
+
+                    # Add pressed period boundaries array for current series to
+                    # the list of series pen pressed boundaries.
+
+                    for i in xrange(len(press_starts)):
+                        si, ei = press_starts[i], press_stops[i]
+                        try:
+                            st, et = pseries['time'][[si, ei]]
+                        except IndexError, err:
+                            ei = ei-1
+                            st, et = pseries['time'][[si, ei]]
+                            press_stops[i]=ei
+
+                        curr_press_series_id = press_run_count
+                        press_run_count+=1
+                        self.run_boundaries.append((curr_press_series_id,series_bounds['id'],psb_start_ix+si,st,psb_start_ix+ei,et))
+                        if SETTINGS['stroke_detect_pressed_runs_only'] is True:
+                            # Create/extend list of all velocity minima points found
+                            # for current pressed sample run
+                            self.findstrokes(pseries[si:ei+1], psb_start_ix+si, curr_press_series_id)
+                        updateDataFileLoadingProgressDialog(self._mwapp)
 
                 if SETTINGS['stroke_detect_pressed_runs_only'] is False:
                     # Create/extend list of all velocity minima points found

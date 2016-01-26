@@ -36,6 +36,26 @@ markwrite_pendata_format = [('time', np.float64),
                     ('segment_id', np.uint16)]
 
 
+SAMPLE_STATES=dict()
+# A sample that is the first sample following a time gap in the sample stream
+SAMPLE_STATES['FIRST_ENTER'] = 1
+# A sample that is the first sample with pressure == 0
+# following a sample with pressure > 0
+SAMPLE_STATES['FIRST_HOVER'] = 2
+# A sample that has pressure == 0, and previous sample also had pressure  == 0
+SAMPLE_STATES['HOVERING'] = 4
+# A sample that is the first sample with pressure > 0
+# following a sample with pressure == 0
+SAMPLE_STATES['FIRST_PRESS'] = 8
+#  A sample that has pressure > 0
+# following a sample with pressure > 0
+SAMPLE_STATES['PRESSED'] = 16
+for k,v in SAMPLE_STATES.items():
+    SAMPLE_STATES[v]=k
+
+def convertSampleStateValue(sv):
+    return [v for k, v in SAMPLE_STATES.items() if isinstance(k,int) and sv&k==k]
+
 class DataImporter(object):
     '''
     Parent class for all data import formatters. Each subclass must implement
@@ -125,18 +145,34 @@ class EyePenDataImporter(DataImporter):
     def parse(cls, file_path):
         list_result = []
         with codecs.open(file_path, "r", "utf-8") as f:
+            last_sample=None
             for line_index, tab_line in enumerate(f):
                 if line_index < cls.DATA_START_LINE_INDEX:
+                    # skip hearer row and first row of 0's
                     continue
                 try:
                     line_tokens = tab_line.split(u'\t')
+                    xp = int(line_tokens[cls.X_COLUMN_IX].strip())
+                    yp = int(line_tokens[cls.Y_COLUMN_IX].strip())
+                    spress = int(line_tokens[cls.PRESS_COLUMN_IX].strip(u' \r\n'))
 
-                    list_result.append(
-                        (float(line_tokens[cls.TIME_COLUMN_IX].strip())/1000.0,
-                         int(line_tokens[cls.X_COLUMN_IX].strip()),
-                         int(line_tokens[cls.Y_COLUMN_IX].strip()),
-                         int(line_tokens[cls.PRESS_COLUMN_IX].strip()),
-                         0, # state field, always 0
+                    # All samples in txyp file are pressed samples
+                    status = SAMPLE_STATES['PRESSED']
+
+                    #skip any 0 pressure samples and set last_sample to None
+                    if spress == 0:# and last_sample and last_sample[cls.X_COLUMN_IX] == xp and last_sample[cls.Y_COLUMN_IX] == yp:
+                            # skip sample and set last_sample to None
+                            last_sample = None
+                            continue
+
+                    if last_sample is None:
+                        status += SAMPLE_STATES['FIRST_PRESS']
+
+                    dsample = (float(line_tokens[cls.TIME_COLUMN_IX].strip())/1000.0,
+                         xp,
+                         yp,
+                         spress,
+                         status, # state field
                          0, # x_filtered, filled in by markwrite runtime
                          0, # y_filtered, filled in by markwrite runtime
                          0, # pressure_filtered, filled in by markwrite runtime
@@ -145,7 +181,9 @@ class EyePenDataImporter(DataImporter):
                          0, # xy_velocity, filled in by markwrite runtime
                          0, # xy_accell, filled in by markwrite runtime
                          0) #segment_id, filled in by markwrite runtime
-                        )
+
+                    last_sample=dsample
+                    list_result.append(dsample)
 
                 except IndexError:
                     print("Note: Skipping Line {0}. Contains {1} Tokens.".format(len(list_result), len(line_tokens)))
@@ -264,12 +302,17 @@ class XmlDataImporter(DataImporter):
         list_result = []
         xml_root = ET.parse(file_path).getroot()
         for stroke_set in xml_root.iter(u'strokes'):
+            si=0
             for stroke in stroke_set.iter(u'stroke'):
+                status = SAMPLE_STATES['PRESSED']
+                if si == 0:
+                    status += SAMPLE_STATES['FIRST_PRESS']
+
                 list_result.append((long(stroke.get("Time"))/1000.0,
                                 int(stroke.get("X")),
                                 int(stroke.get("Y")),
                                 1, # pressure, always 1
-                                0, # state field, always 0
+                                status, # state field
                                 0, # x_filtered, filled in by markwrite runtime
                                 0, # y_filtered, filled in by markwrite runtime
                                 0, # pressure_filtered, filled in by  runtime
@@ -279,9 +322,10 @@ class XmlDataImporter(DataImporter):
                                 0, # xy_accell, filled in by markwrite runtime
                                 0) #segment_id, filled in by markwrite runtime
                                 )
-            last_point = list(list_result[-1])
-            last_point[3] = 0  # Set pressure to 0 for last point
-            list_result[-1]=tuple(last_point)
+                si+=1
+            #last_point = list(list_result[-1])
+            #last_point[3] = 0  # Set pressure to 0 for last point
+            #list_result[-1]=tuple(last_point)
         return list_result
 
 ################################################################################
@@ -304,7 +348,8 @@ def readPickle(file_path, file_name):
         with open(abs_file_path, 'rb') as f:
             dobj = cPickle.load(f)
         for k, v in dobj.items():
-            if isinstance(v, tuple) and len(v)==3:
+            if isinstance(v, tuple) and len(v)==3 and isinstance(v[0], (int, long, float)):
+                #print "Creating color from:",k, v
                 dobj[k] = mkColor(v)
     return dobj
 
