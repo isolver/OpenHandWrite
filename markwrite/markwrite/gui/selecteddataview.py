@@ -40,9 +40,6 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
 
         self.strokeBoundaryPoints = None
 
-        MarkWriteMainWindow.instance().sigSelectedPenDataUpdate.connect(
-            self.handlePenDataSelectionChanged)
-
     def createPenBrushCache(self):
         self.qtpenbrushs.clear()
         self.qtpenbrushs['selected_valid_pressed_pen']=pg.mkPen(SETTINGS['spatialplot_selectedvalid_color'],

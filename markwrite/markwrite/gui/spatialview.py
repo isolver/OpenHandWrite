@@ -36,8 +36,6 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
 
         MarkWriteMainWindow.instance().sigResetProjectData.connect(
             self.handleResetPenData)
-        MarkWriteMainWindow.instance().sigSelectedPenDataUpdate.connect(
-            self.handlePenDataSelectionChanged)
         MarkWriteMainWindow.instance().sigSegmentRemoved.connect(
             self.handleSegmentRemoved)
         MarkWriteMainWindow.instance().sigSegmentCreated.connect(

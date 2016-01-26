@@ -85,7 +85,6 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
         self.currentSelection = None
         self.fullPenValRange=[0,1]
         self.maxTime=1
-        self.sigRegionChangedProxy = None
 
         self._lastselectedtimerange = None
         self._level1Segment = None
@@ -277,9 +276,7 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
             self.currentSelection = project.selectedtimeregion
 
             self.xy_plot.addItem(self.currentSelection)
-            self.sigRegionChangedProxy = pg.SignalProxy(
-                self.currentSelection.sigRegionChanged, rateLimit=30,
-                slot=self.handlePenDataSelectionChanged)
+
 
         else:
             self.xy_plot.getViewBox().setMouseEnabled(y=SETTINGS['timeplot_enable_ymouse'])
@@ -300,7 +297,6 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
         self.xy_plot.setRange(xRange=(penpoints['time'][0], penpoints['time'][-1]),
                       yRange=self.fullPenValRange,
                       padding=None)
-        self.handlePenDataSelectionChanged()
 
 
     def handleUpdatedSettingsEvent(self, updates, settings):
@@ -362,13 +358,6 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
         self.xy_plot.getViewBox().setMouseEnabled(y=SETTINGS['timeplot_enable_ymouse'])
         if SETTINGS['timeplot_enable_ymouse'] is False:
             self.xy_plot.setRange(yRange=self.fullPenValRange)
-
-    def handlePenDataSelectionChanged(self):
-        self.currentSelection.setZValue(10)
-        minT, maxT , selectedpendata= self.currentSelection.selectedtimerangeanddata
-        MarkWriteMainWindow.instance().sigSelectedPenDataUpdate.emit((minT, maxT),
-                                                                     selectedpendata)
-        self.ensureSelectionIsVisible([minT, maxT], selectedpendata)
 
     def scaleBy(self, x=None,y=None):
         for pi in self.dataplots.values():

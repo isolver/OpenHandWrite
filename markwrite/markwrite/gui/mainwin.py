@@ -19,6 +19,7 @@ import numpy as np
 import pyqtgraph as pg
 
 from markwrite.gui import ProjectSettingsDialog, SETTINGS,  X_FIELD, Y_FIELD
+from markwrite import __version__ as markwrite_version
 
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.dockarea import DockArea, Dock
@@ -43,11 +44,11 @@ DEFAULT_DOCK_PLACEMENT = {
 shortcutkey2action=dict()
 
 ABOUT_DIALOG_TEXT = """
-<b> MarkWrite v0.2.1</b> <br>
+<b> MarkWrite v%s</b> <br>
 This software is GLP v3 licensed.<br>
 <br>
 See licence.txt for license details.
-"""
+"""%(markwrite_version)
 
 ABOUT_DIALOG_TITLE = "About MarkWrite"
 
@@ -90,8 +91,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     SAMPLE_XY_FIELDS = ['x_filtered', 'y_filtered']
     sigProjectChanged = QtCore.Signal(object)  # new_project
     sigResetProjectData = QtCore.Signal(object)  # project
-    sigSelectedPenDataUpdate = QtCore.Signal(object,
-                                             object)  # (smin,smax), segmentdata
+    #sigSelectedPenDataUpdate = QtCore.Signal(object,
+    #                                         object)  # (smin,smax), segmentdata
     sigSegmentCreated = QtCore.Signal(object)  # new segment
     sigSegmentRemoved = QtCore.Signal(object,
                                       object)  # segment being removed,
@@ -117,8 +118,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         # init GUI related stuff
         self.setupGUI(qtapp)
 
+        self.sigRegionChangedProxy = None
+
         self.sigProjectChanged.connect(self.handleProjectChange)
-        self.sigSelectedPenDataUpdate.connect(self.handleSelectedPenDataUpdate)
+        #self.sigSelectedPenDataUpdate.connect(self.handleSelectedPenDataUpdate)
         self.sigAppSettingsUpdated.connect(self._penDataTimeLineWidget.handleUpdatedSettingsEvent)
         self.sigAppSettingsUpdated.connect(self._penDataSpatialViewWidget.handleUpdatedSettingsEvent)
         self.sigAppSettingsUpdated.connect(self._selectedPenDataViewWidget.handleUpdatedSettingsEvent)
@@ -356,55 +359,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.backwardSelectionAction.triggered.connect(self.jumpTimeSelectionBackward)
         shortcutkey2action['kbshortcut_selected_timeperiod_backward'] = self.backwardSelectionAction
         shortcutkey2action['kbshortcut_selected_timeperiod_backward'].base_tip_txt=atext
-
-#        atext = 'Increase Timeline Selection End Time'
-#        aicon = 'increase_select_endtime&32.png'
-#        self.increaseSelectionEndPointAction = ContextualStateAction(
-#            QtGui.QIcon(getIconFilePath(aicon)),
-#            'Increase Selection End',
-#            self)
-#        self.increaseSelectionEndPointAction.setShortcut(SETTINGS['kbshortcut_increase_selected_end_time'])
-#        self.increaseSelectionEndPointAction.setEnabled(False)
-#        self.increaseSelectionEndPointAction.setStatusTip(atext)
-#        self.increaseSelectionEndPointAction.triggered.connect(self.increaseSelectionEndPointTime)
-#        shortcutkey2action['kbshortcut_increase_selected_end_time'] = self.increaseSelectionEndPointAction
-
-#        atext = 'Decrease Timeline Selection End Time'
-#        aicon = 'descrease_select_endtime&32.png'
-#        self.decreaseSelectionEndPointAction = ContextualStateAction(
-#            QtGui.QIcon(getIconFilePath(aicon)),
-#            'Decrease Selection End',
-#            self)
-#        self.decreaseSelectionEndPointAction.setShortcut(SETTINGS['kbshortcut_decrease_selected_end_time'])
-#        self.decreaseSelectionEndPointAction.setEnabled(False)
-#        self.decreaseSelectionEndPointAction.setStatusTip(atext)
-#        self.decreaseSelectionEndPointAction.triggered.connect(self.decreaseSelectionEndPointTime)
-#        shortcutkey2action['kbshortcut_decrease_selected_end_time'] = self.decreaseSelectionEndPointAction
-
-        #======================================
-#        atext = 'Increase Timeline Selection Start Time'
-#        aicon = 'increase_select_starttime&32.png'
-#        self.increaseSelectionStartPointAction = ContextualStateAction(
-#            QtGui.QIcon(getIconFilePath(aicon)),
-#            'Increase Selection Start',
-#            self)
-#        self.increaseSelectionStartPointAction.setShortcut(SETTINGS['kbshortcut_increase_selected_start_time'])
-#        self.increaseSelectionStartPointAction.setEnabled(False)
-#        self.increaseSelectionStartPointAction.setStatusTip(atext)
-#        self.increaseSelectionStartPointAction.triggered.connect(self.increaseSelectionStartPointTime)
-#        shortcutkey2action['kbshortcut_increase_selected_start_time'] = self.increaseSelectionStartPointAction
-
-#        atext = 'Decrease Timeline Selection Start Time'
-#        aicon = 'decrease_select_starttime&32.png'
-#        self.decreaseSelectionStartPointAction = ContextualStateAction(
-#            QtGui.QIcon(getIconFilePath(aicon)),
-#            'Decrease Selection Start',
-#            self)
-#        self.decreaseSelectionStartPointAction.setShortcut(SETTINGS['kbshortcut_decrease_selected_start_time'])
-#        self.decreaseSelectionStartPointAction.setEnabled(False)
-#        self.decreaseSelectionStartPointAction.setStatusTip(atext)
-#        self.decreaseSelectionStartPointAction.triggered.connect(self.decreaseSelectionStartPointTime)
-#        shortcutkey2action['kbshortcut_decrease_selected_start_time'] = self.decreaseSelectionStartPointAction
 
         #
         # Next/Prev Sample Series Actions
@@ -656,20 +610,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.exportSampleReportAction.enableActionsList.append(self.zoomInTimelineAction)
         self.exportSampleReportAction.enableActionsList.append(self.zoomOutTimelineAction)
         self.exportSampleReportAction.enableActionsList.append(self.gotoSelectedTimePeriodAction)
-#        self.exportSampleReportAction.enableActionsList.append(self.decreaseSelectionEndPointAction)
-#        self.exportSampleReportAction.enableActionsList.append(self.increaseSelectionEndPointAction)
-#        self.exportSampleReportAction.enableActionsList.append(self.decreaseSelectionStartPointAction)
-#        self.exportSampleReportAction.enableActionsList.append(self.increaseSelectionStartPointAction)
+
         self.exportSampleReportAction.enableActionsList.append(self.forwardSelectionAction)
         self.exportSampleReportAction.enableActionsList.append(self.backwardSelectionAction)
-
-#        self.exportSampleReportAction.enableActionsList.append(self.selectNextSampleSeriesAction)
-#        self.exportSampleReportAction.enableActionsList.append(self.selectPrevSampleSeriesAction)
-#        self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionEndToNextSeriesEndAction)
-#        self.exportSampleReportAction.enableActionsList.append(self.returnSelectionEndToPrevSeriesEndAction)
-#        self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionStartToNextSeriesStartAction)
-#        self.exportSampleReportAction.enableActionsList.append(self.returnSelectionStartToPrevSeriesStartAction)
-
 
         self.exportSampleReportAction.enableActionsList.append(self.selectNextPressedRunAction)
         self.exportSampleReportAction.enableActionsList.append(self.selectPrevPressedRunAction)
@@ -677,7 +620,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.exportSampleReportAction.enableActionsList.append(self.returnSelectionEndToPrevRunEndAction)
         self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionStartToNextRunStartAction)
         self.exportSampleReportAction.enableActionsList.append(self.returnSelectionStartToPrevRunStartAction)
-
 
         self.exportSampleReportAction.enableActionsList.append(self.selectNextStrokeAction)
         self.exportSampleReportAction.enableActionsList.append(self.selectPrevStrokeAction)
@@ -758,12 +700,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.toolbarselecttimeperiod.addAction(self.zoomInTimelineAction)
         self.toolbarselecttimeperiod.addAction(self.zoomOutTimelineAction)
         self.toolbarselecttimeperiod.addAction(self.gotoSelectedTimePeriodAction)
-#        self.toolbarselecttimeperiod.addAction(self.decreaseSelectionStartPointAction)
-#        self.toolbarselecttimeperiod.addAction(self.increaseSelectionStartPointAction)
         self.toolbarselecttimeperiod.addAction(self.backwardSelectionAction)
         self.toolbarselecttimeperiod.addAction(self.forwardSelectionAction)
-#        self.toolbarselecttimeperiod.addAction(self.decreaseSelectionEndPointAction)
-#        self.toolbarselecttimeperiod.addAction(self.increaseSelectionEndPointAction)
 
         self.toolbarseriesselect = self.addToolBar('Sample Series Selection')
         self.toolbarseriesselect.addAction(self.returnSelectionStartToPrevSeriesStartAction)
@@ -996,7 +934,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 if len(name) > 0 and ok:
                     psid = self.project.getSelectedDataSegmentIDs()[0]
                     new_segment = self.project.createSegmentFromSelectedPenData(name, psid)
-                    self.handleSelectedPenDataUpdate(None,None)
+                    #self.handleSelectedPenDataUpdate(None,None)
                     self.sigSegmentCreated.emit(new_segment)
                     self.setActiveObject(new_segment)
                     self.saveProjectAction.setEnabled(True)
@@ -1050,7 +988,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             allpendata['time'] <= segment.endtime)
             allpendata['segment_id'][segment_filter] = segment.parent.id
             self.setActiveObject(self.project.selectedtimeregion)
-            self.handleSelectedPenDataUpdate(None,None)
+            #self.handleSelectedPenDataUpdate(None,None)
             self.sigSegmentRemoved.emit(segment, seg_ix)
             self.project.modified = True
             self.saveProjectAction.setEnabled(True)
@@ -1063,6 +1001,12 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         if self._current_project:
             pass
         self._current_project = project
+
+        if self.project and self.sigRegionChangedProxy is None:
+            self.sigRegionChangedProxy = pg.SignalProxy(
+                self.project.selectedtimeregion.sigRegionChanged, rateLimit=30,
+                slot=self.handleSelectedPenDataUpdate)
+
         self.setActiveObject(self.project.selectedtimeregion)
         self.updateAppTitle()
         self.saveProjectAction.setEnabled(project.modified)
@@ -1166,10 +1110,20 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 if nxmin <= vmin:
                     self._penDataTimeLineWidget.translateViewBy(x=(nxmin-vmin)*1.25)
 
-    def handleSelectedPenDataUpdate(self, timeperiod, pendata):
+    def handleSelectedPenDataUpdate(self):
         #print '>> App.handleSelectedPenDataUpdate:',timeperiod
-        self.createSegmentAction.setEnabled(
-            self.project and self.project.isSelectedDataValidForNewSegment())
+        if self.project is None:
+            return
+
+        self.project.selectedtimeregion.setZValue(10)
+        minT, maxT , selectedpendata= self.project.selectedtimeregion.selectedtimerangeanddata
+        timeperiod = minT, maxT
+        self._penDataTimeLineWidget.ensureSelectionIsVisible(timeperiod, selectedpendata)
+        self._penDataSpatialViewWidget.handlePenDataSelectionChanged(timeperiod, selectedpendata)
+        self._selectedPenDataViewWidget.handlePenDataSelectionChanged(timeperiod, selectedpendata)
+
+        self.createSegmentAction.setEnabled(self.project and self.project.isSelectedDataValidForNewSegment())
+
         #print '<< App.handleSelectedPenDataUpdate'
 
     def handleDisplayAppSettingsDialogEvent(self):
