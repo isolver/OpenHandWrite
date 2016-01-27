@@ -27,7 +27,7 @@ from pyqtgraph import OrderedDict
 
 from file_io import EyePenDataImporter, XmlDataImporter, HubDatastoreImporter, readPickle, writePickle,SAMPLE_STATES
 from segment import PenDataSegment, PenDataSegmentCategory
-from util import contiguous_regions
+from util import contiguous_regions, getFilteredStringList
 from gui.projectsettings import SETTINGS
 from .sigproc import filter_pen_sample_series, calculate_velocity, detect_peaks
 
@@ -290,7 +290,7 @@ class MarkWriteProject(object):
     def fromDict(cls, d):
         print cls, ".fromDict not yet implemented."
 
-    def detectAssociatedSegmentTagsFile(self,dir_path,fname,fext):
+    def _detectAssociatedSegmentTagsFile(self,dir_path,fname,fext):
         tag_list=[]
         same_named_files = glob.glob(os.path.join(dir_path,fname+u'.*'))
         if len(same_named_files)<2:
@@ -323,151 +323,169 @@ class MarkWriteProject(object):
             import datetime
             self.pendatafileinfo['utcdateloaded'] = datetime.datetime.utcnow()
 
+    def _detectTrialPeriodConditionVariables(self, fimporter):
+        # If file opened was an iohub hdf5 file, and had a
+        # cond var table, get the cond var table as a ndarray.
+        try:
+            self._expcondvars = fimporter.exp_condvars
+        except:
+            self._expcondvars = None
+
+        # If cond var table exists, give user option of selecting
+        # a start and end time variable column to be used to
+        # split data into trial segments and remove any between trial
+        # data.
+        self.autosegl1 = SETTINGS['auto_generate_l1segments']
+        if self.autosegl1 and self._expcondvars is not None and (self._stimevar is None and self._etimevar is None):
+            trial_start_var_select_filter = SETTINGS['hdf5_trial_start_var_select_filter'].strip()
+            trial_end_var_select_filter = SETTINGS['hdf5_trial_end_var_select_filter'].strip()
+
+            tvarlists=OrderedDict()
+            tvarlists["Start Time Variable"]=list(self._expcondvars.dtype.names)
+            if trial_start_var_select_filter:
+                tvarlists["Start Time Variable"] = getFilteredStringList(tvarlists["Start Time Variable"], trial_start_var_select_filter)
+            tvarlists["End Time Variable"]=list(self._expcondvars.dtype.names)
+            if trial_end_var_select_filter:
+                 tvarlists["End Time Variable"] = getFilteredStringList(tvarlists["End Time Variable"], trial_end_var_select_filter)
+
+            from gui.dialogs import DlgFromDict
+            dictDlg = DlgFromDict(dictionary=tvarlists, title='Select Trial Time Conditions')
+            if dictDlg.OK:
+                self._stimevar = tvarlists["Start Time Variable"]
+                self._etimevar = tvarlists["End Time Variable"]
+
+    def _parsePenDataByTrials(self, pen_data):
+        trials=[]   #list of tuples; each being (cvrow_index, start_sample_ix, start_sample_time, end_sample_ix, end_sample_time)
+        if self._expcondvars is not None and self._stimevar is not None and self._etimevar is not None:
+            # go through each trial, select only the samples within
+            # the trial period, add the trials sample array to list of trial
+            # sample data.
+            samples_by_trial = []
+            trialsamplecount = 0
+            lastrialendix = -1
+
+            CVROW_IX = 0
+            TS_IX_IX = 1
+            TS_TIME_IX = 2
+            TE_IX_IX = 3
+            TE_TIME_IX = 4
+
+            for tix, t in enumerate(self._expcondvars):
+                tbounds=[tix, 0, 0.0, 0, 0.0]
+                try:
+                    trialstart = float(t[self._stimevar])
+                    trialend = float(t[self._etimevar])
+
+                    if trialend - trialstart <= 0:
+                        raise ValueError("Trial end time must be greater than trial start time: [{}, {}]".format(trialstart,trialend))
+
+                    trial_time_mask = (pen_data['time'] >= trialstart) & (pen_data['time'] < trialend)
+                    start_ix, end_ix, trial_length = contiguous_regions(trial_time_mask)
+                    start_ix, end_ix = start_ix[0], end_ix[0]
+
+                    # check for trial overlap
+                    if not (end_ix > start_ix and start_ix >= lastrialendix):
+                            raise ValueError("Trial sample range overlaps with existing trial: current=[{}, {}], last_trial_end_ix= {}".format(start_ix, end_ix, lastrialendix))
+
+                    lastrialendix = end_ix
+
+                    trial_samples = pen_data[trial_time_mask]
+
+                    if len(trial_samples)>0:
+                        tbounds[TS_IX_IX] = trialsamplecount
+                        trialsamplecount += len(trial_samples)
+                        tbounds[TE_IX_IX] = trialsamplecount-1
+                        samples_by_trial.append(trial_samples)
+
+                    # Normalize pen sample times so first sample starts at 0.0 sec.
+                    if tix == 0:
+                        self.timebase_offset = trialstart
+                        tbounds[TS_TIME_IX] = 0.0
+                    else:
+                        tbounds[TS_TIME_IX] = trialstart-self.timebase_offset
+                    tbounds[TE_TIME_IX] = trialend-self.timebase_offset
+
+                except:
+                    print("Error getting trial time period: [{}, {}] = [{}, {}]".format(self._stimevar, self._etimevar, t[self._stimevar], t[self._etimevar]))
+                    import traceback
+                    traceback.print_exc()
+                finally:
+                    trials.append(tuple(tbounds))
+
+            # make pendata == concat'ed samples_by_trial
+            pen_data = np.concatenate(samples_by_trial)
+
+        else:
+            # Normalize pen sample times so first sample starts at 0.0 sec.
+            self.timebase_offset = pen_data['time'][0]
+            #trials.append((-1, 0, 0.0, len(pendata)-1, pendata['time'][-1]-self.timebase_offset))
+            self.autosegl1 = False
+
+        # Normalize pen sample times so first sample starts at 0.0 sec.
+        pen_data['time']-=self.timebase_offset
+
+        trial_dtype = np.dtype({'names':['cvrow_ix','start_ix','start_time','end_ix','end_time'], 'formats':[np.int32,np.uint32,np.float64,np.uint32,np.float64]})
+        self.trial_boundaries=np.asarray(trials,dtype=trial_dtype)
+        return pen_data
+
+    def _parsePenSampleSeries(self):
+        """
+        Find pen sample Series boundaries, using status
+        field state FIRST_ENTER.
+        If none exist, create a single Series that covers whole file.
+        :return: ndarray with element dtype of ['id','start_ix','start_time','end_ix','end_time']
+        """
+        slist=[]
+        festatus = SAMPLE_STATES['FIRST_ENTER']
+        series_starts_ix =  list(*(self.pendata['state'] & festatus == festatus).nonzero())
+
+        if len(series_starts_ix) == 0 or series_starts_ix[0]!=0:
+            series_starts_ix.insert(0,0)
+        series_stops_ix=series_starts_ix[1:]
+        series_stops_ix.append(len(self.pendata))
+        #print 'series_starts_ix:',series_starts_ix
+        #print "sample count:",len(self.pendata)
+        for i in range(len(series_starts_ix)):
+            si, ei = series_starts_ix[i], series_stops_ix[i]
+            ei=ei-1
+            st, et = self.pendata['time'][[si, ei]]
+            slist.append((i,si,st,ei,et))
+            #print 'series:',(i,si,st,ei,et)
+
+        series_dtype = np.dtype({'names':['id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint32,np.float64,np.uint32,np.float64]})
+        return np.asarray(slist,dtype=series_dtype)
+
     def createNewProject(self, file_path, fimporter):#, condvars=None, stime_var=None, etime_var=None):
             PenDataSegmentCategory.clearSegmentCache()
 
             self.updateProjectFileInfo(file_path, saved=False)
             self.updatePenDataFileInfo(file_path)
 
-            self.autodetected_segment_tags=self.detectAssociatedSegmentTagsFile(self.projectfileinfo['folder'],self.projectfileinfo['shortname'], self.projectfileinfo['extension'])
+            self.autodetected_segment_tags=self._detectAssociatedSegmentTagsFile(self.projectfileinfo['folder'],self.projectfileinfo['shortname'], self.projectfileinfo['extension'])
+
             pen_data = fimporter.asarray(file_path)
-
             updateDataFileLoadingProgressDialog(self._mwapp)
 
-            # If file opened was an iohub hdf5 file, and had a
-            # cond var table, get the cond var table as a ndarray.
             try:
-                self._expcondvars = fimporter.exp_condvars
-            except:
-                self._expcondvars = None
+                self._detectTrialPeriodConditionVariables(fimporter)
+                updateDataFileLoadingProgressDialog(self._mwapp)
+            except Exception, e:
+                import traceback
+                traceback.print_exc()
+                raise e
 
-            # If cond var table exists, give user option of selecting
-            # a start and end time variable column to be used to
-            # split data into trial segments and remove any between trial
-            # data.
-            self.autosegl1 = SETTINGS['auto_generate_l1segments']
-            if self.autosegl1 and self._expcondvars is not None and (self._stimevar is None and self._etimevar is None):
-                trial_start_var_select_filter = SETTINGS['hdf5_trial_start_var_select_filter'].strip()
-                trial_end_var_select_filter = SETTINGS['hdf5_trial_end_var_select_filter'].strip()
-
-                from gui.dialogs import DlgFromDict
-                tvarlists=OrderedDict()
-
-                def getFilteredVarList(vlist,fstr):
-                    filter_tokens = fstr.split('*')
-                    if len(filter_tokens) == 2:
-                        vlist = [v for v in vlist if v.startswith(filter_tokens[0]) and v.endswith(filter_tokens[1])]
-                    elif len(filter_tokens) == 1:
-                        if fstr[0] == '*':
-                            vlist = [v for v in vlist if v.endswith(filter_tokens[1])]
-                        elif fstr[-1] == '*':
-                            vlist = [v for v in vlist if v.startswith(filter_tokens[0])]
-                        else:
-                            print "WARNING: UNHANDLED FILTER TOKENS:",filter_tokens
-                    elif len(filter_tokens) > 2:
-                        print "ERROR: FILTER CAN HAVE MAX 2 TOKENS:",filter_tokens
-                    return vlist
-
-                tvarlists["Start Time Variable"]=list(self._expcondvars.dtype.names)
-                if trial_start_var_select_filter:
-                    tvarlists["Start Time Variable"] = getFilteredVarList(tvarlists["Start Time Variable"], trial_start_var_select_filter)
-
-                tvarlists["End Time Variable"]=list(self._expcondvars.dtype.names)
-                if trial_end_var_select_filter:
-                     tvarlists["End Time Variable"] = getFilteredVarList(tvarlists["End Time Variable"], trial_end_var_select_filter)
-
-                dictDlg = DlgFromDict(dictionary=tvarlists, title='Select Trial Time Conditions')
-                if dictDlg.OK:
-                    self._stimevar = tvarlists["Start Time Variable"]
-                    self._etimevar = tvarlists["End Time Variable"]
-
-            updateDataFileLoadingProgressDialog(self._mwapp)
-
-
-
-            trials=[]   #list of tuples; each being (cvrow_index, start_sample_ix, start_sample_time, end_sample_ix, end_sample_time)
-            if self._expcondvars is not None and self._stimevar is not None and self._etimevar is not None:
-                # go through each trial, select only the samples within
-                # the trial period, add the trials sample array to list of trial
-                # sample data.
-                samples_by_trial = []
-                trialsamplecount = 0
-                lastrialendix = -1
-
-                CVROW_IX = 0
-                TS_IX_IX = 1
-                TS_TIME_IX = 2
-                TE_IX_IX = 3
-                TE_TIME_IX = 4
-
-                for tix, t in enumerate(self._expcondvars):
-                    tbounds=[tix, 0, 0.0, 0, 0.0]
-                    try:
-                        trialstart = float(t[self._stimevar])
-                        trialend = float(t[self._etimevar])
-
-                        if trialend - trialstart <= 0:
-                            raise ValueError("Trial end time must be greater than trial start time: [{}, {}]".format(trialstart,trialend))
-
-                        trial_time_mask = (pen_data['time'] >= trialstart) & (pen_data['time'] < trialend)
-                        start_ix, end_ix, trial_length = contiguous_regions(trial_time_mask)
-                        start_ix, end_ix = start_ix[0], end_ix[0]
-
-                        # check for trial overlap
-                        if not (end_ix > start_ix and start_ix >= lastrialendix):
-                                raise ValueError("Trial sample range overlaps with existing trial: current=[{}, {}], last_trial_end_ix= {}".format(start_ix, end_ix, lastrialendix))
-
-                        lastrialendix = end_ix
-
-                        trial_samples = pen_data[trial_time_mask]
-
-                        if len(trial_samples)>0:
-                            tbounds[TS_IX_IX] = trialsamplecount
-                            trialsamplecount += len(trial_samples)
-                            tbounds[TE_IX_IX] = trialsamplecount-1
-                            samples_by_trial.append(trial_samples)
-
-                        # Normalize pen sample times so first sample starts at 0.0 sec.
-                        if tix == 0:
-                            self.timebase_offset = trialstart
-                            tbounds[TS_TIME_IX] = 0.0
-                        else:
-                            tbounds[TS_TIME_IX] = trialstart-self.timebase_offset
-                        tbounds[TE_TIME_IX] = trialend-self.timebase_offset
-
-                    except:
-                        print("Error getting trial time period: [{}, {}] = [{}, {}]".format(self._stimevar, self._etimevar, t[self._stimevar], t[self._etimevar]))
-                        import traceback
-                        traceback.print_exc()
-                    finally:
-                        trials.append(tuple(tbounds))
-
-                # make pen_data == concat'ed samples_by_trial
-                pen_data = np.concatenate(samples_by_trial)
-
-            else:
-                # Normalize pen sample times so first sample starts at 0.0 sec.
-                self.timebase_offset = pen_data['time'][0]
-                #trials.append((-1, 0, 0.0, len(pen_data)-1, pen_data['time'][-1]-self.timebase_offset))
-                self.autosegl1 = False
-
-            # Normalize pen sample times so first sample starts at 0.0 sec.
-            pen_data['time']-=self.timebase_offset
-
-            trial_dtype = np.dtype({'names':['cvrow_ix','start_ix','start_time','end_ix','end_time'], 'formats':[np.int32,np.uint32,np.float64,np.uint32,np.float64]})
-            self.trial_boundaries=np.asarray(trials,dtype=trial_dtype)
-
+            self.pendata = self._parsePenDataByTrials(pen_data)
             updateDataFileLoadingProgressDialog(self._mwapp,10)
 
-            self.pendata = pen_data
 
             self.nonzero_pressure_mask=self.pendata['pressure']>0
             # nonzero_regions_ix will be a tuple of (starts, stops, lengths) arrays
             self.nonzero_region_ix=contiguous_regions(self.nonzero_pressure_mask)
+            updateDataFileLoadingProgressDialog(self._mwapp)
+
             self.segmenttree=PenDataSegmentCategory(name=self.name,project=self)
             self.pendata['segment_id']=self.segmenttree.id
-
-            updateDataFileLoadingProgressDialog(self._mwapp,5)
+            updateDataFileLoadingProgressDialog(self._mwapp)
 
             # inter sample intervals, used for sampling rate calc and
             # series boundary detection
@@ -479,90 +497,68 @@ class MarkWriteProject(object):
             #if SETTINGS['series_detect_max_isi_msec'] > 0:
             #    self.max_series_isi = SETTINGS['series_detect_max_isi_msec']/1000.0
 
-            # Find pen sample Series boundaries, using status
-            # field state FIRST_ENTER. If none exist, create a single Series
-            # that covers whole file.
-            slist=[]
-            festatus = SAMPLE_STATES['FIRST_ENTER']
-            series_starts_ix =  list(*(self.pendata['state'] & festatus == festatus).nonzero())
+            self.series_boundaries = self._parsePenSampleSeries()
+            updateDataFileLoadingProgressDialog(self._mwapp)
 
-            if len(series_starts_ix) == 0 or series_starts_ix[0]!=0:
-                series_starts_ix.insert(0,0)
-            series_stops_ix=series_starts_ix[1:]
-            series_stops_ix.append(len(self.pendata))
-            #print 'series_starts_ix:',series_starts_ix
-            #print "sample count:",len(self.pendata)
-            for i in range(len(series_starts_ix)):
-                si, ei = series_starts_ix[i], series_stops_ix[i]
-                ei=ei-1
-                st, et = pen_data['time'][[si, ei]]
-                slist.append((i,si,st,ei,et))
-                #print 'series:',(i,si,st,ei,et)
-
-            series_dtype = np.dtype({'names':['id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint32,np.float64,np.uint32,np.float64]})
-            self.series_boundaries = np.asarray(slist,dtype=series_dtype)
-
+            # 1) Filter each sample Series
+            # 2) Calculate pen sample velocity and acceleration data.
+            # 3) Detect Sample Runs within each Series.
+            # 4) Detect pen stroke boundaries within
+            #      a) full sample Series
+            #      b) each sample Run within the Series
             self.run_boundaries=[]
             self._velocity_minima_ixs=[]
             self.velocity_minima_samples = None
             self.stroke_boundaries = []
             press_run_count=0
-
-            updateDataFileLoadingProgressDialog(self._mwapp,5)
-
-            # filter data
             for series_bounds in self.series_boundaries:
                 # get sample array for current series
                 pseries = self.pendata[
                         series_bounds['start_ix']:series_bounds['end_ix']+1]
                 psb_start_ix = series_bounds['start_ix']
 
-                # Filter and calc velocity for all samples in the series,
-                # regardless of pressure state.
+                # 1) Filter each sample Series
                 filter_pen_sample_series(pseries)
+                # 2) Calculate pen sample velocity and acceleration data.
                 calculate_velocity(pseries)
 
-                # For current series, get boundaries for
-                # pen pressed periods (pressure > 0)
+                if SETTINGS['stroke_detect_pressed_runs_only'] is False:
+                    # 4a) Detect pen stroke boundaries within current Series
+                    self.findstrokes(pseries, psb_start_ix, series_bounds['id'])
 
+                updateDataFileLoadingProgressDialog(self._mwapp)
+
+                # 3) Detect Sample Runs within the Series.
+                #    First attempt to use FIRST_PRESS pen sample state.
                 fpstatus = SAMPLE_STATES['FIRST_PRESS']
                 press_starts = list(*(pseries['state'] & fpstatus == fpstatus).nonzero())
-
                 if len(press_starts) != 0:
                     if pseries['pressure'][0] > 0 and press_starts[0] != 0:
                         press_starts.insert(0,0)
                     press_stops=press_starts[1:]
                     press_stops.append(len(pseries))
-
-
-                    #print '-------\npress_starts:',press_starts
-                    #print '-------\npress_stops:',press_stops
-                    #print "sample count:",len(pseries)
+                    # Add pressed period boundaries array for current series to
+                    # the list of series pen pressed boundaries.
                     for i in range(len(press_starts)):
                         si = press_starts[i]
                         pressed_run_ixs = (pseries[si:press_stops[i]]['pressure']>0).nonzero()[0]
                         if len(pressed_run_ixs):
-                            #print 'pressed_run_ixs:',len(run_start_to_series_end),pressed_run_ixs
                             ei=si+pressed_run_ixs[-1]
                             st, et = pseries['time'][[si, ei]]
                             curr_press_series_id = press_run_count
                             press_run_count+=1
-                            #print 'run:',series_bounds['id'], press_run_count,(si,st,ei,et)
                             self.run_boundaries.append((curr_press_series_id,series_bounds['id'],psb_start_ix+si,st,psb_start_ix+ei,et))
 
                             if len(pressed_run_ixs) > 1 and SETTINGS['stroke_detect_pressed_runs_only'] is True:
-                                # Create/extend list of all velocity minima points found
-                                # for current pressed sample run
+                                # 4b) Detect pen stroke boundaries within each sample Run
                                 self.findstrokes(pseries[si:ei+1], psb_start_ix+si, curr_press_series_id)
-
                         updateDataFileLoadingProgressDialog(self._mwapp)
-
                 else:
+                    # If no FIRST_PRESS pen sample states are found,
+                    # use pen pressed periods (pressure > 0) to find Runs.
                     press_starts, press_stops, press_lenths = contiguous_regions(pseries['pressure'] > 0)
-
                     # Add pressed period boundaries array for current series to
                     # the list of series pen pressed boundaries.
-
                     for i in xrange(len(press_starts)):
                         si, ei = press_starts[i], press_stops[i]
                         try:
@@ -571,37 +567,37 @@ class MarkWriteProject(object):
                             ei = ei-1
                             st, et = pseries['time'][[si, ei]]
                             press_stops[i]=ei
-
                         curr_press_series_id = press_run_count
                         press_run_count+=1
                         self.run_boundaries.append((curr_press_series_id,series_bounds['id'],psb_start_ix+si,st,psb_start_ix+ei,et))
                         if SETTINGS['stroke_detect_pressed_runs_only'] is True:
-                            # Create/extend list of all velocity minima points found
-                            # for current pressed sample run
+                            # 4b) Detect pen stroke boundaries within each sample Run
                             self.findstrokes(pseries[si:ei+1], psb_start_ix+si, curr_press_series_id)
                         updateDataFileLoadingProgressDialog(self._mwapp)
 
-                if SETTINGS['stroke_detect_pressed_runs_only'] is False:
-                    # Create/extend list of all velocity minima points found
-                    # for whole series
-                    self.findstrokes(pseries, psb_start_ix, series_bounds['id'])
-
-                updateDataFileLoadingProgressDialog(self._mwapp)
-
+            # Convert run_boundaries list of lists into an ndarray
             run_dtype = np.dtype({'names':['id','parent_id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint16,np.uint32,np.float64,np.uint32,np.float64]})
             self.run_boundaries = np.asarray(self.run_boundaries, dtype=run_dtype)
+            # Convert stroke_boundaries list of lists into an ndarray
             self.stroke_boundaries = np.asarray(self.stroke_boundaries, dtype=run_dtype)
+
+            # Create ndarray of pen samples that are the detected stroke
+            # boundary points.
             self.velocity_minima_samples = self.pendata[self._velocity_minima_ixs]
 
             if self._mwapp:
+                # If project is being created via MarkWrite GUI, create
+                # SelectedTimePeriodItem widget.
                 if self._selectedtimeregion is None:
                     MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)
                 else:
                     MarkWriteProject._selectedtimeregion.project = self
             else:
+                # Otherwise, project is being created via custom script using
+                # markwrite api, so create segments for any detected
+                # trial periods.
                 for t, tbounds in enumerate(self.trial_boundaries):
                     self.createSegmentForTimePeriod(u"Trial%d"%(t+1), self.segmenttree.id, tbounds['start_time'], tbounds['end_time'], update_segid_field=True)
-
             updateDataFileLoadingProgressDialog(self._mwapp,5)
 
     def findstrokes(self, searchsamplearray, obsolute_offset, parent_id):

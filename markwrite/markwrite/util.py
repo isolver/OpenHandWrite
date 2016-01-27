@@ -81,3 +81,50 @@ def contiguous_regions(condition):
     lengths = stops - starts
 
     return starts, stops, lengths
+
+# Misc.
+
+def getFilteredStringList(slist, filterstr):
+    """
+    Given a list of strings slist, find those that match filterstr.
+
+    filterstr has two special characters which can not be
+    used in condition variable names themselves:
+    a) ',': use to indicate more than one possible filter string
+    b) '*': Each filter string can have <= 1 '*' char, and is
+            used as you would when searching for files in your OS.
+
+    filterstr Examples:
+
+    a) "DV_*_START":
+       Returns any elements of slist that start with 'DV_'
+       and end with '_START'.
+
+    b) "*_TIME":
+       Returns any elements of slist that end with '_TIME'.
+
+    c) "RT_*":
+       Returns any elements of slist that start with 'RT_'.
+
+    d) "*_TIME, RT_*":
+       Returns any elements of slist that end with '_TIME'
+       OR start with 'RT_.
+    """
+    # This could be done using a RE
+    # but I'm somewhat RE 'dumb'. ;)
+    smatches=[]
+    for varname in filterstr.strip().split(','):
+        filter_tokens = varname.strip().split('*')
+
+        if len(filter_tokens) == 2:
+            smatches.extend([v for v in slist if v.startswith(filter_tokens[0]) and v.endswith(filter_tokens[1])])
+        elif len(filter_tokens) == 1:
+            if varname[0] == '*':
+                smatches.extend([v for v in slist if v.endswith(filter_tokens[1])])
+            elif varname[-1] == '*':
+               smatches.extend([v for v in slist if v.startswith(filter_tokens[0])])
+            else:
+                print "WARNING: UNHANDLED FILTER STRING:",varname,filter_tokens
+        elif len(filter_tokens) > 2:
+            print "ERROR: FILTER STRING CAN ONLY CONTAIN A SINGLE '*':",varname
+    return smatches
