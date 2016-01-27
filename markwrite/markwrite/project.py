@@ -176,13 +176,11 @@ class MarkWriteProject(object):
                             'pendata',
                             'nonzero_pressure_mask',
                             'nonzero_region_ix',
-                            #'sampling_interval',
                             'series_boundaries',
                             'run_boundaries',
                             'velocity_minima_samples',
                             'stroke_boundaries',
-                            'segmenttree',
-                            '_selectedtimeregion'
+                            'segmenttree'
                             )
     input_file_loaders=dict(xml=XmlDataImporter,
                             txyp=EyePenDataImporter,
@@ -418,7 +416,6 @@ class MarkWriteProject(object):
         else:
             # Normalize pen sample times so first sample starts at 0.0 sec.
             self.timebase_offset = pen_data['time'][0]
-            #trials.append((-1, 0, 0.0, len(pendata)-1, pendata['time'][-1]-self.timebase_offset))
             self.autosegl1 = False
 
         # Normalize pen sample times so first sample starts at 0.0 sec.
@@ -443,14 +440,12 @@ class MarkWriteProject(object):
             series_starts_ix.insert(0,0)
         series_stops_ix=series_starts_ix[1:]
         series_stops_ix.append(len(self.pendata))
-        #print 'series_starts_ix:',series_starts_ix
-        #print "sample count:",len(self.pendata)
+
         for i in range(len(series_starts_ix)):
             si, ei = series_starts_ix[i], series_stops_ix[i]
             ei=ei-1
             st, et = self.pendata['time'][[si, ei]]
             slist.append((i,si,st,ei,et))
-            #print 'series:',(i,si,st,ei,et)
 
         series_dtype = np.dtype({'names':['id','start_ix','start_time','end_ix','end_time'], 'formats':[np.uint16,np.uint32,np.float64,np.uint32,np.float64]})
         return np.asarray(slist,dtype=series_dtype)
@@ -466,13 +461,8 @@ class MarkWriteProject(object):
             pen_data = fimporter.asarray(file_path)
             updateDataFileLoadingProgressDialog(self._mwapp)
 
-            try:
-                self._detectTrialPeriodConditionVariables(fimporter)
-                updateDataFileLoadingProgressDialog(self._mwapp)
-            except Exception, e:
-                import traceback
-                traceback.print_exc()
-                raise e
+            self._detectTrialPeriodConditionVariables(fimporter)
+            updateDataFileLoadingProgressDialog(self._mwapp)
 
             self.pendata = self._parsePenDataByTrials(pen_data)
             updateDataFileLoadingProgressDialog(self._mwapp,10)
@@ -486,16 +476,6 @@ class MarkWriteProject(object):
             self.segmenttree=PenDataSegmentCategory(name=self.name,project=self)
             self.pendata['segment_id']=self.segmenttree.id
             updateDataFileLoadingProgressDialog(self._mwapp)
-
-            # inter sample intervals, used for sampling rate calc and
-            # series boundary detection
-            #sample_dts = self.pendata['time'][1:]-self.pendata['time'][:-1]
-
-            # Calculate what the sampling interval (1000.0 / hz_rate) for the device was in sec.msec
-            #self.sampling_interval = np.percentile(sample_dts,5.0,interpolation='nearest')
-            #self.max_series_isi = 3.0*self.sampling_interval
-            #if SETTINGS['series_detect_max_isi_msec'] > 0:
-            #    self.max_series_isi = SETTINGS['series_detect_max_isi_msec']/1000.0
 
             self.series_boundaries = self._parsePenSampleSeries()
             updateDataFileLoadingProgressDialog(self._mwapp)
@@ -600,6 +580,7 @@ class MarkWriteProject(object):
                     self.createSegmentForTimePeriod(u"Trial%d"%(t+1), self.segmenttree.id, tbounds['start_time'], tbounds['end_time'], update_segid_field=True)
             updateDataFileLoadingProgressDialog(self._mwapp,5)
 
+
     def findstrokes(self, searchsamplearray, obsolute_offset, parent_id):
         edge_type = SETTINGS['stroke_detect_edge_type']
         if edge_type == 'none':
@@ -607,9 +588,8 @@ class MarkWriteProject(object):
         ppp_minima = detect_peaks(searchsamplearray['xy_velocity'],
                                   mph=None,
                                   mpd=SETTINGS['stroke_detect_min_p2p_sample_count'],
-                                  edge=edge_type,##edge=None,
-                                  valley=True)#, show=True)
-
+                                  edge=edge_type,
+                                  valley=True)
         if len(ppp_minima)>1:
             for s,vmin_ix in enumerate(ppp_minima[:-1]):
                 if s == 0:
@@ -813,11 +793,13 @@ class MarkWriteProject(object):
 
     def createSegmentFromSelectedPenData(self, tag, parent_id):
         """
-        Only called if the currently selected pen data can make a valid segment.
+        **Only usable by MarkWrite GUI app.**
+
+        Called if the currently selected pen data can make a valid segment.
         i.e. getSelectedDataSegmentIDs() returned a list of exactly 1 segment id
 
         Also ensure that self._selectedpendata has been trimmed as required
-         based on enabled state of rules like the 0 pressure trim rule
+        based on enabled state of rules like the 0 pressure trim rule
         :param tag:
         :param parent_id:
         :return:
@@ -909,14 +891,6 @@ class MarkWriteProject(object):
         # Handle segment tree specially
         segmenttree = projdict.get('segmenttree')
         projattrnames.remove('segmenttree')
-
-        selectedtimerange = projdict.get('_selectedtimeregion').get('timerange')
-        projattrnames.remove('_selectedtimeregion')
-
-        #import pprint
-        #print "Project Data Loaded:"
-        #pprint.pprint(projdict)
-        #print"_____________________________"
 
         for aname in projattrnames:
             aval = projdict[aname]
