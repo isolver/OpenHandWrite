@@ -425,6 +425,30 @@ class MarkWriteProject(object):
         self.trial_boundaries=np.asarray(trials,dtype=trial_dtype)
         return pen_data
 
+
+    def _normalizeConditionVariableTimes(self):
+        """
+        Normalizes the time values for user specified condition variables.
+
+        Using the app setting hdf5_apply_time_offset_var_select_filter,
+        select matching condition variables and subtract the projects
+        time offset from the cv values.
+        :return:
+        """
+        if self._expcondvars is None:
+            return
+        cvnfilter = SETTINGS['hdf5_apply_time_offset_var_select_filter'].strip()
+        if cvnfilter:
+            normvarnames = getFilteredStringList(
+                                    list(self._expcondvars.dtype.names),
+                                    cvnfilter)
+            for vn in normvarnames:
+                # self._stimevar and self._etimevar values have already
+                # been normalized, so skip any names that match either of those.
+                if vn != self._stimevar and vn != self._etimevar:
+                    self._expcondvars[vn]-=self.timebase_offset
+
+
     def _parsePenSampleSeries(self):
         """
         Find pen sample Series boundaries, using status
@@ -467,6 +491,7 @@ class MarkWriteProject(object):
             self.pendata = self._parsePenDataByTrials(pen_data)
             updateDataFileLoadingProgressDialog(self._mwapp,10)
 
+            self._normalizeConditionVariableTimes()
 
             self.nonzero_pressure_mask=self.pendata['pressure']>0
             # nonzero_regions_ix will be a tuple of (starts, stops, lengths) arrays
