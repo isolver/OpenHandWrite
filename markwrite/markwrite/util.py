@@ -94,6 +94,15 @@ def getFilteredStringList(slist, filterstr):
     b) '*': Each filter string can have <= 1 '*' char, and is
             used as you would when searching for files in your OS.
 
+    If >1 filter string token exists in filterstr (i.e. it contains >=1 ','),
+    the returned match list only contain unique element values.
+    For example,
+
+         slist = ['DV_TRIAL_START', 'DV_TRIAL_END']
+         filterstr = "*_START,DV_TRIAL_START"
+
+         return value will be ['DV_TRIAL_START'].
+
     filterstr Examples:
 
     a) "DV_*_START":
@@ -108,7 +117,10 @@ def getFilteredStringList(slist, filterstr):
 
     d) "*_TIME, RT_*":
        Returns any elements of slist that end with '_TIME'
-       OR start with 'RT_.
+       OR start with 'RT_. Only unique elements are returned.
+
+    d) "TRIAL_START":
+       Returns TRIAL_START if it is an element of slist.
     """
     # This could be done using a RE but I'm somewhat RE 'dumb'. ;)
     smatches=[]
