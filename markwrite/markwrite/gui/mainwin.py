@@ -808,7 +808,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             fileName = self._current_project.name
             fileName = u'{0} : '.format(fileName)
 
-        app_title = u'MarkWrite'
+        app_title = u'MarkWrite v%s'%(markwrite_version)
         full_title = u'{0}{1}'.format(fileName, app_title)
 
         self.setWindowTitle(full_title)
@@ -1159,8 +1159,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         new_selection_end = self.project.getNextUnitEndTime(unit_lookup_table,selection_end,adjust_end_time)
         if new_selection_end:
             if adjust_end_time and selection_end == new_selection_end:
+                new_selection_end = self.project.getNextUnitStartTime(unit_lookup_table, new_selection_end)
                 new_selection_end = self.project.getNextUnitEndTime(unit_lookup_table,new_selection_end,adjust_end_time)
-            if not self.activetrial or self.activetrial.endtime <= new_selection_end:
+            if not self.activetrial or self.activetrial.endtime >= new_selection_end:
                 if selection_start != new_selection_end:
                     self.project.selectedtimeregion.setRegion((selection_start,new_selection_end))
 
