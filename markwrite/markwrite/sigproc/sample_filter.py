@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import division
+from markwrite import SETTINGS
 
 import scipy
 from scipy.signal import savgol_filter
@@ -35,11 +36,16 @@ def filter_pen_sample_series(series):
     :return:
     """
 
+    if SETTINGS['filter_imported_pen_data'] is False:
+        series['x_filtered'] = series['x']
+        series['y_filtered'] = series['y']
+        series['pressure_filtered'] = series['pressure']
+        return
+
     # Initial filter will use scipy.signal.savgol_filter, commonly used in
     # eye tracking data, as it does not phase shift the data and does
     # a good job of smoothing out noise while maintaining signal.
     # See http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.savgol_filter.html#scipy.signal.savgol_filter
-
     if len(series)> window_length*2:
         series['x_filtered'] = savgol_filter(series['x'], window_length, polyorder)
         series['y_filtered'] = savgol_filter(series['y'], window_length, polyorder)
