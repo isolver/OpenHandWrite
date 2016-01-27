@@ -440,14 +440,13 @@ class MarkWriteProject(object):
         cvnfilter = SETTINGS['hdf5_apply_time_offset_var_select_filter'].strip()
         if cvnfilter:
             normvarnames = getFilteredStringList(
-                                    list(self._expcondvars.dtype.names),
+                                    [unicode(cvn) for cvn in self._expcondvars.dtype.names],
                                     cvnfilter)
             for vn in normvarnames:
                 # self._stimevar and self._etimevar values have already
                 # been normalized, so skip any names that match either of those.
                 if vn != self._stimevar and vn != self._etimevar:
                     self._expcondvars[vn]-=self.timebase_offset
-
 
     def _parsePenSampleSeries(self):
         """

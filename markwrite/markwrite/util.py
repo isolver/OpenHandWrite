@@ -110,19 +110,19 @@ def getFilteredStringList(slist, filterstr):
        Returns any elements of slist that end with '_TIME'
        OR start with 'RT_.
     """
-    # This could be done using a RE
-    # but I'm somewhat RE 'dumb'. ;)
+    # This could be done using a RE but I'm somewhat RE 'dumb'. ;)
     smatches=[]
     for varname in filterstr.strip().split(','):
         filter_tokens = varname.strip().split('*')
-
         if len(filter_tokens) == 2:
-            smatches.extend([v for v in slist if v.startswith(filter_tokens[0]) and v.endswith(filter_tokens[1])])
+            smatches.extend([v for v in slist if v.startswith(filter_tokens[0]) and v.endswith(filter_tokens[1]) and v not in smatches])
         elif len(filter_tokens) == 1:
             if varname[0] == '*':
-                smatches.extend([v for v in slist if v.endswith(filter_tokens[1])])
+                smatches.extend([v for v in slist if v.endswith(filter_tokens[0]) and v not in smatches])
             elif varname[-1] == '*':
-               smatches.extend([v for v in slist if v.startswith(filter_tokens[0])])
+                smatches.extend([v for v in slist if v.startswith(filter_tokens[0]) and v not in smatches])
+            elif varname in slist and varname not in smatches:
+                smatches.append(varname)
             else:
                 print "WARNING: UNHANDLED FILTER STRING:",varname,filter_tokens
         elif len(filter_tokens) > 2:

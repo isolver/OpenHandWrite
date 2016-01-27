@@ -34,4 +34,4 @@ from gui.projectsettings import ProjectSettingsDialog
 _ = ProjectSettingsDialog(savedstate=usersettings)
 from gui.projectsettings import SETTINGS
 writePickle(appdirs.user_config_dir,u'usersettings.pkl', SETTINGS)
-print "Updated usersettings.pkl in:",appdirs.user_config_dir
+#print "Updated usersettings.pkl in:",appdirs.user_config_dir
