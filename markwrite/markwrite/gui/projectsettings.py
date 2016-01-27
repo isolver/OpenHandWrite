@@ -29,7 +29,7 @@ flattenned_settings_dict['auto_generate_l1segments'] = {'name': 'Enable Level 1 
 
 flattenned_settings_dict['hdf5_trial_start_var_select_filter'] = {'name': 'Start Time Options Filter', 'type': 'str', 'value': "DV_*_START"}
 flattenned_settings_dict['hdf5_trial_end_var_select_filter'] = {'name': 'End Time Options Filter', 'type': 'str', 'value':  "DV_*_END"}
-flattenned_settings_dict['hdf5_apply_time_offset_var_select_filter'] = {'name': 'Experiment Time based Condition Variables', 'type': 'str', 'value': "DV_*_START,DV_*_END"}
+flattenned_settings_dict['hdf5_apply_time_offset_var_select_filter'] = {'name': 'Experiment Time Condition Variables Filter', 'type': 'str', 'value': "DV_*_START,DV_*_END"}
 
 flattenned_settings_dict['new_segment_trim_0_pressure_points'] = {'name': 'Trim 0 Pressure Points', 'type': 'bool', 'value': True}
 flattenned_settings_dict['plotviews_background_color'] = {'name': 'Background Color', 'type': 'color', 'value': (32,32,32), 'tip': "Application Plot's background color. Change will not take effect until the application is restarted."}
