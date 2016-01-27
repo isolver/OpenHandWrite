@@ -466,8 +466,6 @@ class PenDataSegment(PenDataSegmentCategory):
             period_count = np.nonzero(np.logical_and(start_ixs<max_ix,start_ixs>=min_ix))[0].shape[0]
         project_properties = OrderedDict()
         project_properties['Name'] = [self.name,]
-        if self.l1seg:
-            project_properties['L1 Segment'] = [self.l1seg.name,]
         project_properties['ID'] = [self.id,]
         project_properties['Start Time'] = ["%.3f"%self.starttime,]
         project_properties['End Time'] = ["%.3f"%self.endtime,]
@@ -477,6 +475,8 @@ class PenDataSegment(PenDataSegmentCategory):
         project_properties['# No Pressure Samples'] = [self.zeropressurependata.shape[0],]
         project_properties['# Runs'] = [period_count,]
         #project_properties['Last Pen-Lift Duration'] = ['TODO',]
+        if self.l1seg and self.l1seg.locked:
+            project_properties['Current Trial'] = [self.l1seg.name,]
         project_properties['Hierarchy Path'] = [u"->".join(self.path[1:]),]
         project_properties['Hierarchy Level'] = [self.level,]
         project_properties['Child Count'] = [len(self.children),]

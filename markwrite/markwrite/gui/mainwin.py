@@ -109,6 +109,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         self._current_project = None
         self._activeobject = None
+        self._activetrial = None
 
         self._predefinedtags = loadPredefinedSegmentTagList(u'default.tag')
 
@@ -144,6 +145,14 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         return self._current_project
 
     @property
+    def activetrial(self):
+        ao = self._activeobject
+        if isinstance(ao,PenDataSegment):
+            if ao.l1seg and ao.l1seg.locked is True:
+                self._activetrial = ao.l1seg
+        return self._activetrial
+
+    @property
     def activeobject(self):
         return self._activeobject
 
@@ -153,12 +162,16 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self._activeobject = timeperioddatatype
         if timeperioddatatype is None:
             self._activeobject = self.project.selectedtimeregion
-        #print "Settings active object:",self._activeobject
+
         if isinstance(self._activeobject,PenDataSegment):
             #print "**Setting region:",self._activeobject
             self._segmenttree.doNotSetActiveObject=True
+            at = self.activetrial
+            if at:
+                self.project.selectedtimeregion.setBounds(bounds=at.timerange)
             self.project.selectedtimeregion.setRegion(self._activeobject.timerange)
             self._segmenttree.doNotSetActiveObject=False
+
             self.removeSegmentAction.setEnabled(not self._activeobject.locked)
         else:
             self.removeSegmentAction.setEnabled(False)
@@ -817,7 +830,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                     with pg.ProgressDialog("Loading Pen Data from: {}".format(fname), minimum=0, wait=100, maximum=100, parent=self, busyCursor=False) as dlg:
                         self._progressdlg=dlg
                         wmproj = MarkWriteProject(file_path=file_path, mwapp=self)
-
+                        self._activetrial=None
                         wmproj.selectedtimeregion.setBounds(bounds=(wmproj.pendata['time'][0], wmproj.pendata['time'][-1]))
 
 
@@ -1001,13 +1014,16 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         if self._current_project:
             pass
         self._current_project = project
+        self._activetrial=None
 
         if self.project and self.sigRegionChangedProxy is None:
             self.sigRegionChangedProxy = pg.SignalProxy(
                 self.project.selectedtimeregion.sigRegionChanged, rateLimit=30,
                 slot=self.handleSelectedPenDataUpdate)
 
+
         self.setActiveObject(self.project.selectedtimeregion)
+
         self.updateAppTitle()
         self.saveProjectAction.setEnabled(project.modified)
 
@@ -1143,9 +1159,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         new_selection_end = self.project.getNextUnitEndTime(unit_lookup_table,selection_end,adjust_end_time)
         if new_selection_end:
             if adjust_end_time and selection_end == new_selection_end:
-                new_selection_end = self.project.getNextUnitStartTime(unit_lookup_table, new_selection_end)
                 new_selection_end = self.project.getNextUnitEndTime(unit_lookup_table,new_selection_end,adjust_end_time)
-            self.project.selectedtimeregion.setRegion((selection_start,new_selection_end))
+            if not self.activetrial or self.activetrial.endtime <= new_selection_end:
+                if selection_start != new_selection_end:
+                    self.project.selectedtimeregion.setRegion((selection_start,new_selection_end))
 
     def returnSelectionEndToPrevUnitEnd(self, unit_lookup_table, adjust_end_time=False):
         selection_start, selection_end = self.project.selectedtimeregion.getRegion()
@@ -1163,7 +1180,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         selection_start, selection_end = self.project.selectedtimeregion.getRegion()
         new_selection_start = self.project.getPrevUnitStartTime(unit_lookup_table, selection_start)
         if new_selection_start:
-            self.project.selectedtimeregion.setRegion((new_selection_start, selection_end))
+            if not self.activetrial or self.activetrial.starttime <= new_selection_start:
+                if new_selection_start != selection_end:
+                    self.project.selectedtimeregion.setRegion((new_selection_start, selection_end))
     # <<<<<<
 
     # >>>>>>

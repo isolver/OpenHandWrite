@@ -74,9 +74,15 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
 #            print 'lineMoveFinished:',self.getRegion()
             self.project._mwapp.setActiveObject(self)
 
+    def getBounds(self):
+        return self.lines[0].maxRange
+
     @property
     def project(self):
         return self._project
+
+    #def setBounds(self, bounds):
+    #    super.setBounds(self, bounds)
 
     @project.setter
     def project(self, p):
@@ -128,6 +134,15 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
         props['Start Time'][0] = '%.3f'%stime
         props['End Time'][0] = '%.3f'%etime
         props['Point Count'][0] = self.selectedpendata.shape[0]
+        mwapp = self._project._mwapp
+        trialname=None
+        if mwapp:
+            if mwapp.activetrial:
+                trialname = mwapp.activetrial.name
+        if trialname:
+            props.setdefault('Current Trial',[''])[0] = '%s'%(trialname)
+        elif props.has_key('Current Trial'):
+            del props['Current Trial']
 
         return props
 
@@ -705,22 +720,32 @@ class MarkWriteProject(object):
     def getNextUnitTimeRange(self, unit_lookup_table, adjust_end_time=False):
         if self.selectedtimeregion:
             selection_start, selection_end = self.selectedtimeregion.getRegion()
+            mint, maxt = self.selectedtimeregion.getBounds()
             next_units = unit_lookup_table[unit_lookup_table['start_time'] > selection_start]
             try:
                 if adjust_end_time is True:
-                    return next_units[0]['start_time'], self.pendata['time'][next_units[0]['end_ix']-1]
-                return next_units[0]['start_time'], next_units[0]['end_time']
+                    st, et = max(next_units[0]['start_time'],mint), min(self.pendata['time'][next_units[0]['end_ix']-1], maxt)
+                else:
+                    st, et = max(next_units[0]['start_time'], mint), min(next_units[0]['end_time'], maxt)
+                if st >= et:
+                    return None
+                return st, et
             except:
                 return None
 
     def getPreviousUnitTimeRange(self, unit_lookup_table, adjust_end_time=False):
         if self.selectedtimeregion:
             selection_start, selection_end = self.selectedtimeregion.getRegion()
+            mint, maxt = self.selectedtimeregion.getBounds()
             prev_units = unit_lookup_table[unit_lookup_table['start_time'] < selection_start]
             try:
                 if adjust_end_time is True:
-                    return prev_units[-1]['start_time'], self.pendata['time'][prev_units[-1]['end_ix']-1]
-                return prev_units[-1]['start_time'], prev_units[-1]['end_time']
+                    st, et = max(prev_units[-1]['start_time'], mint), min(self.pendata['time'][prev_units[-1]['end_ix']-1], maxt)
+                else:
+                    st, et = max(prev_units[-1]['start_time'], mint), min(prev_units[-1]['end_time'], maxt)
+                if st >= et:
+                    return None
+                return st, et
             except:
                 return None
 

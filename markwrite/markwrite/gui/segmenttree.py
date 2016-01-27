@@ -188,17 +188,16 @@ class SegmentInfoDockArea(DockArea):
     def rightClickTreeEvent(self, *args, **kwargs):
         # Show Segment name editing dialog
         segment = MarkWriteMainWindow.instance().activeobject
-        ##print "rightClickTreeEvent:",segment
+        #print "rightClickTreeEvent:",segment
         if segment:
             if isinstance(segment, PenDataSegmentCategory):
-                tag, ok = showSegmentNameDialog(
-                    MarkWriteMainWindow.instance().predefinedtags, default=segment.name)
-                if len(tag) > 0 and ok:
-                    segment.name = tag
-                    self.project_tree.selectedItems()[0].setText(0,
-                                                                 segment.name)
-            else:
-                print "TODO: SUPPORT RENAMING OF SEGMENT CATEGORY NODE."
+                if segment.locked is False:
+                    tag, ok = showSegmentNameDialog(
+                        MarkWriteMainWindow.instance().predefinedtags, default=segment.name)
+                    if len(tag) > 0 and ok:
+                        segment.name = tag
+                        self.project_tree.selectedItems()[0].setText(0,
+                                                                     segment.name)
 
 
     def currentTreeItemChangedEvent(self, *args, **kwargs):
