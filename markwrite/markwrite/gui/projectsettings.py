@@ -27,7 +27,7 @@ flattenned_settings_dict = OrderedDict()
 
 flattenned_settings_dict['auto_generate_l1segments'] = {'name': 'Enable Level 1 Auto Segmentation', 'type': 'bool', 'value': True}
 
-flattenned_settings_dict['filter_imported_pen_data'] = {'name': 'Filter Imported Pen Data', 'type': 'bool', 'value': True}
+flattenned_settings_dict['filter_imported_pen_data'] = {'name': 'Filter Imported Pen Data', 'type': 'bool', 'value': False}
 
 flattenned_settings_dict['hdf5_trial_start_var_select_filter'] = {'name': 'Start Time Options Filter', 'type': 'str', 'value': "DV_*_START"}
 flattenned_settings_dict['hdf5_trial_end_var_select_filter'] = {'name': 'End Time Options Filter', 'type': 'str', 'value':  "DV_*_END"}
