@@ -164,12 +164,23 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             self._activeobject = self.project.selectedtimeregion
 
         if isinstance(self._activeobject,PenDataSegment):
-            #print "**Setting region:",self._activeobject
             self._segmenttree.doNotSetActiveObject=True
             at = self.activetrial
             if at:
                 self.project.selectedtimeregion.setBounds(bounds=at.timerange)
-            self.project.selectedtimeregion.setRegion(self._activeobject.timerange)
+
+            nextstart=nextend=None
+            if at and at.id == self._activeobject.id:
+                # If selected object is a Trial Segment, set
+                # selectedtimeregion to be first run in trial
+                nextstart = self.project.getNextUnitStartTime(self.project.run_boundaries,at.starttime)
+                nextend = self.project.getNextUnitEndTime(self.project.run_boundaries,at.starttime)
+            if nextstart and nextend and nextstart < nextend:
+                self.project.selectedtimeregion.setRegion((nextstart, nextend))
+            else:
+                # Otherwise, set selectedtimeregion to cover full segment time
+                self.project.selectedtimeregion.setRegion(self._activeobject.timerange)
+
             self._segmenttree.doNotSetActiveObject=False
 
             self.removeSegmentAction.setEnabled(not self._activeobject.locked)
