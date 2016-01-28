@@ -61,7 +61,6 @@ def fileSaveDlg(initFilePath="", initFileName="",
         return None
     return unicode(r)
 
-
 def fileOpenDlg(tryFilePath="",
                 tryFileName="",
                 prompt=u"Select file to open",
@@ -112,6 +111,11 @@ def fileOpenDlg(tryFilePath="",
 
     return filesToOpen
 
+def singleSelectDialog(items, parent=None, title=u'singleSelectDialog', text='Select:'):
+    var, ok = QtGui.QInputDialog.getItem(parent, title, text, items, editable=False)
+    if ok:
+        return unicode(var)
+    return None
 
 def infoDlg(title=u"Information",
             prompt=u"No details provided. ('prompt' value not set)."):
