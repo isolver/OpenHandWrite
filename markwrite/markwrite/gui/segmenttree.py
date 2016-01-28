@@ -102,6 +102,8 @@ class SegmentInfoDockArea(DockArea):
             self.rightClickTreeEvent)
  #       self.project_tree.itemSelectionChanged.connect(self.handleItemSelectionChanged)
 
+        self.project_tree.setExpandsOnDoubleClick(False)
+
         self.doNotSetActiveObject=False
 
     def updatePropertiesTableData(self, objwithprops, cleartable=False):
