@@ -4,11 +4,12 @@
 
 .iohpid
 markwrite/test_reports/
-
-collectwrite/experiments/ExperimentTemplate/results
-collectwrite/experiments/ExperimentTemplate/temp
-collectwrite/experiments/BuilderExample/data
-
+markwrite/build
+getwrite/experiments/ExperimentTemplate/results
+getwrite/experiments/ExperimentTemplate/temp
+getwrite/experiments/BuilderExample/data
+getwrite/experiments/BuilderExample/results
+getwrite/hdf2txt/*.txt
 
 #################
 ## PyCharm

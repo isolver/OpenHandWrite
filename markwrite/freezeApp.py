@@ -1,5 +1,11 @@
-# Creates an exe for the MarkWrite application using cx_freeze.
+# Creates an exe for the MarkWrite GUI application using cx_freeze.
 # Build with `python freezeApp.py build_exe`
+# !!! Requires:
+#      1. Must use my (Sol's) WinPython-32bit-2.7.6.0 python env. 
+#      2. Use of psychopy_with_cx_freeze_needed_fixes.zip as psychopy folder in site-packages
+#         so anytime psychopy source is rebuilt for WinPython-32bit-2.7.6.0
+#           changes need to be reapplied. 
+
 from cx_Freeze import setup, Executable
 
 import shutil
@@ -11,12 +17,14 @@ import sys
 import markwrite
 
 includes = ['PyQt4.QtCore', 'PyQt4.QtGui', 'sip', 'pyqtgraph.graphicsItems',
-            'numpy', 'atexit']
+            'numpy', 'atexit','scipy.special._ufuncs_cxx',
+            'scipy.sparse.csgraph._validation',
+            'scipy.integrate.vode',
+            'scipy.integrate.lsoda']
 excludes = ['cvxopt','_gtkagg', '_tkagg', 'bsddb', 'curses', 'email', 'pywin.debugger',
-    'pywin.debugger.dbgcon', 'pywin.dialogs', 'tcl','tables',
-    'Tkconstants', 'Tkinter', 'zmq','PySide','pysideuic','scipy','matplotlib']
+    'pywin.debugger.dbgcon', 'pywin.dialogs', 'tcl','Tkconstants', 'Tkinter', 'zmq','PySide','pysideuic','matplotlib']
 
-includefiles =['markwrite/resources','test_data', 'customreports.py']
+includefiles =['test_data', 'customreports.py', 'batchreportgen.py']
 if sys.version[0] == '2':
     # causes syntax error on py2
     excludes.append('PyQt4.uic.port_v3')
@@ -41,6 +49,39 @@ setup(name = "MarkWrite",
       version = markwrite.__version__,
       description = "MarkWrite Application",
       options = {"build_exe": build_exe_options},
-      executables = [Executable(script="./markwrite/runapp.py", targetName='MarkWrite.exe',base=base)])
+      executables = [Executable(script="./runapp.py", targetName='MarkWrite.exe',base=base)])
 
+import os
+import shutil
+import stat
+def copytree(src, dst, symlinks = False, ignore = None):
+  if not os.path.exists(dst):
+    os.makedirs(dst)
+    shutil.copystat(src, dst)
+  lst = os.listdir(src)
+  if ignore:
+    excl = ignore(src, lst)
+    lst = [x for x in lst if x not in excl]
+  for item in lst:
+    s = os.path.join(src, item)
+    d = os.path.join(dst, item)
+    if symlinks and os.path.islink(s):
+      if os.path.lexists(d):
+        os.remove(d)
+      os.symlink(os.readlink(s), d)
+      try:
+        st = os.lstat(s)
+        mode = stat.S_IMODE(st.st_mode)
+        os.lchmod(d, mode)
+      except:
+        pass # lchmod not available
+    elif os.path.isdir(s):
+      copytree(s, d, symlinks, ignore)
+    else:
+      shutil.copy2(s, d)
+      
+source_resources_dir = os.path.abspath(os.path.join('.', 'markwrite/resources'))
+target_resources_dir = os.path.abspath(os.path.join('.',build_exe_options['build_exe'],'resources'))
+print ("Copying folder {} to {}".format(source_resources_dir,target_resources_dir)) 
+copytree(source_resources_dir,target_resources_dir)
 
