@@ -12,7 +12,7 @@ import os
 ## OF THE INPUT FILES TO PROCESS.
 #
 # Set root path to use when scanning for input files
-root_input_folder = os.path.abspath('test_data')
+root_input_folder = os.path.abspath('../MarkWrite/test_data')
 # Set file types to use as input files
 input_extensions = "txyp", "xml", "hdf5", "mwp"
 # If hdf5 files are being processed, and trials are to be parsed

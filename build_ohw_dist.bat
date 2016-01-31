@@ -25,8 +25,10 @@ set PATH=%WINPYDIR%\Lib\site-packages\PyQt5;%WINPYDIR%\Lib\site-packages\PyQt4;%
 echo.
 
 set OPENHW_SRC_DIR=%~dp0..\DEV\OpenHandWrite
+set OPENHW_DST_DIR=%~dp0OpenHandWrite
+
 set PSYCHOPY_SRC_DIR=%~dp0..\WinPython-32bit-2.7.6.0\my-code\psychopy
- 
+set MARKWRITE_SRC_DIR=%~dp0..\DEV\OpenHandWrite\src\markwrite
 REM >>> Build latest PsychoPy package from local source
 echo Building latest PsychoPy Source ...
 cd %PSYCHOPY_SRC_DIR%
@@ -35,27 +37,25 @@ cd %~dp0
 echo.
 REM <<<
 
-REM >>> Copy latest OpenHW getwrite files to .\OpenHandWrite\getwrite
-echo Copying OpenHW getwrite Files...
-xcopy %OPENHW_SRC_DIR%\getwrite %~dp0OpenHandWrite\getwrite /v /y /s /e /q /i
+set HDF5_DISABLE_VERSION_CHECK=2
+
+REM >>> Build latest markwrite package from local source
+echo Building latest markwrite Source ...
+cd %MARKWRITE_SRC_DIR%
+python setup.py install
+cd %~dp0
 echo.
 REM <<<
 
-REM >>> Copy latest OpenHW wintab test script to .\OpenHandWrite\getwrite
+REM >>> Copy latest OpenHandWrite distribution files to .\OpenHandWrite
+echo Copying OpenHandWrite Distribution Files...
+xcopy %OPENHW_SRC_DIR%\distribution %OPENHW_DST_DIR% /v /y /s /e /q /i
+echo.
+REM <<<
+
+REM >>> Copy latest OpenHW wintab test script to .\OpenHandWrite\getwrite\wintabtest
 echo Copying latest OpenHW psychopy.iohub wintab test script...
-xcopy %PSYCHOPY_SRC_DIR%\psychopy\demos\coder\iohub\wintab\*.py %~dp0OpenHandWrite\getwrite\wintabtest /v /y /s /e /q /i
-echo.
-REM <<<
-
-REM >>> Copy latest OpenHW markwrite files to .\OpenHandWrite\markwrite
-echo Copying OpenHW markwrite Files...
-xcopy %OPENHW_SRC_DIR%\markwrite %~dp0OpenHandWrite\markwrite /v /y /s /e /q /i
-echo.
-REM <<<
-
-REM >>> Copy .bat launcher files to .\OpenHandWrite
-echo Copying .bat launcher files...
-copy %OPENHW_SRC_DIR%\distribution\launchers\*.bat %~dp0OpenHandWrite  /v /y
+xcopy %PSYCHOPY_SRC_DIR%\psychopy\demos\coder\iohub\wintab\*.py %OPENHW_DST_DIR%\getwrite\wintabtest /v /y /s /e /q /i
 echo.
 REM <<<
 

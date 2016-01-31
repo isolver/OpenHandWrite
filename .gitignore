@@ -9,7 +9,10 @@ getwrite/experiments/ExperimentTemplate/results
 getwrite/experiments/ExperimentTemplate/temp
 getwrite/experiments/BuilderExample/data
 getwrite/experiments/BuilderExample/results
-getwrite/hdf2txt/*.txt
+examples/hdf2txt/*.txt
+src/markwrite/build
+src/markwrite/dist
+src/markwrite/markwrite.egg-info
 
 #################
 ## PyCharm

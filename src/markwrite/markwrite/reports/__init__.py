@@ -328,4 +328,9 @@ from sample import PenSampleReportExporter
 from segment import SegmentLevelReportExporter
 
 import importlib,inspect
-custom_report_classes = [rctype for rcname, rctype in inspect.getmembers(importlib.import_module('customreports'), inspect.isclass) if rctype != ReportExporter]
+custom_report_classes = []
+try:
+    custom_report_classes=[rctype for rcname, rctype in inspect.getmembers(importlib.import_module('customreports'), inspect.isclass) if rctype != ReportExporter]
+except ImportError, imperr:
+    print "Warning: customreports.py could not be imported. Ensure customreports.py is in your CWD or python_path."
+

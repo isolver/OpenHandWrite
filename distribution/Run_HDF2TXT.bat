@@ -25,7 +25,7 @@ set PATH=%WINPYDIR%\Lib\site-packages\PyQt5;%WINPYDIR%\Lib\site-packages\PyQt4;%
 rem force default Qt kit for Spyder
 set QT_API=pyqt
 
-cd "%~dp0getwrite\hdf2txt"
+cd "%~dp0examples"
 
 python.exe hdf2txt.py %*
 

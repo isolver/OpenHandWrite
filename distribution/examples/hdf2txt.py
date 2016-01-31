@@ -27,19 +27,22 @@ if _DATA_STORE_AVAILABLE is False:
     sys.exit(1)
 
 def displayTimeRangeVariableSelectionDialog(dataAccessUtil):
-    cv_names = [cvname for cvname in dataAccessUtil.getConditionVariableNames()
-                if cvname.startswith('DV_')]
-    dlg_info =  OrderedDict()
-    dlg_info["Start Trial Time"] = [cvname for cvname in cv_names
-                                    if cvname.endswith('START')]
-    dlg_info["End Trial Time"] = [cvname for cvname in cv_names
-                                  if cvname.endswith('END')]
-    infoDlg = gui.DlgFromDict(dictionary=dlg_info,
-                                       title="Trial Event Time Range Variables",
-                                       order=dlg_info.keys())
-    if not infoDlg.OK:
-        return None
-    return dlg_info.values()
+    try:
+        cv_names = [cvname for cvname in dataAccessUtil.getConditionVariableNames()
+                    if cvname.startswith('DV_')]
+        dlg_info =  OrderedDict()
+        dlg_info["Start Trial Time"] = [cvname for cvname in cv_names
+                                        if cvname.endswith('START')]
+        dlg_info["End Trial Time"] = [cvname for cvname in cv_names
+                                      if cvname.endswith('END')]
+        infoDlg = gui.DlgFromDict(dictionary=dlg_info,
+                                           title="Trial Event Time Range Variables",
+                                           order=dlg_info.keys())
+        if not infoDlg.OK:
+            return None
+        return dlg_info.values()
+    except:
+        pass
 
 def writeOutputFileHeader(output_file, *args):
     """
@@ -115,7 +118,10 @@ if __name__ == '__main__':
             sesion_meta_data_dict[s.session_id]=s
 
     # Get the experiment conditions table for the session reference...
-    cv_table = dataAccessUtil.getConditionVariablesTable()
+    try:
+        cv_table = dataAccessUtil.getConditionVariablesTable()
+    except:
+        cv_table = None
 
     # Get the WintabTabletSample evvents table reference....
     tablet_sample_table = dataAccessUtil.getEventTable(
@@ -131,44 +137,54 @@ if __name__ == '__main__':
 
         # write column header
         #
-        writeOutputFileHeader(output_file,
-                                session_metadata_columns,
-                                cv_table.colnames[2:],
-                                tablet_sample_table.colnames[3:])
+        args = [output_file,session_metadata_columns,]
+        if cv_table:
+            args.append(cv_table.colnames[2:])
+        args.append(tablet_sample_table.colnames[3:])
+        writeOutputFileHeader(*args)
 
-        print('Writing Data to %s:\n'%(log_file_name))
+        print('Writing Data to %s:\n'%(os.path.abspath(log_file_name)))
 
-        for trial_vars in cv_table.iterrows():
-            evt_win_start_time, evt_win_end_time = trial_vars[dvs_selected[0]],\
-                                                   trial_vars[dvs_selected[1]]
-            sys.stdout.write("Saving Events for Trial {}.".format(
-                                                    trial_vars['DV_TRIAL_ID']))
-            if evt_win_start_time >= evt_win_end_time:
-                print "WARNING: Trial start time >= end_time:" \
-                      " {}, {}. Skipping output for trial {}".format(
-                                                    evt_win_start_time,
-                                                    evt_win_end_time,
-                                                    trial_vars['DV_TRIAL_ID'])
-                continue
-            event_iterator_for_output = tablet_sample_table.where(
-                                        "(time > {}) & (time <= {})".format(
-                                                            evt_win_start_time,
-                                                            evt_win_end_time))
-            for i,event in enumerate(event_iterator_for_output):
+        if cv_table:
+            for trial_vars in cv_table.iterrows():
+                evt_win_start_time, evt_win_end_time = trial_vars[dvs_selected[0]],\
+                                                       trial_vars[dvs_selected[1]]
+                sys.stdout.write("Saving Events for Trial {}.".format(
+                                                        trial_vars['DV_TRIAL_ID']))
+                if evt_win_start_time >= evt_win_end_time:
+                    print "WARNING: Trial start time >= end_time:" \
+                          " {}, {}. Skipping output for trial {}".format(
+                                                        evt_win_start_time,
+                                                        evt_win_end_time,
+                                                        trial_vars['DV_TRIAL_ID'])
+                    continue
+                event_iterator_for_output = tablet_sample_table.where(
+                                            "(time > {}) & (time <= {})".format(
+                                                                evt_win_start_time,
+                                                                evt_win_end_time))
+                for i,event in enumerate(event_iterator_for_output):
+                    # write out each row of the event data with session
+                    # and condition variable data as prepended columns.....
+                    #
+                    writeDataRow(output_file,
+                                 sesion_meta_data_dict[event['session_id']][:-1],
+                                 trial_vars[:][2:],
+                                 event[:][3:])
+                    if i%100==0:
+                        sys.stdout.write('.')
+                    scount = scount + 1
+                sys.stdout.write('\n')
+        else:
+            for i,event in enumerate(tablet_sample_table.iterrows()):
                 # write out each row of the event data with session
                 # and condition variable data as prepended columns.....
                 #
                 writeDataRow(output_file,
                              sesion_meta_data_dict[event['session_id']][:-1],
-                             trial_vars[:][2:],
-                             event[:][3:])
-
+                             event[3:])
                 if i%100==0:
                     sys.stdout.write('.')
-
                 scount = scount + 1
-
-            sys.stdout.write('\n')
 
     dataAccessUtil.close()
 
@@ -176,7 +192,7 @@ if __name__ == '__main__':
         duration=duration+(getTime()-start_time)
         print('\nOutput Complete. '
               '%d Events Saved to %s in %.3f seconds '
-              '(%.2f events/seconds).\n'%(scount,log_file_name,duration,scount/duration))
+              '(%.2f events/seconds).\n'%(scount,os.path.abspath(log_file_name),duration,scount/duration))
     else:
         print("The selected file does not have any Pen Sample Events "
               "within the chosen trial start and end times.")
