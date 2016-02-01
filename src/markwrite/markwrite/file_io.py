@@ -19,7 +19,8 @@ import numpy as np
 from util import getSegmentTagsFilePath
 import codecs
 import os
-
+import traceback
+            
 markwrite_pendata_format = [('time', np.float64),
                     ('x', np.int32),
                     ('y', np.int32),
@@ -247,7 +248,6 @@ class HubDatastoreImporter(DataImporter):
             return cls.hdfFile
         except:
             print "Error openning ioHub HDF5 file."
-            import traceback
             traceback.print_exc()
         return None
 

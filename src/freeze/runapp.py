@@ -15,6 +15,9 @@ from __future__ import division
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import os
+os.environ['HDF5_DISABLE_VERSION_CHECK']='2'
+
 import markwrite
 
 import sys
