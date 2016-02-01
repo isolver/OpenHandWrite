@@ -35,4 +35,3 @@ wmwin = MarkWriteMainWindow(markwrite.app)
 MarkWriteMainWindow._appdirs = markwrite.appdirs
 wmwin.show()
 status = markwrite.app.exec_()
-sys.exit(status)

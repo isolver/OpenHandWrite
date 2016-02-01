@@ -396,8 +396,7 @@ class Dlg(QtGui.QDialog):
            QDialog.show() and then exec_(). This seems to not cause issues,
            however we need to keep an eye out for any issues.
 
-        ** Deprecated: Use dlg.display() instead. This method will be removed
-           in a future version of psychopy.
+        ** Deprecated: Use dlg.display() instead.
 
         Presents the dialog and waits for the user to press either OK or CANCEL.
 

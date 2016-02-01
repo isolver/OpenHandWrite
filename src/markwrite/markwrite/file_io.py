@@ -192,27 +192,59 @@ class EyePenDataImporter(DataImporter):
 #
 # ioHub HDF5 File Importer
 #
-from psychopy.iohub.datastore.util import ExperimentDataAccessUtility
-from psychopy.iohub import EventConstants
+from tables import openFile
+from collections import namedtuple
 
 class HubDatastoreImporter(DataImporter):
-    hubdata = None
+    hdfFile = None
     exp_condvars = None
     condvars_names = None
+    WINTAB_TABLET_SAMPLE=91
     def __init__(self):
         DataImporter.__init__(self)
 
+
+    @classmethod
+    def _getEventMappingInformation(cls):
+        """
+        Returns details on how ioHub Event Types are mapped to tables within
+        the given DataStore file.
+        """
+        if cls.hdfFile:
+            eventMappings=dict()
+            class_2_table=cls.hdfFile.root.class_table_mapping
+            EventTableMapping=namedtuple('EventTableMapping',cls.hdfFile.root.class_table_mapping.colnames)
+            for row in class_2_table[:]:
+                eventMappings[row['class_id']]=EventTableMapping(*row)
+            return eventMappings
+        return None
+        
+    @classmethod
+    def _getPenSampleEvents(cls, condition_str = None):
+        """
+        Get the Pen Sample Events from the iohub hdf5 file.
+        Return value is a row iterator for events of that type.
+        """
+        event_mapping_info=cls._getEventMappingInformation().get(cls.WINTAB_TABLET_SAMPLE)
+        if event_mapping_info:
+            cond="(type == %d)"%(cls.WINTAB_TABLET_SAMPLE)
+            if condition_str:
+                cond+=" & "+condition_str
+            return cls.hdfFile.getNode(event_mapping_info.table_path).where(cond).next()
+        return []
+
+    @classmethod
+    def _close(cls):
+        if cls.hdfFile:
+            cls.hdfFile.close()
+            cls.hdfFile = None
+    
     @classmethod
     def _load(cls, file_path):
         try:
-            if cls.hubdata:
-                cls.hubdata.close()
-                cls.hubdata = None
-            dpath, dfile=os.path.split(file_path)
-            cls.hubdata = ExperimentDataAccessUtility(dpath, dfile,
-                                                      experimentCode=None,
-                                                      sessionCodes=[])
-            return cls.hubdata
+            cls._close()
+            cls.hdfFile=openFile(file_path, 'r')
+            return cls.hdfFile
         except:
             print "Error openning ioHub HDF5 file."
             import traceback
@@ -221,61 +253,52 @@ class HubDatastoreImporter(DataImporter):
 
     @classmethod
     def validate(cls, file_path):
-        exp_data_util = cls._load(file_path)
         file_valid = False
-        if exp_data_util:
-            evt_table_mappings = cls.hubdata.getEventsByType()
-            file_valid = evt_table_mappings.get(EventConstants.WINTAB_TABLET_SAMPLE,False)
-
-        if cls.hubdata:
-            cls.hubdata.close()
-            cls.hubdata = None
-
+        if cls._load(file_path):
+            if cls._getPenSampleEvents():
+                file_valid = True    
+        cls._close()
         return file_valid
 
     @classmethod
     def parse(cls, file_path):
-        exp_data_util = cls._load(file_path)
-        if exp_data_util is None:
-            return []
-
-        wintab_samples = exp_data_util.getEventsByType().get(
-                                EventConstants.WINTAB_TABLET_SAMPLE,None)
         list_result = []
-        if wintab_samples:
-            for r in wintab_samples:
-                list_result.append((
-                                 r['time'],
-                                 r['x'],
-                                 r['y'],
-                                 r['pressure'],
-                                 r['status'], # state field
-                                 0, # x_filtered, filled in by markwrite runtime
-                                 0, # y_filtered, filled in by markwrite runtime
-                                 0, # pressure_filtered, filled in by  runtime
-                                 0, # x_velocity, filled in by markwrite runtime
-                                 0, # y_velocity, filled in by markwrite runtime
-                                 0, # xy_velocity, filled in by markwrite runtime
-                                 0, # xy_accell, filled in by markwrite runtime
-                                 0) #segment_id, filled in by markwrite runtime
-                                    )
+        if cls._load(file_path) is None:
+            return list_result
 
-            try:
-                cls.exp_condvars = exp_data_util.getConditionVariablesTable().read()
+        for r in cls._getPenSampleEvents():
+            list_result.append((
+                             r['time'],
+                             r['x'],
+                             r['y'],
+                             r['pressure'],
+                             r['status'], # state field
+                             0, # x_filtered, filled in by markwrite runtime
+                             0, # y_filtered, filled in by markwrite runtime
+                             0, # pressure_filtered, filled in by  runtime
+                             0, # x_velocity, filled in by markwrite runtime
+                             0, # y_velocity, filled in by markwrite runtime
+                             0, # xy_velocity, filled in by markwrite runtime
+                             0, # xy_accell, filled in by markwrite runtime
+                             0) #segment_id, filled in by markwrite runtime
+                                )
+
+        try:
+            cls.exp_condvars = None
+            cls.condvars_names = None            
+            cv_group = cls.hdfFile.root.data_collection.condition_variables
+            if "EXP_CV_1" in cv_group._v_leaves:
+                cls.exp_condvars = cv_group._v_leaves["EXP_CV_1"].read()
                 cls.condvars_names = cls.exp_condvars.dtype.names
-            except:
-                cls.exp_condvars = None
-                cls.condvars_names = None
+        except:
+            cls.exp_condvars = None
+            cls.condvars_names = None
 
-        if cls.hubdata:
-            cls.hubdata.close()
-            cls.hubdata = None
-
+        cls._close()
         return list_result
 
     def __del__(self):
-        if self.hubdata:
-            self.hubdata.close()
+        self._close()
 #
 # XML Format Importer
 #
@@ -292,7 +315,7 @@ class XmlDataImporter(DataImporter):
             xml_root = ET.parse(file_path)
             # TODO: Use element near start of file to verify that XML
             # file contains expected format. For example "xmlns:tns"
-            return True
+            return xml_root is not None
         except:
             pass
         return False
@@ -338,15 +361,12 @@ def loadPredefinedSegmentTagList(file_name=u'default.tag'):
 ################################################################################
 
 import cPickle
-import os
-import pyqtgraph
 
-from pyqtgraph.Qt import QtCore, QtGui
-from pyqtgraph import mkColor
 def readPickle(file_path, file_name):
     abs_file_path = os.path.join(file_path,file_name)
     dobj=None
     if os.path.isfile(abs_file_path):
+        from pyqtgraph import mkColor
         with open(abs_file_path, 'rb') as f:
             dobj = cPickle.load(f)
         for k, v in dobj.items():
@@ -356,6 +376,7 @@ def readPickle(file_path, file_name):
     return dobj
 
 def writePickle(file_path, file_name, dictobj):
+    from pyqtgraph.Qt import QtGui
     abs_file_path = os.path.join(file_path,file_name)
     dobj=dict()
     if not os.path.exists(file_path):
