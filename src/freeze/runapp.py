@@ -17,6 +17,7 @@ from __future__ import division
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 os.environ['HDF5_DISABLE_VERSION_CHECK']='2'
+import shutil
 
 import markwrite
 
@@ -28,6 +29,13 @@ if sys.platform == 'win32':
     myappid = u'isolver.markwrite.editor.version' # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
+    src_icon = os.path.abspath("./resources/icons")
+    if not os.path.isdir(src_icon):
+        src_icon=os.path.abspath("./MarkWrite/resources/icons")
+    if os.path.isdir(src_icon):
+        src_icon = os.path.join(src_icon,'markwrite_icon.ico')
+        shutil.copy(src_icon, os.path.join(markwrite.appdirs.user_config_dir,'markwrite_icon.ico'))
+    
 import pyqtgraph as pg
 from markwrite.gui.mainwin import MarkWriteMainWindow
 # # Switch to using white background and black foreground
