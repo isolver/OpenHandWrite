@@ -286,7 +286,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.exitAction.setShortcut('Ctrl+Alt+Q')
         self.exitAction.setEnabled(True)
         self.exitAction.setStatusTip(atext)
-        self.exitAction.triggered.connect(self.closeEvent)
+        self.exitAction.triggered.connect(self.close)
 
         #
         # Selection Menu / Toolbar Related Actions
@@ -1296,16 +1296,19 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             QtCore.QCoreApplication.instance().quit()
             return
 
-        exitapp = ExitApplication.display()
-        if exitapp:
-            pass
+        reply = QtGui.QMessageBox.question(self, 'Exit Application',
+            "Are you sure to quit? Any unsaved project changes will be lost.", QtGui.QMessageBox.Yes | 
+            QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+
+        if reply == QtGui.QMessageBox.Yes:
             if event:
                 event.accept()
             else:
                 QtCore.QCoreApplication.instance().quit()
         else:
-            if event:
-                event.ignore()
+            if event:            
+                event.ignore()        
+
 
     def __del__(self):
         pass

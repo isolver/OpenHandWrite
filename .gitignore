@@ -10,6 +10,7 @@ getwrite/experiments/ExperimentTemplate/temp
 getwrite/experiments/BuilderExample/data
 getwrite/experiments/BuilderExample/results
 examples/hdf2txt/*.txt
+src/markwrite/build_exe
 src/markwrite/build
 src/markwrite/dist
 src/markwrite/markwrite.egg-info
