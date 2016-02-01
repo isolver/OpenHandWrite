@@ -91,8 +91,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     SAMPLE_XY_FIELDS = ['x_filtered', 'y_filtered']
     sigProjectChanged = QtCore.Signal(object)  # new_project
     sigResetProjectData = QtCore.Signal(object)  # project
-    #sigSelectedPenDataUpdate = QtCore.Signal(object,
-    #                                         object)  # (smin,smax), segmentdata
     sigSegmentCreated = QtCore.Signal(object)  # new segment
     sigSegmentRemoved = QtCore.Signal(object,
                                       object)  # segment being removed,

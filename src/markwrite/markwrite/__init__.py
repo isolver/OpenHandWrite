@@ -20,6 +20,7 @@ __version__ = "0.2.2.1"
 # Need to import pyTables module before pyqt imports pyh5 or error occurs when
 # openning an iohub datastore file.
 import tables
+import pyqtgraph
 import sys
 from appdirs import AppDirs
 from file_io import readPickle, writePickle

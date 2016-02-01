@@ -351,8 +351,12 @@ class Dlg(QtGui.QDialog):
 
             def handleCurrentIndexChanged(new_index):
                 ix = self.inputFields.index(inputBox)
-                self.data[ix] = inputBox.itemData(new_index).toPyObject()[0]
-
+                # Some versions of pyqt require using toPyObject(), 
+                # others do not. Try both.
+                try:
+                    self.data[ix] = inputBox.itemData(new_index).toPyObject()[0]
+                except:
+                    self.data[ix] = inputBox.itemData(new_index)[0]
             inputBox.currentIndexChanged.connect(handleCurrentIndexChanged)
 
         if len(color):

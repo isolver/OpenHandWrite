@@ -294,16 +294,13 @@ class ProjectSettingsDialog(QtGui.QDialog):
                 if setting_key.startswith('kbshortcut_'):
                     qks=QtGui.QKeySequence(data)
                     if (len(data)>0 and qks.isEmpty()) or qks.toString() in SETTINGS.values():
-                        #print "Setting invalid: [{}], [{}]".format(data, qks.toString())
                         self._invalid_settings[setting_key]=param
                         continue
                     else:
-                        #print "Setting shortcut: [{}], [{}]".format(data, qks.toString())
-                        data = qks.toString()
+                        data = u''+qks.toString()
                 SETTINGS[setting_key]=data
                 self._updated_settings[setting_key] = data
                 param.orgvalue=data
-                #print 'settings_state:',self.settings_state
 
     # static method to create the dialog and return (date, time, accepted)
     @staticmethod

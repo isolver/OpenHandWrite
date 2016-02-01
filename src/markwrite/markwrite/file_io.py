@@ -339,6 +339,8 @@ def loadPredefinedSegmentTagList(file_name=u'default.tag'):
 
 import cPickle
 import os
+import pyqtgraph
+
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph import mkColor
 def readPickle(file_path, file_name):
@@ -359,9 +361,7 @@ def writePickle(file_path, file_name, dictobj):
     if not os.path.exists(file_path):
         os.makedirs(file_path)
     for k,v in dictobj.items():
-        if isinstance(v,QtCore.QString):
-            dobj[k]= unicode(v.toUtf8(), encoding="UTF-8")
-        elif isinstance(v, QtGui.QColor):
+        if isinstance(v, QtGui.QColor):
             dobj[k] = (v.red(), v.green(), v.blue())
         else:
             dobj[k]=v
