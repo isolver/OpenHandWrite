@@ -15,7 +15,7 @@ src/freeze/build_exe
 src/markwrite/build
 src/markwrite/dist
 src/markwrite/markwrite.egg-info
-
+src/psychopy_hacks/
 #################
 ## PyCharm
 #################
