@@ -10,7 +10,7 @@ getwrite/experiments/ExperimentTemplate/temp
 getwrite/experiments/BuilderExample/data
 getwrite/experiments/BuilderExample/results
 examples/hdf2txt/*.txt
-src/freeze/MarkWrite v*
+src/freeze/MarkWrite_v*
 src/freeze/build_exe
 src/markwrite/build
 src/markwrite/dist

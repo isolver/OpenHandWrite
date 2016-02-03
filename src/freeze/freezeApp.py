@@ -16,7 +16,7 @@ import markwrite
 import shutil
 import sys, os
 
-build_folder="MarkWrite v%s/MarkWrite"%markwrite.__version__
+build_folder="MarkWrite_v%s/MarkWrite"%markwrite.__version__
 
 # Remove the build folder
 shutil.rmtree(build_folder, ignore_errors=True)

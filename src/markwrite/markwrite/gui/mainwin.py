@@ -853,8 +853,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 try:
                     import os
                     _, fname = os.path.split(file_path)
-                    with pg.ProgressDialog("Loading Pen Data from: {}".format(fname), minimum=0, wait=100, maximum=100, parent=self, busyCursor=False) as dlg:
+                    with pg.ProgressDialog("Loading Pen Data from: {}".format(fname), minimum=0, wait=0, maximum=100, parent=self, busyCursor=False) as dlg:
+                        dlg+=1
                         self._progressdlg=dlg
+                        QtGui.QApplication.processEvents()
                         wmproj = MarkWriteProject(file_path=file_path, mwapp=self)
                         self._activetrial=None
                         wmproj.selectedtimeregion.setBounds(bounds=(wmproj.pendata['time'][0], wmproj.pendata['time'][-1]))
