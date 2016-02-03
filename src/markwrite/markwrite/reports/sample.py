@@ -18,6 +18,7 @@
 import numpy as np
 
 from markwrite.reports import ReportExporter
+from markwrite.util import convertSampleStateValue
 
 class PenSampleReportExporter(ReportExporter):
     progress_dialog_title = "Saving Pen Point Sample Level Report .."
@@ -28,11 +29,14 @@ class PenSampleReportExporter(ReportExporter):
 
     @classmethod
     def columnnames(cls):
-        column_names=['file','index','time','x','y','pressure','cat1']
+        column_names=['file','index','time','x','y','pressure', 'status', 'cat1']
         ss = cls.project.segmenttree
         lvls = range(1,ss.getLevelCount()+1)
         column_names.extend([u'cat1.L%d'%l for l in lvls])
-
+        
+        if len(cls.project.trial_cond_vars):
+            column_names.extend(cls.project.trial_cond_vars.dtype.names)
+            
         return column_names
 
     @classmethod
@@ -51,11 +55,16 @@ class PenSampleReportExporter(ReportExporter):
         segs_by_lvl=ss.getLeveledSegments()
         catname = ss.name
 
+        cvcolcount=0
+        if len(cls.project.trial_cond_vars):
+            cvcolcount=len(cls.project.trial_cond_vars.dtype.names)
+
         for i in xrange(pendata.shape[0]):
             dp=pendata[i]
 
 
-            rowdata = [sfile,i,dp['time'],dp['x'],dp['y'],dp['pressure'],catname]
+            rowdata = [sfile,i,dp['time'],dp['x'],dp['y'],dp['pressure'],
+                       convertSampleStateValue(dp['state']), catname]
 
             # Go through segment levels finding matching seg at each level for
             # current data point. Use '' for levels where no seg matched
@@ -73,5 +82,11 @@ class PenSampleReportExporter(ReportExporter):
                     break
                 rowdata.append(dpsegname)
 
+            if cvcolcount:
+                tcv=cls.project.getTrialConditionsForSample(i)
+                if tcv is not None:
+                    rowdata.extend(list(tcv))
+                else:
+                    rowdata.extend([cls.missingval for i in range(cvcolcount)])
             yield rowdata
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from markwrite.reports import ReportExporter
+from markwrite.util import convertSampleStateValue
 
 class RawSampleDataReportExporter(ReportExporter):
     progress_dialog_title = "Saving the Raw Pen Point Sample Report .."
@@ -16,7 +17,7 @@ class RawSampleDataReportExporter(ReportExporter):
         # generating the report
         r = ['index',]
         r.extend(cls.project.pendata.dtype.names)
-        r.extend(('series_id','run_id','stroke_id'))
+        r.extend(('status','series_id','run_id','stroke_id'))
         return r
 
     @classmethod
@@ -36,5 +37,8 @@ class RawSampleDataReportExporter(ReportExporter):
         for i, pensample in enumerate(cls.project.pendata):
             r = [i,]
             r.extend(pensample.tolist())
-            r.extend((getSeriesForSample(i),getPressedRunForSample(i),getStrokeForSample(i)))
+            r.extend((convertSampleStateValue(pensample['state']), 
+                        getSeriesForSample(i),
+                        getPressedRunForSample(i),
+                        getStrokeForSample(i)))
             yield r

@@ -170,7 +170,7 @@ class MarkWriteProject(object):
                             'autosegl1',
                             '_stimevar',
                             '_etimevar',
-                            '_expcondvars',
+                            'trial_cond_vars',
                             'trial_boundaries',
                             'autodetected_segment_tags',
                             'pendata',
@@ -230,7 +230,7 @@ class MarkWriteProject(object):
         self.autosegl1=False
         self._stimevar = tstart_cond_name
         self._etimevar = tend_cond_name
-        self._expcondvars = []
+        self.trial_cond_vars = []
         self.trial_boundaries = []
 
         self.autodetected_segment_tags=[]
@@ -325,24 +325,26 @@ class MarkWriteProject(object):
         # If file opened was an iohub hdf5 file, and had a
         # cond var table, get the cond var table as a ndarray.
         try:
-            self._expcondvars = fimporter.exp_condvars
+            self.trial_cond_vars = fimporter.exp_condvars
         except:
-            self._expcondvars = None
-
+            self.trial_cond_vars = []
+            
+        if self.trial_cond_vars is None:
+            self.trial_cond_vars = []
         # If cond var table exists, give user option of selecting
         # a start and end time variable column to be used to
         # split data into trial segments and remove any between trial
         # data.
         self.autosegl1 = SETTINGS['auto_generate_l1segments']
-        if self.autosegl1 and self._expcondvars is not None and (self._stimevar is None and self._etimevar is None):
+        if self.autosegl1 and len(self.trial_cond_vars) and (self._stimevar is None and self._etimevar is None):
             trial_start_var_select_filter = SETTINGS['hdf5_trial_start_var_select_filter'].strip()
             trial_end_var_select_filter = SETTINGS['hdf5_trial_end_var_select_filter'].strip()
 
             tvarlists=OrderedDict()
-            tvarlists["Start Time Variable"]=list(self._expcondvars.dtype.names)
+            tvarlists["Start Time Variable"]=list(self.trial_cond_vars.dtype.names)
             if trial_start_var_select_filter:
                 tvarlists["Start Time Variable"] = getFilteredStringList(tvarlists["Start Time Variable"], trial_start_var_select_filter)
-            tvarlists["End Time Variable"]=list(self._expcondvars.dtype.names)
+            tvarlists["End Time Variable"]=list(self.trial_cond_vars.dtype.names)
             if trial_end_var_select_filter:
                  tvarlists["End Time Variable"] = getFilteredStringList(tvarlists["End Time Variable"], trial_end_var_select_filter)
 
@@ -354,7 +356,7 @@ class MarkWriteProject(object):
 
     def _parsePenDataByTrials(self, pen_data):
         trials=[]   #list of tuples; each being (cvrow_index, start_sample_ix, start_sample_time, end_sample_ix, end_sample_time)
-        if self._expcondvars is not None and self._stimevar is not None and self._etimevar is not None:
+        if len(self.trial_cond_vars) and self._stimevar is not None and self._etimevar is not None:
             # go through each trial, select only the samples within
             # the trial period, add the trials sample array to list of trial
             # sample data.
@@ -368,7 +370,7 @@ class MarkWriteProject(object):
             TE_IX_IX = 3
             TE_TIME_IX = 4
 
-            for tix, t in enumerate(self._expcondvars):
+            for tix, t in enumerate(self.trial_cond_vars):
                 tbounds=[tix, 0, 0.0, 0, 0.0]
                 try:
                     trialstart = float(t[self._stimevar])
@@ -425,7 +427,11 @@ class MarkWriteProject(object):
         self.trial_boundaries=np.asarray(trials,dtype=trial_dtype)
         return pen_data
 
-
+    def _mapTrialConditions2TrialSegments(self):
+        if len(self.trial_cond_vars) and len(self.trial_boundaries) and self.segmenttree.children:
+            for i, tseg in enumerate(self.segmenttree.children):
+                tseg.cond_vars = self.trial_cond_vars[i]
+                    
     def _normalizeConditionVariableTimes(self):
         """
         Normalizes the time values for user specified condition variables.
@@ -435,18 +441,18 @@ class MarkWriteProject(object):
         time offset from the cv values.
         :return:
         """
-        if self._expcondvars is None:
+        if len(self.trial_cond_vars)==0:
             return
         cvnfilter = SETTINGS['hdf5_apply_time_offset_var_select_filter'].strip()
         if cvnfilter:
             normvarnames = getFilteredStringList(
-                                    [unicode(cvn) for cvn in self._expcondvars.dtype.names],
+                                    [unicode(cvn) for cvn in self.trial_cond_vars.dtype.names],
                                     cvnfilter)
             for vn in normvarnames:
                 # self._stimevar and self._etimevar values have already
                 # been normalized, so skip any names that match either of those.
                 if vn != self._stimevar and vn != self._etimevar:
-                    self._expcondvars[vn]-=self.timebase_offset
+                    self.trial_cond_vars[vn]-=self.timebase_offset
 
     def _parsePenSampleSeries(self):
         """
@@ -602,6 +608,7 @@ class MarkWriteProject(object):
                 # trial periods.
                 for t, tbounds in enumerate(self.trial_boundaries):
                     self.createSegmentForTimePeriod(u"Trial%d"%(t+1), self.segmenttree.id, tbounds['start_time'], tbounds['end_time'], update_segid_field=True)
+                self._mapTrialConditions2TrialSegments()
             updateDataFileLoadingProgressDialog(self._mwapp,5)
 
 
@@ -643,6 +650,40 @@ class MarkWriteProject(object):
                                            obsolute_offset+len(searchsamplearray)-1,
                                            searchsamplearray['time'][-1]))
 
+    def getTrialConditionsForSample(self,sample):
+        """
+        Returns the trial condition variable data for the given sample. 
+        None is returned if no trial condition variables were found for the
+        given samples time.
+        
+        sample can be one of:
+        
+        - int: index of sample in project.pendata
+        - float: time of sample
+        - ndarray: a row from the project.pendata ndarray.
+        """
+        tbounds = self.trial_boundaries
+        tvars = self.trial_cond_vars
+        tvar_ix = -1
+        if len(tbounds)>0 and len(tvars)>0:
+            if isinstance(sample, (int,long)):
+                tb=tbounds[(tbounds['start_ix']<=sample) & (tbounds['end_ix']>=sample)]
+                if len(tb):
+                    tvar_ix=tb[0]['cvrow_ix']
+            elif isinstance(sample, float):
+                tb=tbounds[(tbounds['start_time']<=sample) & (tbounds['end_time']>=sample)]
+                if len(tb):
+                    tvar_ix=tb[0]['cvrow_ix']
+            else:
+                try:
+                    tb=tbounds[(tbounds['start_time']<=sample['time']) & (tbounds['end_time']>=sample['time'])]
+                    if len(tb):
+                        tvar_ix=tb[0]['cvrow_ix']
+                except:
+                    pass
+        if tvar_ix>=0:
+            return tvars[tvar_ix]
+            
     def getSeriesPeriodForTime(self, atime, positions='current'):
         """
         :param atime: the time to find the series for (if any)
@@ -907,6 +948,7 @@ class MarkWriteProject(object):
 
     def openFromProjectFile(self, proj_file_path, fimporter):
         PenDataSegmentCategory.clearSegmentCache()
+        updateDataFileLoadingProgressDialog(self._mwapp,10)
         projdict = fimporter(*os.path.split(proj_file_path))
         projattrnames = projdict.keys()
 
@@ -920,17 +962,21 @@ class MarkWriteProject(object):
             aval = projdict[aname]
             setattr(self,aname,aval)
             projdict[aname]=None
+            updateDataFileLoadingProgressDialog(self._mwapp,4)
+            
         del projdict
 
         self.segmenttree = PenDataSegmentCategory.fromDict(segmenttree, self, None)
-
+        updateDataFileLoadingProgressDialog(self._mwapp,10)
+ 
         if self._mwapp:
             if self._selectedtimeregion is None:
                 MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(project=self)
             else:
                 MarkWriteProject._selectedtimeregion.project = self
         self.modified = False
-
+        updateDataFileLoadingProgressDialog(self._mwapp)
+ 
     def close(self):
         """
         Close the MarkWrite project, including closing any imported data files.

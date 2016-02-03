@@ -82,6 +82,29 @@ def contiguous_regions(condition):
 
     return starts, stops, lengths
 
+# Pen Sample field conversions
+
+SAMPLE_STATES=dict()
+# A sample that is the first sample following a time gap in the sample stream
+SAMPLE_STATES['FIRST_ENTER'] = 1
+# A sample that is the first sample with pressure == 0
+# following a sample with pressure > 0
+SAMPLE_STATES['FIRST_HOVER'] = 2
+# A sample that has pressure == 0, and previous sample also had pressure  == 0
+SAMPLE_STATES['HOVERING'] = 4
+# A sample that is the first sample with pressure > 0
+# following a sample with pressure == 0
+SAMPLE_STATES['FIRST_PRESS'] = 8
+#  A sample that has pressure > 0
+# following a sample with pressure > 0
+SAMPLE_STATES['PRESSED'] = 16
+for k,v in SAMPLE_STATES.items():
+    SAMPLE_STATES[v]=k
+
+def convertSampleStateValue(sv):
+    return [v for k, v in SAMPLE_STATES.items() if isinstance(k,int) and sv&k==k]
+
+
 # Misc.
 
 def getFilteredStringList(slist, filterstr):

@@ -867,6 +867,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                             if len(wmproj.segmenttree.children) == 0:
                                 for i, atrial in enumerate(wmproj.trial_boundaries):
                                     self.createTrialSegment("Trial%d"%(i+1),(atrial['start_time'],atrial['end_time']))
+                                wmproj._mapTrialConditions2TrialSegments()
                         if len(wmproj.segmenttree.children) > 0:
                             self.setActiveObject(self.project.segmenttree.children[0])
                         else:

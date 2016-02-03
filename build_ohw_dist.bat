@@ -17,7 +17,7 @@ REM **** Not rebuilding psychopy at this time,
 REM      since the latest psychopy source breaks 
 REM      iohub.wintab. See https://github.com/isolver/OpenHandWrite/issues/160
 REM
-REM set PSYCHOPY_SRC_DIR=%~dp0..\WinPython-32bit-2.7.6.0\my-code\psychopy
+set PSYCHOPY_SRC_DIR=%~dp0..\WinPython-32bit-2.7.6.0\my-code\psychopy
 REM REM >>> Build latest PsychoPy package from local source
 REM echo Building latest PsychoPy Source ...
 REM cd %PSYCHOPY_SRC_DIR%

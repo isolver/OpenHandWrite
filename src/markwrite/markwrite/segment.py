@@ -70,6 +70,8 @@ class PenDataSegmentCategory(object):
         # If a segment is locked, it can not be deleted or modified.
         self._locked=False
 
+        self._cond_vars=None
+        
         if project:
             if isinstance(project,ProxyType):
                 PenDataSegmentCategory._project = project
@@ -126,6 +128,17 @@ class PenDataSegmentCategory(object):
     def locked(self, n):
         self._locked = n
 
+    @property
+    def cond_vars(self):
+        if self._cond_vars:
+            return self._cond_vars
+        if self.l1seg:
+            return self.l1seg._cond_vars
+
+    @cond_vars.setter
+    def cond_vars(self, cv):
+        self._cond_vars = cv
+        
     @property
     def children(self):
         return self._childsegments
@@ -283,7 +296,7 @@ class PenDataSegmentCategory(object):
             return self
         elif len(segtree) > 1:
             return segtree[-2]
-
+            
     @property
     def pendata(self):
         return self._project.pendata
