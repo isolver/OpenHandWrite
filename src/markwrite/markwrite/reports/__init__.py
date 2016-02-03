@@ -289,33 +289,37 @@ class ReportExporter(object):
         """
         cls.project = project
         try:
+            
             import pyqtgraph
             with codecs.open(file_path, "w", "utf-8") as f:
-                with pyqtgraph.ProgressDialog(cls.progress_dialog_title, 0,cls.datarowcount()) as dlg:
-
-                    rp = cls.preamble()
-                    if len(rp)>0:
-                        # TODO: Should split into lines and prefix each line
-                        # with a 'comment' character(s), like '#' is used in python
-
-                        f.write(cls.preamble()+cls.nl)
-
-                    if len(cls.columnnames())>0:
-                        f.write(cls.sep.join(cls.columnnames())+cls.nl)
-
-                    rowformatstr=cls.rowformat()
-                    ri = 0
+                rp = cls.preamble()
+                if len(rp)>0:
+                    # TODO: Should split into lines and prefix each line
+                    # with a 'comment' character(s), like '#' is used in python
+                    f.write(cls.preamble()+cls.nl)
+                if len(cls.columnnames())>0:
+                    f.write(cls.sep.join(cls.columnnames())+cls.nl)
+                rowformatstr=cls.rowformat()
+                ri = 0
+ 
+                if project._mwapp:                 
+                    with pyqtgraph.ProgressDialog(cls.progress_dialog_title, 0,cls.datarowcount(), cancelText=None) as dlg:     
+                        for row in cls.datarows():
+                            row.extend([cls.missingval,]*(cls.columncount()-len(row)))
+                            f.write(rowformatstr.format(*row))
+    
+                            if ri%cls.progress_update_rate==0:
+                                dlg.setValue(ri)
+                            if dlg.wasCanceled():
+                                # TODO: Should the incomplete report file be deleted
+                                #       if dialog is cancelled?
+                                break
+                            ri+=1
+                else:
                     for row in cls.datarows():
                         row.extend([cls.missingval,]*(cls.columncount()-len(row)))
                         f.write(rowformatstr.format(*row))
-
-                        if ri%cls.progress_update_rate==0:
-                            dlg.setValue(ri)
-                        if dlg.wasCanceled():
-                            # TODO: Should the incomplete report file be deleted
-                            #       if dialog is cancelled?
-                            break
-                        ri+=1
+                        ri+=1           
             return ri
         except:
             import traceback
@@ -324,8 +328,8 @@ class ReportExporter(object):
             cls.project = None
         return 0
 
-from sample import PenSampleReportExporter
-from segment import SegmentLevelReportExporter
+from .sample import PenSampleReportExporter
+from .segment import SegmentLevelReportExporter
 
 import importlib,inspect
 custom_report_classes = []

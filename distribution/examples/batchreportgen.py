@@ -37,14 +37,25 @@ data_file_paths = getInputFiles(root_input_folder, input_extensions)
 # for each pen data file ...
 for dfp in data_file_paths:
     _,dfname = os.path.split(dfp)
-    print 'Processed',dfp,'->',
     # Create a markwrite project class from the data file. This performs
     # all the same steps as loading the data file from within the MarkWrite GUI
     # including data filtering, sample grouping into series, runs, and strokes.
-    mwp = MarkWriteProject(file_path=dfp,
-                           tstart_cond_name=hdf5_trial_parsing[0],
-                           tend_cond_name=hdf5_trial_parsing[1])
 
+    try:    
+        mwp = MarkWriteProject(file_path=dfp,
+                               tstart_cond_name=hdf5_trial_parsing[0],
+                               tend_cond_name=hdf5_trial_parsing[1])
+    except:
+        print
+        print '----------------'
+        print 'Error creating report for',dfp
+        import traceback
+        traceback.print_exc()
+        print '----------------'
+        print
+        continue
+
+    print 'Processed',dfp,'->',
     # create the report output folder if needed
     outdirpath = os.path.abspath(os.path.join('.','test_output_reports'))
     if not os.path.exists(outdirpath):
