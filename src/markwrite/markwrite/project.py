@@ -771,7 +771,7 @@ class MarkWriteProject(object):
                     st, et = max(next_units[0]['start_time'],mint), min(self.pendata['time'][next_units[0]['end_ix']-1], maxt)
                 else:
                     st, et = max(next_units[0]['start_time'], mint), min(next_units[0]['end_time'], maxt)
-                if st >= et:
+                if st > et:
                     return None
                 return st, et
             except:
@@ -787,7 +787,7 @@ class MarkWriteProject(object):
                     st, et = max(prev_units[-1]['start_time'], mint), min(self.pendata['time'][prev_units[-1]['end_ix']-1], maxt)
                 else:
                     st, et = max(prev_units[-1]['start_time'], mint), min(prev_units[-1]['end_time'], maxt)
-                if st >= et:
+                if st > et:
                     return None
                 return st, et
             except:
