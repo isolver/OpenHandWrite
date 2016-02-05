@@ -25,7 +25,9 @@ import numpy as np
 import pyqtgraph as pg
 from pyqtgraph import OrderedDict
 
-from file_io import EyePenDataImporter, XmlDataImporter, HubDatastoreImporter, readPickle, writePickle,SAMPLE_STATES
+from file_io import EyePenDataImporter, XmlDataImporter, HubDatastoreImporter 
+from file_io import TabDelimitedDataImporter, readPickle, writePickle
+from file_io import SAMPLE_STATES
 from segment import PenDataSegment, PenDataSegmentCategory
 from util import contiguous_regions, getFilteredStringList
 from gui.projectsettings import SETTINGS
@@ -183,11 +185,12 @@ class MarkWriteProject(object):
                             'segmenttree'
                             )
     input_file_loaders=dict(xml=XmlDataImporter,
-                            txyp=EyePenDataImporter,
+                            txyp=TabDelimitedDataImporter,
+                            eptxyp=EyePenDataImporter,
                             hdf5=HubDatastoreImporter,
                             mwp=readPickle)
     _selectedtimeregion=None
-    schema_version = "0.1"
+    schema_version = "0.2"
     def __init__(self, name=u"New", file_path=None, mwapp=None, tstart_cond_name=None, tend_cond_name=None):
         """
         The MarkWriteProject class represents a MarkWrite project created using

@@ -16,10 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import division
 import numpy as np
-from util import getSegmentTagsFilePath, SAMPLE_STATES
+from util import getSegmentTagsFilePath, SAMPLE_STATES, contiguous_regions
 import codecs
 import os
 import traceback
+from gui.projectsettings import SETTINGS
             
 markwrite_pendata_format = [('time', np.float64),
                     ('x', np.int32),
@@ -40,15 +41,17 @@ markwrite_pendata_format = [('time', np.float64),
 class DataImporter(object):
     '''
     Parent class for all data import formatters. Each subclass must implement
-    the .validate(file_path) and .parse(file_path).
+    the .validate(file_path), .parse(file_path), and optionally 
+    .setstatusdata(pendata)
 
     Use .asarray(file_path) to return the formatted input data as a numpy array
-    with dtype: [('time', np.int64),
-                 ('x', np.int32),
-                 ('y', np.int32),
-                 ('pressure', np.int32),
-                 ('tag_ix', np.uint32)]
+    with dtype markwrite_pendata_format
+    
+    The array returned by .asarray() will already have already had status data
+    processed by the setstatusdata() implementaton. Default setstatusdata 
+    is a direct pass through of the pendata array, with no changes made.
     '''
+    _ADD_SAMPLE_COL_COUNT = 8
     def __init__(self):
         pass
 
@@ -68,11 +71,11 @@ class DataImporter(object):
         Return a list of tuples, with each tuple representing a single data
         point parsed from the file. Each tuple must have 5 elements, with the
         following format:
-            0,  'time', long
+            0,  'time', double
             1,  'x', int
             2,  'y', int
             3,  'pressure', int
-            4,  0, int
+            4,  'status', uint8
 
         For example, a list with three data points would look like:
 
@@ -98,10 +101,25 @@ class DataImporter(object):
         '''
         if cls.validate(file_path) is False:
             raise IOError("File could not be imported. Invalid format for DataImporter.")
-        return np.asarray(cls.parse(file_path), markwrite_pendata_format)
 
+        txyps_array = [s+(0,)*cls._ADD_SAMPLE_COL_COUNT for s in cls.parse(file_path)]        
+        
+        return cls.postprocess(np.asarray(txyps_array, markwrite_pendata_format))
+
+    @classmethod
+    def postprocess(cls, pendata):
+        """
+        Process the pendata array, updating sample data as needed. 
+        
+        Intended to be used to set the status column of the sample array 
+        for data file types that do not provide status information, or can not
+        set it within the .parse() method
+        
+        Default implementation is to return the pendata array unmodified.
+        """
+        return pendata
 #
-# Tab Delimited File Importer
+# E&P Syle Text File Importer (*.eptxyp)
 #
 
 class EyePenDataImporter(DataImporter):
@@ -153,16 +171,8 @@ class EyePenDataImporter(DataImporter):
                          xp,
                          yp,
                          spress,
-                         status, # state field
-                         0, # x_filtered, filled in by markwrite runtime
-                         0, # y_filtered, filled in by markwrite runtime
-                         0, # pressure_filtered, filled in by markwrite runtime
-                         0, # x_velocity, filled in by markwrite runtime
-                         0, # y_velocity, filled in by markwrite runtime
-                         0, # xy_velocity, filled in by markwrite runtime
-                         0, # xy_accell, filled in by markwrite runtime
-                         0) #segment_id, filled in by markwrite runtime
-
+                         status
+                         ) 
                     last_sample=dsample
                     list_result.append(dsample)
 
@@ -171,7 +181,152 @@ class EyePenDataImporter(DataImporter):
 
         return list_result
 #
-# ioHub HDF5 File Importer
+# Generic Tab Delimited File Importer  (*.txyp)
+#
+class TabDelimitedDataImporter(DataImporter):
+    TIME_COLUMN_IX = 0
+    X_COLUMN_IX = 1
+    Y_COLUMN_IX = 2
+    PRESS_COLUMN_IX = 3
+
+    DATA_START_LINE_INDEX = 1
+
+    def __init__(self):
+        DataImporter.__init__(self)
+
+    @classmethod
+    def validate(cls, file_path):
+        line1 = u'T	X	Y	P'
+        with codecs.open(file_path, "r", "utf-8") as f:
+            ffl1=f.readline()
+            return ffl1.startswith(line1)
+        return False
+
+    @classmethod
+    def parse(cls, file_path):
+        list_result = []
+        with codecs.open(file_path, "r", "utf-8") as f:
+            for line_index, tab_line in enumerate(f):
+                if line_index < cls.DATA_START_LINE_INDEX:
+                    # skip hearer row
+                    continue
+                try:
+                    line_tokens = tab_line.split(u'\t')
+                    list_result.append(
+                    (float(line_tokens[cls.TIME_COLUMN_IX].strip())/1000.0,
+                         int(line_tokens[cls.X_COLUMN_IX].strip()),
+                         int(line_tokens[cls.Y_COLUMN_IX].strip()),
+                         int(line_tokens[cls.PRESS_COLUMN_IX].strip(u' \r\n')),
+                         0
+                         ))
+
+                except IndexError:
+                    print("Note: Skipping Line {0}. Contains {1} Tokens.".format(len(list_result), len(line_tokens)))
+
+        return list_result
+
+    @classmethod
+    def postprocess(cls,pendata):
+        # Set initial sample state to HOVERING or PRESSED based on pressure
+        pendata['state'][pendata['pressure']==0]=SAMPLE_STATES["HOVERING"]
+        pendata['state'][pendata['pressure']>0]=SAMPLE_STATES["PRESSED"]
+
+        # Calculate ISI value for samples 1-N
+        sample_dts = pendata['time'][1:]-pendata['time'][:-1]
+                
+        # Handle non monotonic time stamped samples
+        non_mono_ix = (sample_dts < 0.0).nonzero()[0]    
+        if len(non_mono_ix)>0:
+            non_mono_ix = non_mono_ix + 1
+            print ">>>>>>>"
+            print "WARNING: Non-monotonic Timestamps Detected."
+            print "         Removing %d sample(s) with negative ISIs...."%(len(non_mono_ix))
+            print "         Sample Indices:",non_mono_ix
+            print "<<<<<<<"
+            print
+            # TODO: This code needs updating, it is a quick and dirty fix.
+            #       Simply removes samples with negative ISI. In Guidos files,
+            #       this seems to only occur within the first few samples
+            #       of the file, if at all.
+            pendata = np.delete(pendata,non_mono_ix)
+            sample_dts = pendata['time'][1:]-pendata['time'][:-1]
+
+        #
+        # Detect Series Boundaries Using an ISI Threshold alg.
+        #
+        # Determine ISI threshold value to use
+        if SETTINGS['series_detect_max_isi_msec'] > 0:
+            series_isi_thresh = SETTINGS['series_detect_max_isi_msec']/1000.0
+        else:
+            series_isi_thresh = np.percentile(sample_dts,99.0,interpolation='nearest')*2.5
+        print "series_isi_thresh:",series_isi_thresh
+        print
+        
+        # Find sample array ix where ISI threshold is exceeded.
+        # These are the series start ix
+        series_start_ixs = (sample_dts > series_isi_thresh).nonzero()[0]
+        if len(series_start_ixs)>0:
+            series_start_ixs=series_start_ixs+1
+        # First sample in data file is always a series start.
+        series_start_ixs = np.insert(series_start_ixs, 0, 0)
+        # Create list of series_start, series_end indexs for slicing
+        series_bounds = []  # holds (series_start_ix, series_end_ix, 
+                            # series_len, stime, etime, series_dur, series_dur/series_len)
+        for i, start_ix in enumerate(series_start_ixs[:-1]):
+            end_ix = series_start_ixs[i+1]
+            stime, etime = pendata['time'][[start_ix,end_ix-1]]
+            sdur = etime - stime 
+            slen = end_ix-start_ix
+            series_bounds.append((start_ix,end_ix,
+                                  slen,stime, etime,sdur,sdur/slen))
+        start_ix, end_ix = series_start_ixs[-1], len(pendata)
+        stime, etime = pendata['time'][[start_ix,end_ix-1]]
+        sdur = etime - stime 
+        slen = end_ix-start_ix                         
+        series_bounds.append((start_ix,end_ix,
+                              slen,stime, etime,sdur,sdur/(slen-1)))
+
+        # For each Sample Series in the data file,
+        # 1) handle duplicate sample timestamps
+        # 2) set FIRST_PRESS and FIRST_HOVER sample status as needed. 
+        for i, sb in enumerate(series_bounds):
+            # Cleanup duplicate timestamps after series bounds have been found
+            # TODO: This code needs updating, it is a quick and dirty fix.
+            #       A constant ISI across all series should really be used.
+            dup_ix = (sample_dts[sb[0]:sb[1]] == 0.0).nonzero()[0]# + sb[0]    
+            if len(dup_ix)>0:
+                start_ix, end_ix, slen, stime, etime, sdur, sampling_interval = sb
+                calc_sample_times, calc_isi = np.linspace(etime-slen*sampling_interval,etime,slen,retstep=True)
+                print ">>>>>>>"
+                print "Warning: Duplicate timestamps found in series", i+1, (stime, etime)
+                print "         Sample / Duplicate Count:",slen,'/',len(dup_ix)
+                print "         Calc. Series ISI:",calc_isi
+                print "         Updating Series sample times......."
+                print "<<<<<<<"
+                print
+                pendata['time'][start_ix:end_ix] = calc_sample_times[:]
+
+            # Update sample state field to include FIRST_PRESS as needed
+            run_start_ixs, _, _ = contiguous_regions(pendata['state'][sb[0]:sb[1]] == SAMPLE_STATES["PRESSED"])
+            if len(run_start_ixs):
+                run_start_ixs = np.array(run_start_ixs, dtype=np.uint32) + sb[0]
+                pendata['state'][run_start_ixs]+= SAMPLE_STATES['FIRST_PRESS']        
+            # Update sample state field to include FIRST_HOVER as needed
+            hover_start_ixs, _, _ = contiguous_regions(pendata['state'][sb[0]:sb[1]] == SAMPLE_STATES["HOVERING"])
+            if len(hover_start_ixs):
+                hover_start_ixs = np.array(hover_start_ixs, dtype=np.uint32) + sb[0]
+                pendata['state'][hover_start_ixs]+= SAMPLE_STATES['FIRST_HOVER']
+
+        # For whole sample array, update series start sample's status
+        # with FIRST_ENTER value.
+        if len(series_start_ixs):
+            pendata['state'][series_start_ixs] += SAMPLE_STATES['FIRST_ENTER']        
+        
+        # Return pendata array with sample state field populated.
+        return pendata
+
+#
+# ioHub HDF5 File Importer  (*.hdf5)
 #
 from tables import openFile
 from collections import namedtuple
@@ -252,16 +407,8 @@ class HubDatastoreImporter(DataImporter):
                              r['x'],
                              r['y'],
                              r['pressure'],
-                             r['status'], # state field
-                             0, # x_filtered, filled in by markwrite runtime
-                             0, # y_filtered, filled in by markwrite runtime
-                             0, # pressure_filtered, filled in by  runtime
-                             0, # x_velocity, filled in by markwrite runtime
-                             0, # y_velocity, filled in by markwrite runtime
-                             0, # xy_velocity, filled in by markwrite runtime
-                             0, # xy_accell, filled in by markwrite runtime
-                             0) #segment_id, filled in by markwrite runtime
-                                )
+                             r['status'] # state field
+                             ))
 
         try:
             cls.exp_condvars = None
@@ -279,10 +426,10 @@ class HubDatastoreImporter(DataImporter):
 
     def __del__(self):
         self._close()
-#
-# XML Format Importer
-#
 
+#
+# XML Format Importer (*.xml)
+#
 import xml.etree.ElementTree as ET
 
 class XmlDataImporter(DataImporter):
@@ -315,20 +462,9 @@ class XmlDataImporter(DataImporter):
                                 int(stroke.get("X")),
                                 int(stroke.get("Y")),
                                 1, # pressure, always 1
-                                status, # state field
-                                0, # x_filtered, filled in by markwrite runtime
-                                0, # y_filtered, filled in by markwrite runtime
-                                0, # pressure_filtered, filled in by  runtime
-                                0, # x_velocity, filled in by markwrite runtime
-                                0, # y_velocity, filled in by markwrite runtime
-                                0, # xy_velocity, filled in by markwrite runtime
-                                0, # xy_accell, filled in by markwrite runtime
-                                0) #segment_id, filled in by markwrite runtime
-                                )
+                                status))
                 si+=1
-            #last_point = list(list_result[-1])
-            #last_point[3] = 0  # Set pressure to 0 for last point
-            #list_result[-1]=tuple(last_point)
+
         return list_result
 
 ################################################################################

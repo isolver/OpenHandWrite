@@ -874,19 +874,13 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                             self.setActiveObject(self.project.segmenttree.children[0])
                         else:
                             wmproj.selectedtimeregion.setRegion([wmproj.pendata['time'][0], wmproj.pendata['time'][0] + 1.0])
-
-                        dlg.setValue(dlg.maximum())
-                        dlg.hide()
                 except:
                     import traceback
-
-                    traceback.print_exc()
                     ErrorDialog.info_text = u"An error occurred while " \
-                                            u"opening:\n%s\nMarkWrite will " \
-                                            u"now close." % (
-                    file_path)
+                                            u"opening: %s\n\n%s"%(file_path,
+                                                        traceback.format_exc())
                     ErrorDialog().display()
-                    self.closeEvent(u'FORCE_EXIT')
+                    #self.closeEvent(u'FORCE_EXIT')
                 finally:
                     self._progressdlg=None
 

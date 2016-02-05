@@ -89,9 +89,9 @@ def fileOpenDlg(tryFilePath="",
     """
 
     if allowed is None:
-        allowed = "Supported files (*.txyp *.xml *.hdf5 *.mwp);;"
-                  #"Data Files (*.txyp *.xml);;"
-                  #"Project Files (*.mwp);;"
+        from markwrite.project import MarkWriteProject
+        ftypes = ' *.'.join(MarkWriteProject.input_file_loaders.keys())
+        allowed = "Supported files (*.%s);;"%ftypes
     fdlg = QtGui.QFileDialog.getOpenFileName
     if allow_multiple_select is True:
         fdlg = QtGui.QFileDialog.getOpenFileNames
