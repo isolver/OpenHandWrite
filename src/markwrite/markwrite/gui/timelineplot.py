@@ -17,56 +17,22 @@
 
 import numpy as np
 import pyqtgraph as pg
+import pyqtgraph.exporters
 from pyqtgraph.Qt import QtGui
 from weakref import proxy,ProxyType
 from markwrite.gui import X_FIELD, Y_FIELD
 from markwrite.gui.projectsettings import SETTINGS
 from markwrite.gui.mainwin import MarkWriteMainWindow
 from markwrite.segment import PenDataSegment
+from markwrite.gui.dialogs import fileSaveDlg
 
 class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
     displayVelocityTrace = True
     displayStrokePoints = True
-
-    def addSubPlot(self,name, row, **kwargs):
-        if name in self.dataplots.keys():
-            return None
-        self.dataplots[name] = self.addPlot(name=name, row=row, col=0)
-        for k,v in kwargs.items():
-            a = getattr(self.dataplots[name], k, None)#, v)
-            if a is None:
-                a = getattr(self.dataplots[name].getViewBox(), k, None)
-
-            if a and callable(a):
-                if isinstance(v, dict):
-                    a(**v)
-                else:
-                    a(v)
-            else:
-                setattr(a, k, v)
-
-        # Add an attribute to the class that allows access to the
-        # newly added plot item.
-
-        setattr(self, name, self.dataplots[name])
-        return self.dataplots[name]
-
-    def addPlotLineItem(self,plot_name, item_name, **kwargs):
-        plot = self.dataplots.get(plot_name,None)
-        if plot:
-            aplotsitems = self.plotitems.setdefault(plot_name,{})
-            plotitem = aplotsitems.get(item_name)
-            if plotitem is None:
-                aplotsitems[item_name]=plot.plot(**kwargs)
-                return True
-            else:
-                plotitem.setData(**kwargs)
-                return False
-
     def __init__(self):
         pg.GraphicsLayoutWidget.__init__(self)
         # Create Pen Position Time Series Plot for All Data
-
+        
         self.dataplots=dict()
         self.plotitems=dict()
 
@@ -93,6 +59,53 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
             self.handleResetPenData)
         MarkWriteMainWindow.instance().sigActiveObjectChanged.connect(
             self.handleSelectedObjectChanged)
+
+
+    def contextMenuEvent(self, event):
+        menu = QtGui.QMenu(self)
+        quitAction = menu.addAction("Export")
+        action = menu.exec_(self.mapToGlobal(event.pos()))
+        if action == quitAction:
+            exporter = pg.exporters.ImageExporter(self.ci)
+            apath = fileSaveDlg(initFileName="timeline_view.png",
+                        prompt=u"Save Timeline View as Image",
+                        allowed="*.png")
+            if apath:
+                exporter.export(apath)
+            
+    def addSubPlot(self,name, row, **kwargs):
+        if name in self.dataplots.keys():
+            return None
+        self.dataplots[name] = self.addPlot(name=name, row=row, col=0)
+        for k,v in kwargs.items():
+            a = getattr(self.dataplots[name], k, None)#, v)
+            if a is None:
+                a = getattr(self.dataplots[name].getViewBox(), k, None)
+
+            if a and callable(a):
+                if isinstance(v, dict):
+                    a(**v)
+                else:
+                    a(v)
+            else:
+                setattr(a, k, v)
+
+        # Add an attribute to the class that allows access to the
+        # newly added plot item.
+        setattr(self, name, self.dataplots[name])
+        return self.dataplots[name]
+
+    def addPlotLineItem(self,plot_name, item_name, **kwargs):
+        plot = self.dataplots.get(plot_name,None)
+        if plot:
+            aplotsitems = self.plotitems.setdefault(plot_name,{})
+            plotitem = aplotsitems.get(item_name)
+            if plotitem is None:
+                aplotsitems[item_name]=plot.plot(**kwargs)
+                return True
+            else:
+                plotitem.setData(**kwargs)
+                return False
 
     @property
     def bottom_plot(self):

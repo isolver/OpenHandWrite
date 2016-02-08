@@ -16,15 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
 import pyqtgraph as pg
+import pyqtgraph.exporters
+from pyqtgraph.Qt import QtGui
 from markwrite.gui.projectsettings import SETTINGS
 from markwrite.gui.mainwin import MarkWriteMainWindow
 from markwrite.segment import PenDataSegment
 from markwrite.gui import X_FIELD, Y_FIELD
+from markwrite.gui.dialogs import fileSaveDlg
 
 class PenDataSpatialPlotWidget(pg.PlotWidget):
     def __init__(self):
         pg.PlotWidget.__init__(self, enableMenu=False)
-
         self._level1Segment=None
 
         self.getPlotItem().invertY(SETTINGS['spatialplot_invert_y_axis'])
@@ -43,6 +45,18 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         MarkWriteMainWindow.instance().sigActiveObjectChanged.connect(
             self.handleSelectedObjectChanged)
 
+    def contextMenuEvent(self, event):
+        menu = QtGui.QMenu(self)
+        quitAction = menu.addAction("Export")
+        action = menu.exec_(self.mapToGlobal(event.pos()))
+        if action == quitAction:
+            exporter = pg.exporters.ImageExporter(self.plotItem)
+            apath = fileSaveDlg(initFileName="spatial_view.png",
+                        prompt=u"Save Spatial View as Image",
+                        allowed="*.png")
+            if apath:
+                exporter.export(apath)
+                
     def createDefaultPenBrushForData(self, pdat):
         pen = pg.mkPen(SETTINGS['spatialplot_default_color'],
                        width=SETTINGS['spatialplot_default_point_size'])
