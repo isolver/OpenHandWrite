@@ -853,7 +853,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 try:
                     import os
                     _, fname = os.path.split(file_path)
-                    with pg.ProgressDialog("Loading Pen Data from: {}".format(fname), minimum=0, wait=0, maximum=100, parent=self, busyCursor=False) as dlg:
+                    with pg.ProgressDialog(u"Loading Pen Data from: {}".format(fname), minimum=0, wait=0, maximum=100, parent=self, busyCursor=False) as dlg:
                         dlg+=1
                         self._progressdlg=dlg
                         QtGui.QApplication.processEvents()
@@ -938,7 +938,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         default_file_name = u"{}_{}.txt".format(reportcls.outputfileprefix(),self.project.name)
         file_path = fileSaveDlg(initFilePath=self.project.projectfileinfo['folder'],
                                 initFileName=default_file_name,
-                                prompt="Export %s"%(reportcls.reportlabel()))
+                                prompt=u"Export %s"%(reportcls.reportlabel()))
         if file_path:
             reportcls().export(file_path, self.project)
 
