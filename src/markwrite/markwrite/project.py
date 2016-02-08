@@ -293,7 +293,9 @@ class MarkWriteProject(object):
 
     def _detectAssociatedSegmentTagsFile(self,dir_path,fname,fext):
         tag_list=[]
-        same_named_files = glob.glob(os.path.join(dir_path,fname+u'.*'))
+        same_named_files = [tagsf for tagsf in glob.glob(os.path.join(
+                                            dir_path,fname+u'.*')) if tagsf[
+                                            tagsf.rfind(u'.')+1:] not in self.input_file_loaders.keys()]
         if len(same_named_files)<2:
             return tag_list
 
