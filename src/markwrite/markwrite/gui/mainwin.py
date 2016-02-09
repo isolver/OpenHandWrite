@@ -43,14 +43,14 @@ DEFAULT_DOCK_PLACEMENT = {
 
 shortcutkey2action=dict()
 
-ABOUT_DIALOG_TEXT = """
+ABOUT_DIALOG_TEXT = u"""
 <b> MarkWrite v%s</b> <br>
 This software is GLP v3 licensed.<br>
 <br>
 See licence.txt for license details.
 """%(markwrite_version)
 
-ABOUT_DIALOG_TITLE = "About MarkWrite"
+ABOUT_DIALOG_TITLE = u"About MarkWrite"
 
 
 def showNotImplementedDialog(widget, title=None, msg=None, func_name=None):
@@ -120,7 +120,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.sigRegionChangedProxy = None
 
         self.sigProjectChanged.connect(self.handleProjectChange)
-        #self.sigSelectedPenDataUpdate.connect(self.handleSelectedPenDataUpdate)
         self.sigAppSettingsUpdated.connect(self._penDataTimeLineWidget.handleUpdatedSettingsEvent)
         self.sigAppSettingsUpdated.connect(self._penDataSpatialViewWidget.handleUpdatedSettingsEvent)
         self.sigAppSettingsUpdated.connect(self._selectedPenDataViewWidget.handleUpdatedSettingsEvent)
@@ -1065,15 +1064,12 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.exportSampleReportAction.setEnabled(True)
 
     def zoomInTimeline(self):
-        # TODO: Move method to _penDataTimeLineWidget
         self._penDataTimeLineWidget.scaleBy(x=0.5)
 
     def zoomOutTimeline(self):
-        # TODO: Move method to _penDataTimeLineWidget
         self._penDataTimeLineWidget.scaleBy(x=2.0)#,center=(xmin+xmax)/2)
 
     def gotoSelectTimelinePeriod(self):
-        # TODO: Move method to _penDataTimeLineWidget
         xmin, xmax , selpendat= self._penDataTimeLineWidget.currentSelection.selectedtimerangeanddata
         xpad = (xmax-xmin)/2
         pdat=self.project.pendata
@@ -1087,7 +1083,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self._penDataTimeLineWidget.setPlotRange(xrange=rx, yrange=ry)
 
     def jumpTimeSelectionForward(self):
-        # TODO: Move method to _penDataTimeLineWidget
         xmin, xmax = self.project.selectedtimeregion.getRegion()
         pendata_ix_range = self.project.segmenttree.calculateTrimmedSegmentIndexBoundsFromTimeRange(xmin, xmax)
         if len(pendata_ix_range):
@@ -1112,7 +1107,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 self._penDataTimeLineWidget.translateViewBy(x=(nxmax-vmax)*1.25)
 
     def jumpTimeSelectionBackward(self):
-        # TODO: Move method to _penDataTimeLineWidget
         if 0:
             xmin, xmax = self.project.selectedtimeregion.getRegion()
             nxmax =xmin-0.001
@@ -1153,7 +1147,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                     self._penDataTimeLineWidget.translateViewBy(x=(nxmin-vmin)*1.25)
 
     def handleSelectedPenDataUpdate(self):
-        #print '>> App.handleSelectedPenDataUpdate:',timeperiod
         if self.project is None:
             return
 
@@ -1166,14 +1159,11 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         self.createSegmentAction.setEnabled(self.project and self.project.isSelectedDataValidForNewSegment())
 
-        #print '<< App.handleSelectedPenDataUpdate'
-
     def handleDisplayAppSettingsDialogEvent(self):
         updatedsettings, allsettings, savestate, ok = ProjectSettingsDialog.getProjectSettings(self)
         if ok is True:
             if len(updatedsettings)>0:
                 writePickle(self._appdirs.user_config_dir,u'usersettings.pkl', SETTINGS)
-                #print "MAINWIN.writePickle called:",SETTINGS
                 self.updateActionToolTipText()
             if self.project:
                 self.sigAppSettingsUpdated.emit(updatedsettings, allsettings)

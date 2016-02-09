@@ -17,7 +17,7 @@
 import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.exporters
-from pyqtgraph.Qt import QtGui
+from pyqtgraph.Qt import QtGui, QtCore
 from markwrite.gui.projectsettings import SETTINGS
 from markwrite.gui.mainwin import MarkWriteMainWindow
 from markwrite.segment import PenDataSegment
@@ -36,6 +36,8 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         self.selectedPlotDataItem = None
         self.strokeBoundaryPoints = None
 
+        self._enablePopupDisplay = True
+        
         MarkWriteMainWindow.instance().sigResetProjectData.connect(
             self.handleResetPenData)
         MarkWriteMainWindow.instance().sigSegmentRemoved.connect(
@@ -45,17 +47,27 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         MarkWriteMainWindow.instance().sigActiveObjectChanged.connect(
             self.handleSelectedObjectChanged)
 
+    def mouseMoveEvent(self, event):
+        super(PenDataSpatialPlotWidget,self).mouseMoveEvent(event)
+        if (self._enablePopupDisplay is True and event.buttons() and not 
+                (event.buttons()&QtCore.Qt.LeftButton==QtCore.Qt.LeftButton)):
+            self._enablePopupDisplay = False
+        elif not event.buttons():
+            self._enablePopupDisplay = True
+            
     def contextMenuEvent(self, event):
-        menu = QtGui.QMenu(self)
-        quitAction = menu.addAction("Export")
-        action = menu.exec_(self.mapToGlobal(event.pos()))
-        if action == quitAction:
-            exporter = pg.exporters.ImageExporter(self.plotItem)
-            apath = fileSaveDlg(initFileName="spatial_view.png",
-                        prompt=u"Save Spatial View as Image",
-                        allowed="*.png")
-            if apath:
-                exporter.export(apath)
+        if self._enablePopupDisplay:
+            menu = QtGui.QMenu(self)
+            quitAction = menu.addAction("Save as Image")
+            action = menu.exec_(self.mapToGlobal(event.pos()))
+            if action == quitAction:
+                exporter = pg.exporters.ImageExporter(self.plotItem)
+                apath = fileSaveDlg(initFileName="spatial_view.png",
+                            prompt=u"Save Spatial View as Image",
+                            allowed="*.png")
+                if apath:
+                    exporter.export(apath)
+        self._enablePopupDisplay = True
                 
     def createDefaultPenBrushForData(self, pdat):
         pen = pg.mkPen(SETTINGS['spatialplot_default_color'],

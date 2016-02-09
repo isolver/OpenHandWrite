@@ -18,7 +18,7 @@
 import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.exporters
-from pyqtgraph.Qt import QtGui
+from pyqtgraph.Qt import QtGui, QtCore
 from weakref import proxy,ProxyType
 from markwrite.gui import X_FIELD, Y_FIELD
 from markwrite.gui.projectsettings import SETTINGS
@@ -55,24 +55,34 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
         self._lastselectedtimerange = None
         self._level1Segment = None
 
+        self._enablePopupDisplay = True
         MarkWriteMainWindow.instance().sigResetProjectData.connect(
             self.handleResetPenData)
         MarkWriteMainWindow.instance().sigActiveObjectChanged.connect(
             self.handleSelectedObjectChanged)
 
-
-    def contextMenuEvent(self, event):
-        menu = QtGui.QMenu(self)
-        quitAction = menu.addAction("Export")
-        action = menu.exec_(self.mapToGlobal(event.pos()))
-        if action == quitAction:
-            exporter = pg.exporters.ImageExporter(self.ci)
-            apath = fileSaveDlg(initFileName="timeline_view.png",
-                        prompt=u"Save Timeline View as Image",
-                        allowed="*.png")
-            if apath:
-                exporter.export(apath)
+    def mouseMoveEvent(self, event):
+        super(PenDataTemporalPlotWidget,self).mouseMoveEvent(event)
+        if (self._enablePopupDisplay is True and event.buttons() and not 
+                (event.buttons()&QtCore.Qt.LeftButton==QtCore.Qt.LeftButton)):
+            self._enablePopupDisplay = False
+        elif not event.buttons():
+            self._enablePopupDisplay = True
             
+    def contextMenuEvent(self, event):
+        if self._enablePopupDisplay:
+            menu = QtGui.QMenu(self)
+            quitAction = menu.addAction("Save as Image")
+            action = menu.exec_(self.mapToGlobal(event.pos()))
+            if action == quitAction:
+                exporter = pg.exporters.ImageExporter(self.ci)
+                apath = fileSaveDlg(initFileName="timeline_view.png",
+                            prompt=u"Save Timeline View as Image",
+                            allowed="*.png")
+                if apath:
+                    exporter.export(apath)
+        self._enablePopupDisplay=True
+        
     def addSubPlot(self,name, row, **kwargs):
         if name in self.dataplots.keys():
             return None

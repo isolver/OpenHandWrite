@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import pyqtgraph as pg
 import pyqtgraph.exporters
-from pyqtgraph.Qt import QtGui
+from pyqtgraph.Qt import QtGui, QtCore
 from markwrite.gui.dialogs import fileSaveDlg
 from markwrite.gui import X_FIELD, Y_FIELD
 from markwrite.gui.mainwin import MarkWriteMainWindow
@@ -43,19 +43,31 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
 
         self.strokeBoundaryPoints = None
 
+        self._enablePopupDisplay = True
 
+
+    def mouseMoveEvent(self, event):
+        super(SelectedPointsPlotWidget,self).mouseMoveEvent(event)
+        if (self._enablePopupDisplay is True and event.buttons() and not 
+                (event.buttons()&QtCore.Qt.LeftButton==QtCore.Qt.LeftButton)):
+            self._enablePopupDisplay = False
+        elif not event.buttons():
+            self._enablePopupDisplay = True
+            
     def contextMenuEvent(self, event):
-        menu = QtGui.QMenu(self)
-        quitAction = menu.addAction("Export")
-        action = menu.exec_(self.mapToGlobal(event.pos()))
-        if action == quitAction:
-            exporter = pg.exporters.ImageExporter(self.plotItem)
-            apath = fileSaveDlg(initFileName="selected_data_view.png",
-                        prompt=u"Save Selected Data View as Image",
-                        allowed="*.png")
-            if apath:
-                exporter.export(apath)
-                
+        if self._enablePopupDisplay:
+            menu = QtGui.QMenu(self)
+            quitAction = menu.addAction("Save as Image")
+            action = menu.exec_(self.mapToGlobal(event.pos()))
+            if action == quitAction:
+                exporter = pg.exporters.ImageExporter(self.plotItem)
+                apath = fileSaveDlg(initFileName="selected_data_view.png",
+                            prompt=u"Save Selected Data View as Image",
+                            allowed="*.png")
+                if apath:
+                    exporter.export(apath)
+        self._enablePopupDisplay = True
+
     def createPenBrushCache(self):
         self.qtpenbrushs.clear()
         self.qtpenbrushs['selected_valid_pressed_pen']=pg.mkPen(SETTINGS['spatialplot_selectedvalid_color'],
