@@ -48,7 +48,7 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
             l.setHoverPen(l.hoverPen.color(),width=2)
         self._project = None
         if project:
-            self.project=project
+            self.project=proxy(project)
 
     def mouseClickEvent(self, ev):
         self.project._mwapp.setActiveObject(self)
@@ -67,13 +67,11 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
             return
         pg.LinearRegionItem.lineMoved(self)
         if self.project._mwapp._segmenttree.doNotSetActiveObject is False:
-#            print 'lineMoved:',self.getRegion()
             self.project._mwapp.setActiveObject(self)
 
     def lineMoveFinished(self):
         pg.LinearRegionItem.lineMoveFinished(self)
         if self.project._mwapp._segmenttree.doNotSetActiveObject is False:
-#            print 'lineMoveFinished:',self.getRegion()
             self.project._mwapp.setActiveObject(self)
 
     def getBounds(self):
@@ -83,13 +81,10 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
     def project(self):
         return self._project
 
-    #def setBounds(self, bounds):
-    #    super.setBounds(self, bounds)
-
     @project.setter
     def project(self, p):
         if p is None:
-            self._project = p
+            self._project = proxy(p)
             self.setBounds(bounds=(0,0))
             self.setRegion([0,0])
         else:

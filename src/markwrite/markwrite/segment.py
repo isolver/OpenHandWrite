@@ -398,7 +398,6 @@ class PenDataSegmentCategory(object):
         """
         project_properties = OrderedDict()
         project_properties['Name'] = [self.name,]
-        #project_properties['Locked'] = [self.locked,]
         project_properties['ID'] = [self.id,]
         project_properties['Start Time'] = ["%.3f"%self.starttime,]
         project_properties['End Time'] = ["%.3f"%self.endtime,]
