@@ -22,17 +22,20 @@ all_cap_re = re.compile('([a-z0-9])([A-Z])')
 
 class ReportExporter(object):
     '''
-    To define a new report type that can be used by MarkWrite, a class that
-    implements the ReportExporter interface must be created.
+    ReportExporter is the base class used for any MarkWrite Report.
+    New report types (built-in or user defined), must be a subclass 
+    of ReportExporter.
+    
+    ReportExporter is like a report class template for creating tabular 
+    style reports. A report can have 1 - C named columns, and 0 - R rows.  
+    Each column represents a variable, each row provides the values 
+    for the C variables.
 
-    ReportExporter is the parent class, or in this case more like a report
-    class template, for creating tabular style reports. A report can have
-    1 - C named columns, and 0 - R rows.  Each column represents a variable,
-    each row provides the values for the C variables.
+    Reports are saved as utf-8 encoded text files. The utf-8 encoding is done
+    by the ReportExporter class when the report file is saved, so all string
+    type values returned by a ReportExporter subclass should be 
+    unicode strings,
 
-    Reports are saved as utf-8 encoded text files. The utf-8 encoding is done by
-    the ReportExporter class when the report file is saved, so all string
-    type values returned by a ReportExporter subclass should be unicode strings,
     i.e.
 
         # Good
@@ -42,7 +45,7 @@ class ReportExporter(object):
         astring = 'This is not a unicode string'
 
     If your strings only contain latin-1 characters, then the above will not
-    really  matter.
+    really matter.
 
     A report can have the following parts:
 
@@ -61,13 +64,15 @@ class ReportExporter(object):
          any data type. ReportExporter converts each data row list it receives
          into a ReportExporter.sep separated line, ending with the
          ReportExporter.nl. A report must provide this section, otherwise what
-         would be the point of the report? ;)
+         would be the point of the report? ;) When calculating report values,
+         an instance of the MarkWriteProject class is used to access all pen
+         data, user defined segments, trial condition variables, etc....
 
     To create a new report type, create a subclass of the ReportExporter
     class. At minimum, a ReportExporter subclass must implement the following
     parts of the ReportExporter interface. For the example, we will create a
     report type that simply saves out the pen point samples that were loaded
-    into the project and converted into the project.pendata numpy rec array.
+    into project.pendata as a numpy ndarray.
 
         class RawSampleDataReportExporter(ReportExporter):
             progress_dialog_title = "Saving the Raw Pen Point Sample Report .."
@@ -175,8 +180,8 @@ class ReportExporter(object):
     ## ReportExporter subclass.
     #
 
-    # Can be used within your report code to access the project object,
-    # usually the pendata and segmenttree project attributes.
+    # Can be used within your report code to access the MarkWriteProject 
+    # instance that the report is being generated for.
     project = None
 
     def __init__(self):
@@ -243,10 +248,24 @@ class ReportExporter(object):
 
     @classmethod
     def columncount(cls):
+        """
+        ReportExporter subclasses should not override this method.
+        
+        Return the number of columns in the report for the given MarkWrite
+        project. Note that reports can have different column counts depending
+        on the project data. When a report is generated, every row of the 
+        report will contain columncount() values.
+        
+        Every row of a generated report must return a list with 
+        columncount() elements in it. 
+        """
         return len(cls.columnnames())
 
     @classmethod
     def reportlabel(cls):
+        """
+        ReportExporter subclasses should not override this method.        
+        """
         label = cls.__name__
         if label.endswith('Exporter'):
             label = label[:-8]
@@ -258,12 +277,17 @@ class ReportExporter(object):
 
     @classmethod
     def outputfileprefix(cls):
+        """
+        ReportExporter subclasses should not override this method.        
+        """
         return cls.reportlabel().replace(' ','_')
 
     @classmethod
     def rowformat(cls):
         """
-         :return: list of strings
+        ReportExporter subclasses should not override this method.        
+        
+        :return: list of strings
         """
         rowformater=[]
         for cname in cls.columnnames():
@@ -273,16 +297,17 @@ class ReportExporter(object):
     @classmethod
     def export(cls, file_path, project):
         """
-        This method is called by the MarkWrite application to create and
-        save a report. Subclasses should *not* have to override / change
-        this method.
+        ReportExporter subclasses should not override this method.        
+
+        export() is called by the MarkWrite application to create and
+        save a report.
 
         Example usage:
 
             MyReportExporter.export(path_to_output_file, markwrite_app.project)
 
         :param file_path: Absolute file path to save the report to.
-        :param project: The MarkWrite Project instance that will be used
+        :param project: The MarkWriteProject instance that will be used
                         for data and further calculations by the datarows
                         method.
         :return: None

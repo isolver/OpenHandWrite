@@ -970,8 +970,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 name = unicode(name).strip().replace('\t', "#")
 
                 if len(name) > 0 and ok:
-                    psid = self.project.getSelectedDataSegmentIDs()[0]
-                    new_segment = self.project.createSegmentFromSelectedPenData(name, psid)
+                    psid = self.project._getSelectedDataSegmentIDs()[0]
+                    new_segment = self.project._createSegmentFromSelectedPenData(name, psid)
                     #self.handleSelectedPenDataUpdate(None,None)
                     self.sigSegmentCreated.emit(new_segment)
                     self.setActiveObject(new_segment)
@@ -1205,12 +1205,12 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     # >>>>>>
     # SERIES based selection region actions
     def selectNextSampleSeries(self):
-        seriestimerange = self.project.getNextUnitTimeRange(self.project.series_boundaries)
+        seriestimerange = self.project._getNextUnitTimeRange(self.project.series_boundaries)
         if seriestimerange:
             self.project.selectedtimeregion.setRegion(seriestimerange)
 
     def selectPrevSampleSeries(self):
-        seriestimerange = self.project.getPreviousUnitTimeRange(self.project.series_boundaries)
+        seriestimerange = self.project._getPreviousUnitTimeRange(self.project.series_boundaries)
         if seriestimerange:
             self.project.selectedtimeregion.setRegion(seriestimerange)
 
@@ -1230,13 +1230,13 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     # >>>>>>
     # RUN based selection region actions
     def selectNextPressedRun(self):
-        runtimerange = self.project.getNextUnitTimeRange(self.project.run_boundaries)
+        runtimerange = self.project._getNextUnitTimeRange(self.project.run_boundaries)
 
         if runtimerange:
             self.project.selectedtimeregion.setRegion(runtimerange)
 
     def selectPrevPressedRun(self):
-        runtimerange = self.project.getPreviousUnitTimeRange(self.project.run_boundaries)
+        runtimerange = self.project._getPreviousUnitTimeRange(self.project.run_boundaries)
         if runtimerange:
             self.project.selectedtimeregion.setRegion(runtimerange)
 
@@ -1256,12 +1256,12 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     # >>>>>>
     # STROKE based selection region actions
     def selectNextStroke(self):
-        stroketimerange = self.project.getNextUnitTimeRange(self.project.stroke_boundaries, adjust_end_time = True)
+        stroketimerange = self.project._getNextUnitTimeRange(self.project.stroke_boundaries, adjust_end_time = True)
         if stroketimerange:
             self.project.selectedtimeregion.setRegion(stroketimerange)
 
     def selectPrevStroke(self):
-        stroketimerange = self.project.getPreviousUnitTimeRange(self.project.stroke_boundaries, adjust_end_time = True)
+        stroketimerange = self.project._getPreviousUnitTimeRange(self.project.stroke_boundaries, adjust_end_time = True)
         if stroketimerange:
             self.project.selectedtimeregion.setRegion(stroketimerange)
 
