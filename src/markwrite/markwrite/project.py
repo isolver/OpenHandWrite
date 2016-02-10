@@ -281,6 +281,355 @@ class MarkWriteProject(object):
         else:
             raise IOError("Invalid File Path: %s" % (file_path))
 
+    @property
+    def allpendata(self):
+        '''
+        Same as project pendata attribute.
+
+        Returns an ndarray containing all pen samples loaded from the source
+        data file. Each element of the array is a single pen sample stored using
+        a datatype defined in markwrite.file_io.markwrite_pendata_format with
+        the following fields
+            ('time', np.float64),
+            ('x', np.int32),
+            ('y', np.int32),
+            ('pressure', np.int16),
+            ('state', np.uint8),
+            # Following are set by MarkWrite
+            ('x_filtered', np.float64),
+            ('y_filtered', np.float64),
+            ('pressure_filtered', np.float64),
+            ('x_velocity', np.float64),
+            ('y_velocity', np.float64),
+            ('xy_velocity', np.float64),
+            ('xy_acceleration', np.float64),
+            ('segment_id', np.uint16)
+
+        Since each pen sample is rep[resented as an ndarray, pen sample fields
+        can be accessed using the field name or an array index.
+
+        Examples:
+
+        apd = project.allpendata
+
+        first_ten_samples = apd[0:10]
+        avg_pressure_for_10_samples = first_ten_samples['pressure'].mean()
+
+        last_sample = apd[-1]
+        last_sample_xy_position = last_sample[['x','y']]
+
+        :return: 1D numpy array with dtype markwrite.file_io.markwrite_pendata
+        '''
+        return self.pendata
+
+    @property
+    def unsegmentedpendata(self):
+        '''
+        Property containing all pen samples that are not associated with any
+        Segments.
+
+        :return: 1D numpy array with dtype markwrite.file_io.markwrite_pendata
+        '''
+        return self.pendata[self.pendata['segment_id'] == 0]
+
+    @property
+    def segmentedpendata(self):
+        '''
+        Property containing all pen samples that are within at least one Segment.
+
+        :return: 1D numpy array with dtype markwrite.file_io.markwrite_pendata
+        '''
+        return self.pendata[self.pendata['segment_id'] > 0]
+
+
+    def getSeriesPeriodForTime(self, atime, positions='current'):
+        """
+        Find sample Series that occur relative to the atime param, a
+        sec.usec time in the normalized project data time space.
+
+        By default the Series that contains atime is returned, or None if atime
+        is outside any of the sample Series.
+
+        The positions argument can be used to request additional or
+        alternative sample Series relative to atime:
+
+        - 'current': default
+        - 'previous': return the Series that occurred prior to the current Series
+        - 'next': return the Series that occurred after to the current Series
+        - 'all': return ['previous', 'current', 'next'] Series
+
+        :param atime: the time to find the series for (if any)
+        :param position: 'all', 'current', 'previous', 'next', or a list with >= 1 of these str values.
+        :return:
+        """
+        sb_start_times = self.series_boundaries['start_time']
+        sb_end_times = self.series_boundaries['end_time']
+
+        if positions == 'all':
+            positions = ['previous', 'current', 'next']
+        elif isinstance(positions, basestring):
+            positions = [positions, ]
+
+        result = {}
+
+        if 'current' in positions:
+            result['current'] = None
+            current = self.series_boundaries[
+                (atime >= sb_start_times) & (atime <= sb_end_times)]
+            if len(current) > 0:
+                result['current'] = current[0]
+
+        nstime = pstime = atime
+        current = result.get('current', None)
+        if current:
+            nstime = current['end_time']
+            pstime = current['start_time']
+
+        if 'next' in positions:
+            result['next'] = None
+            nexts = self.series_boundaries[sb_start_times >= nstime]
+            if len(nexts) > 0:
+                result['next'] = nexts
+
+        if 'previous' in positions:
+            result['previous'] = None
+            prevs = self.series_boundaries[sb_end_times <= pstime]
+            if len(prevs) > 0:
+                result['previous'] = prevs
+
+        return result
+
+    def getNextUnitStartTime(self, unit_lookup_table, current_time):
+        '''
+        Return the time of the first sample contained within the next pen sample
+        grouping unit relative to current_time project data time.
+
+        |---------------------------------------------------------------|
+        |Pen Sample Grouping Unit | unit_lookup_table project attribute |
+        |-------------------------|-------------------------------------|
+        | Sample Series           | series_boundaries |
+        | Sample Run              | run_boundaries |
+        | Stroke                  | stroke_boundaries |
+        |---------------------------------------------------------------|
+
+        :param unit_lookup_table: project.series_boundaries, run_boundaries, or stroke_boundaries attribute
+        :param current_time: float (time in sec.usec format)
+        :return: float (time in sec.usec format)
+        '''
+        next_unit_ends = unit_lookup_table[
+            unit_lookup_table['start_time'] > current_time]
+        try:
+            return next_unit_ends[0]['start_time']
+        except:
+            return None
+
+    def getNextUnitEndTime(self, unit_lookup_table, current_time,
+                           adjust_end_time=False):
+        '''
+        Return the time of the last sample* contained within the next pen sample
+        grouping unit relative to the project data time 'current_time'.
+
+        |---------------------------------------------------------------|
+        |Pen Sample Grouping Unit | unit_lookup_table project attribute |
+        |-------------------------|-------------------------------------|
+        | Sample Series           | series_boundaries |
+        | Sample Run              | run_boundaries |
+        | Stroke                  | stroke_boundaries |
+        |---------------------------------------------------------------|
+
+        *If adjust_end_time is True, the second to last sample time is returned.
+
+        :param unit_lookup_table: project.series_boundaries, run_boundaries, or stroke_boundaries attribute
+        :param current_time: float (time in sec.usec format)
+        :param adjust_end_time: bool
+        :return: float (time in sec.usec format)
+        '''
+        next_unit_ends = unit_lookup_table[
+            unit_lookup_table['end_time'] > current_time]
+        try:
+            if adjust_end_time is True:
+                return self.pendata['time'][next_unit_ends[0]['end_ix'] - 1]
+            return next_unit_ends[0]['end_time']
+        except:
+            return None
+
+    def getPrevUnitStartTime(self, unit_lookup_table, current_time):
+        '''
+        Return the time of the first sample contained within the previous
+        pen sample grouping unit relative to current_time project data time.
+
+        |---------------------------------------------------------------|
+        |Pen Sample Grouping Unit | unit_lookup_table project attribute |
+        |-------------------------|-------------------------------------|
+        | Sample Series           | series_boundaries |
+        | Sample Run              | run_boundaries |
+        | Stroke                  | stroke_boundaries |
+        |---------------------------------------------------------------|
+
+        :param unit_lookup_table: project.series_boundaries, run_boundaries, or stroke_boundaries attribute
+        :param current_time: float (time in sec.usec format)
+        :return: float (time in sec.usec format)
+        '''
+        prev_unit_starts = unit_lookup_table[
+            unit_lookup_table['start_time'] < current_time]
+        try:
+            return prev_unit_starts[-1]['start_time']
+        except:
+            return None
+
+    def getPrevUnitEndTime(self, unit_lookup_table, current_time,
+                           adjust_end_time=False):
+        '''
+        Return the time of the last sample* contained within the previous
+        pen sample grouping unit relative to the project data time
+        'current_time'.
+
+        |---------------------------------------------------------------|
+        |Pen Sample Grouping Unit | unit_lookup_table project attribute |
+        |-------------------------|-------------------------------------|
+        | Sample Series           | series_boundaries |
+        | Sample Run              | run_boundaries |
+        | Stroke                  | stroke_boundaries |
+        |---------------------------------------------------------------|
+
+        *If adjust_end_time is True, the second to last sample time is returned.
+
+        :param unit_lookup_table: project.series_boundaries, run_boundaries, or stroke_boundaries attribute
+        :param current_time: float (time in sec.usec format)
+        :param adjust_end_time: bool
+        :return: float (time in sec.usec format)
+        '''
+        prev_unit_ends = unit_lookup_table[
+            unit_lookup_table['end_time'] < current_time]
+        try:
+            if adjust_end_time is True:
+                return self.pendata['time'][prev_unit_ends[-1]['end_ix'] - 1]
+            return prev_unit_ends[-1]['end_time']
+        except:
+            return None
+
+    def getSeriesForSample(self, sample_index):
+        '''
+        Return a record from the series_boundaries ndarray for the sample
+        Series that contains sample_index.
+
+        If the sample at pendata[sample_index] is not within a Series,
+        return None.
+
+        :param sample_index: int (valid value range 0 : len(pendata)-1)
+        :return: Record / row from series_boundaries attribute, or None
+        '''
+        starts = self.series_boundaries['start_ix']
+        ends = self.series_boundaries['end_ix']
+        series = self.series_boundaries[
+            (sample_index >= starts) & (sample_index <= ends)]
+        if len(series) > 1:
+            print "Error, > 1 stroke found:", sample_index, series
+        elif len(series) == 1:
+            return series['id'][0] + 1
+        return 0
+
+    def getPressedRunForSample(self, sample_index):
+        '''
+        Return a record from the run_boundaries ndarray for the sample
+        Run that contains sample_index.
+
+        If the sample at pendata[sample_index] is not within a Run,
+        return None.
+
+        :param sample_index: int (valid value range 0 : len(pendata)-1)
+        :return: Record / row from run_boundaries attribute, or None
+        '''
+        starts = self.run_boundaries['start_ix']
+        ends = self.run_boundaries['end_ix']
+        run = self.run_boundaries[
+            (sample_index >= starts) & (sample_index <= ends)]
+        if len(run) > 1:
+            print "Error, > 1 stroke found:", sample_index, run
+        elif len(run) == 1:
+            return run['id'][0] + 1
+        return 0
+
+    def getStrokeForSample(self, sample_index):
+        '''
+        Return a record from the stroke_boundaries ndarray for the pen Stroke
+        that contains sample_index.
+
+        If the sample at pendata[sample_index] is not within a pen Stroke,
+        return None.
+
+        :param sample_index: int (valid value range 0 : len(pendata)-1)
+        :return: Record / row from stroke_boundaries attribute, or None
+        '''
+        starts = self.stroke_boundaries['start_ix']
+        ends = self.stroke_boundaries['end_ix'] - 1
+        stroke = self.stroke_boundaries[
+            (sample_index >= starts) & (sample_index <= ends)]
+        if len(stroke) > 1:
+            print ">>>>>>>>\nError, %d strokes found for sample ix %d:" % (
+            len(stroke), sample_index)
+            for i, s in enumerate(stroke):
+                print "\tSelected Stroke %d: " % (i), s
+            print "Using last detected stroke for report.\n<<<<<<<"
+
+        if len(stroke) > 0 and len(stroke) <= 2:
+            return stroke['id'][-1] + 1
+        return 0
+
+    def getPenDataForTimePeriod(self, tstart, tend, pendata=None):
+        '''
+        Given the pen samples ndarray 'pendata', return the sub-array that only
+        contains samples with time >= tstart and <= tend.
+
+        :param tstart: float (sec.usec time format)
+        :param tend:  float (sec.usec time format)
+        :param pendata: ndarray of dtype markwrite.file_io.markwrite_pendata_format
+        :return: ndarray of dtype markwrite.file_io.markwrite_pendata_format
+        '''
+        if pendata is None:
+            pendata = self.pendata
+        return pendata[(pendata['time'] >= tstart) & (pendata['time'] <= tend)]
+
+    def getTrialConditionsForSample(self, sample):
+        '''
+        Returns the trial condition variable data for the given sample.
+        None is returned if no trial condition variables were found for the
+        given sample.
+
+        sample can be one of:
+
+        - int: index of sample in project.pendata
+        - float: time of sample
+        - ndarray: a row from the project.pendata ndarray.
+
+        :param sample: in, float, or ndarray
+        :return: ndarray or None
+        '''
+        tbounds = self.trial_boundaries
+        tvars = self.trial_cond_vars
+        tvar_ix = -1
+        if len(tbounds) > 0 and len(tvars) > 0:
+            if isinstance(sample, (int, long)):
+                tb = tbounds[(tbounds['start_ix'] <= sample) & (
+                tbounds['end_ix'] >= sample)]
+                if len(tb):
+                    tvar_ix = tb[0]['cvrow_ix']
+            elif isinstance(sample, float):
+                tb = tbounds[(tbounds['start_time'] <= sample) & (
+                tbounds['end_time'] >= sample)]
+                if len(tb):
+                    tvar_ix = tb[0]['cvrow_ix']
+            else:
+                try:
+                    tb = tbounds[(tbounds['start_time'] <= sample['time']) & (
+                    tbounds['end_time'] >= sample['time'])]
+                    if len(tb):
+                        tvar_ix = tb[0]['cvrow_ix']
+                except:
+                    pass
+        if tvar_ix >= 0:
+            return tvars[tvar_ix]
+        
     def toDict(self):
         '''
         Return a dict representation of the project, suitable for
@@ -304,6 +653,218 @@ class MarkWriteProject(object):
                 print "### MarkWriteProject.toDict Error: %s is not a member " \
                       "of the project class" % a
         return projdict
+
+    def save(self):
+        '''
+        Save the project object to disk. The project is saved to the current
+        project file path, overwriting the existing file.
+        :return: bool (True if save was successful, False otherwise)
+        '''
+        if os.path.exists(self.projectfileinfo['abspath']):
+            return self.saveAs(self.projectfileinfo['abspath'])
+        return False
+
+    def saveAs(self, tofile):
+        '''
+        Save the project object to disk using the file path specified by tofile.
+
+        tofile must include the path and name for the project file. Relative
+        paths are first converted to an absolute path. If the file directory
+        does not exist, it will be created if possible. If the directory
+        can not be created, the project will not be saved.
+
+        If a file already exists at topath, it will be overwritten with this
+        projects serialized data.
+
+        :return: bool (True if save was successful, False otherwise)
+        '''
+        try:
+            self._updateProjectFileInfo(tofile, saved=True)
+            projdict = self.toDict()
+            pdir, pfile = os.path.split(tofile)
+            writePickle(pdir, pfile, projdict)
+            self.modified = False
+            return True
+        except:
+            return False
+
+    def close(self):
+        """
+        Close the MarkWrite project. Attempts to leave project instance in a
+        state that allows for clean GCing.
+
+        **DO NOT call saveAs or save methods on a project that is closed!**
+        Return a bool indicating if the close operation was successful or not.
+
+        :return: bool
+        """
+        self._selectedtimeregion = None
+        for a in self.serialize_attributes:
+            setattr(self, a, None)
+        return True
+
+    #
+    ## Following methods and properties should only be used by MarkWrite GUI App
+    #
+
+    def _createNewProject(self, file_path, fimporter):  # , condvars=None,
+        # stime_var=None, etime_var=None):
+        PenDataSegmentCategory.clearSegmentCache()
+
+        self._updateProjectFileInfo(file_path, saved=False)
+        self._updatePenDataFileInfo(file_path)
+
+        self.autodetected_segment_tags = self._detectAssociatedSegmentTagsFile(
+            self.projectfileinfo['folder'], self.projectfileinfo['shortname'],
+            self.projectfileinfo['extension'])
+
+        pen_data = fimporter.asarray(file_path)
+        updateDataFileLoadingProgressDialog(self._mwapp)
+
+        self._detectTrialPeriodConditionVariables(fimporter)
+        updateDataFileLoadingProgressDialog(self._mwapp)
+
+        self.pendata = self._parsePenDataByTrials(pen_data)
+        updateDataFileLoadingProgressDialog(self._mwapp, 10)
+
+        self._normalizeConditionVariableTimes()
+
+        self.nonzero_pressure_mask = self.pendata['pressure'] > 0
+        # nonzero_regions_ix will be a tuple of (starts, stops, lengths) arrays
+        self.nonzero_region_ix = contiguous_regions(self.nonzero_pressure_mask)
+        updateDataFileLoadingProgressDialog(self._mwapp)
+
+        self.segmenttree = PenDataSegmentCategory(name=self.name, project=self)
+        self.pendata['segment_id'] = self.segmenttree.id
+        updateDataFileLoadingProgressDialog(self._mwapp)
+
+        self.series_boundaries = self._parsePenSampleSeries()
+        updateDataFileLoadingProgressDialog(self._mwapp)
+
+        # 1) Filter each sample Series
+        # 2) Calculate pen sample velocity and acceleration data.
+        # 3) Detect Sample Runs within each Series.
+        # 4) Detect pen stroke boundaries within
+        #      a) full sample Series
+        #      b) each sample Run within the Series
+        self.run_boundaries = []
+        self._velocity_minima_ixs = []
+        self.velocity_minima_samples = None
+        self.stroke_boundaries = []
+        press_run_count = 0
+        for series_bounds in self.series_boundaries:
+            # get sample array for current series
+            pseries = self.pendata[
+                      series_bounds['start_ix']:series_bounds['end_ix'] + 1]
+            psb_start_ix = series_bounds['start_ix']
+
+            # 1) Filter each sample Series
+            filter_pen_sample_series(pseries)
+            # 2) Calculate pen sample velocity and acceleration data.
+            calculate_velocity(pseries)
+
+            if SETTINGS['stroke_detect_pressed_runs_only'] is False:
+                # 4a) Detect pen stroke boundaries within current Series
+                self._findstrokes(pseries, psb_start_ix, series_bounds['id'])
+
+            updateDataFileLoadingProgressDialog(self._mwapp)
+
+            # 3) Detect Sample Runs within the Series.
+            #    First attempt to use FIRST_PRESS pen sample state.
+            fpstatus = SAMPLE_STATES['FIRST_PRESS']
+            press_starts = list(
+                *(pseries['state'] & fpstatus == fpstatus).nonzero())
+            if len(press_starts) != 0:
+                if pseries['pressure'][0] > 0 and press_starts[0] != 0:
+                    press_starts.insert(0, 0)
+                press_stops = press_starts[1:]
+                press_stops.append(len(pseries))
+                # Add pressed period boundaries array for current series to
+                # the list of series pen pressed boundaries.
+                for i in range(len(press_starts)):
+                    si = press_starts[i]
+                    pressed_run_ixs = \
+                    (pseries[si:press_stops[i]]['pressure'] > 0).nonzero()[0]
+                    if len(pressed_run_ixs):
+                        ei = si + pressed_run_ixs[-1]
+                        st, et = pseries['time'][[si, ei]]
+                        curr_press_series_id = press_run_count
+                        press_run_count += 1
+                        self.run_boundaries.append((
+                        curr_press_series_id, series_bounds['id'],
+                        psb_start_ix + si, st, psb_start_ix + ei, et))
+
+                        if len(pressed_run_ixs) > 1 and SETTINGS[
+                            'stroke_detect_pressed_runs_only'] is True:
+                            # 4b) Detect pen stroke boundaries within each
+                            # sample Run
+                            self._findstrokes(pseries[si:ei + 1],
+                                             psb_start_ix + si,
+                                             curr_press_series_id)
+                    updateDataFileLoadingProgressDialog(self._mwapp)
+            else:
+                # If no FIRST_PRESS pen sample states are found,
+                # use pen pressed periods (pressure > 0) to find Runs.
+                press_starts, press_stops, press_lenths = contiguous_regions(
+                    pseries['pressure'] > 0)
+                # Add pressed period boundaries array for current series to
+                # the list of series pen pressed boundaries.
+                for i in xrange(len(press_starts)):
+                    si, ei = press_starts[i], press_stops[i]
+                    try:
+                        st, et = pseries['time'][[si, ei]]
+                    except IndexError, err:
+                        ei = ei - 1
+                        st, et = pseries['time'][[si, ei]]
+                        press_stops[i] = ei
+                    curr_press_series_id = press_run_count
+                    press_run_count += 1
+                    self.run_boundaries.append((
+                    curr_press_series_id, series_bounds['id'],
+                    psb_start_ix + si, st, psb_start_ix + ei, et))
+                    if SETTINGS['stroke_detect_pressed_runs_only'] is True:
+                        # 4b) Detect pen stroke boundaries within each sample
+                        #  Run
+                        self._findstrokes(pseries[si:ei + 1], psb_start_ix + si,
+                                         curr_press_series_id)
+                    updateDataFileLoadingProgressDialog(self._mwapp)
+
+        # Convert run_boundaries list of lists into an ndarray
+        run_dtype = np.dtype({
+        'names': ['id', 'parent_id', 'start_ix', 'start_time', 'end_ix',
+                  'end_time'],
+        'formats': [np.uint16, np.uint16, np.uint32, np.float64, np.uint32,
+                    np.float64]})
+        self.run_boundaries = np.asarray(self.run_boundaries, dtype=run_dtype)
+        # Convert stroke_boundaries list of lists into an ndarray
+        self.stroke_boundaries = np.asarray(self.stroke_boundaries,
+                                            dtype=run_dtype)
+
+        # Create ndarray of pen samples that are the detected stroke
+        # boundary points.
+        self.velocity_minima_samples = self.pendata[self._velocity_minima_ixs]
+
+        if self._mwapp:
+            # If project is being created via MarkWrite GUI, create
+            # SelectedTimePeriodItem widget.
+            if self._selectedtimeregion is None:
+                MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(
+                    project=self)
+            else:
+                MarkWriteProject._selectedtimeregion.project = self
+        else:
+            # Otherwise, project is being created via custom script using
+            # markwrite api, so create segments for any detected
+            # trial periods.
+            for t, tbounds in enumerate(self.trial_boundaries):
+                self.createSegmentForTimePeriod(u"Trial%d" % (t + 1),
+                                                self.segmenttree.id,
+                                                tbounds['start_time'],
+                                                tbounds['end_time'],
+                                                update_segid_field=True)
+            self._mapTrialConditions2TrialSegments()
+        updateDataFileLoadingProgressDialog(self._mwapp, 5)
+
 
     def _detectAssociatedSegmentTagsFile(self, dir_path, fname, fext):
         tag_list = []
@@ -539,166 +1100,7 @@ class MarkWriteProject(object):
                          np.float64]})
         return np.asarray(slist, dtype=series_dtype)
 
-    def _createNewProject(self, file_path, fimporter):  # , condvars=None,
-        # stime_var=None, etime_var=None):
-        PenDataSegmentCategory.clearSegmentCache()
-
-        self._updateProjectFileInfo(file_path, saved=False)
-        self._updatePenDataFileInfo(file_path)
-
-        self.autodetected_segment_tags = self._detectAssociatedSegmentTagsFile(
-            self.projectfileinfo['folder'], self.projectfileinfo['shortname'],
-            self.projectfileinfo['extension'])
-
-        pen_data = fimporter.asarray(file_path)
-        updateDataFileLoadingProgressDialog(self._mwapp)
-
-        self._detectTrialPeriodConditionVariables(fimporter)
-        updateDataFileLoadingProgressDialog(self._mwapp)
-
-        self.pendata = self._parsePenDataByTrials(pen_data)
-        updateDataFileLoadingProgressDialog(self._mwapp, 10)
-
-        self._normalizeConditionVariableTimes()
-
-        self.nonzero_pressure_mask = self.pendata['pressure'] > 0
-        # nonzero_regions_ix will be a tuple of (starts, stops, lengths) arrays
-        self.nonzero_region_ix = contiguous_regions(self.nonzero_pressure_mask)
-        updateDataFileLoadingProgressDialog(self._mwapp)
-
-        self.segmenttree = PenDataSegmentCategory(name=self.name, project=self)
-        self.pendata['segment_id'] = self.segmenttree.id
-        updateDataFileLoadingProgressDialog(self._mwapp)
-
-        self.series_boundaries = self._parsePenSampleSeries()
-        updateDataFileLoadingProgressDialog(self._mwapp)
-
-        # 1) Filter each sample Series
-        # 2) Calculate pen sample velocity and acceleration data.
-        # 3) Detect Sample Runs within each Series.
-        # 4) Detect pen stroke boundaries within
-        #      a) full sample Series
-        #      b) each sample Run within the Series
-        self.run_boundaries = []
-        self._velocity_minima_ixs = []
-        self.velocity_minima_samples = None
-        self.stroke_boundaries = []
-        press_run_count = 0
-        for series_bounds in self.series_boundaries:
-            # get sample array for current series
-            pseries = self.pendata[
-                      series_bounds['start_ix']:series_bounds['end_ix'] + 1]
-            psb_start_ix = series_bounds['start_ix']
-
-            # 1) Filter each sample Series
-            filter_pen_sample_series(pseries)
-            # 2) Calculate pen sample velocity and acceleration data.
-            calculate_velocity(pseries)
-
-            if SETTINGS['stroke_detect_pressed_runs_only'] is False:
-                # 4a) Detect pen stroke boundaries within current Series
-                self.findstrokes(pseries, psb_start_ix, series_bounds['id'])
-
-            updateDataFileLoadingProgressDialog(self._mwapp)
-
-            # 3) Detect Sample Runs within the Series.
-            #    First attempt to use FIRST_PRESS pen sample state.
-            fpstatus = SAMPLE_STATES['FIRST_PRESS']
-            press_starts = list(
-                *(pseries['state'] & fpstatus == fpstatus).nonzero())
-            if len(press_starts) != 0:
-                if pseries['pressure'][0] > 0 and press_starts[0] != 0:
-                    press_starts.insert(0, 0)
-                press_stops = press_starts[1:]
-                press_stops.append(len(pseries))
-                # Add pressed period boundaries array for current series to
-                # the list of series pen pressed boundaries.
-                for i in range(len(press_starts)):
-                    si = press_starts[i]
-                    pressed_run_ixs = \
-                    (pseries[si:press_stops[i]]['pressure'] > 0).nonzero()[0]
-                    if len(pressed_run_ixs):
-                        ei = si + pressed_run_ixs[-1]
-                        st, et = pseries['time'][[si, ei]]
-                        curr_press_series_id = press_run_count
-                        press_run_count += 1
-                        self.run_boundaries.append((
-                        curr_press_series_id, series_bounds['id'],
-                        psb_start_ix + si, st, psb_start_ix + ei, et))
-
-                        if len(pressed_run_ixs) > 1 and SETTINGS[
-                            'stroke_detect_pressed_runs_only'] is True:
-                            # 4b) Detect pen stroke boundaries within each
-                            # sample Run
-                            self.findstrokes(pseries[si:ei + 1],
-                                             psb_start_ix + si,
-                                             curr_press_series_id)
-                    updateDataFileLoadingProgressDialog(self._mwapp)
-            else:
-                # If no FIRST_PRESS pen sample states are found,
-                # use pen pressed periods (pressure > 0) to find Runs.
-                press_starts, press_stops, press_lenths = contiguous_regions(
-                    pseries['pressure'] > 0)
-                # Add pressed period boundaries array for current series to
-                # the list of series pen pressed boundaries.
-                for i in xrange(len(press_starts)):
-                    si, ei = press_starts[i], press_stops[i]
-                    try:
-                        st, et = pseries['time'][[si, ei]]
-                    except IndexError, err:
-                        ei = ei - 1
-                        st, et = pseries['time'][[si, ei]]
-                        press_stops[i] = ei
-                    curr_press_series_id = press_run_count
-                    press_run_count += 1
-                    self.run_boundaries.append((
-                    curr_press_series_id, series_bounds['id'],
-                    psb_start_ix + si, st, psb_start_ix + ei, et))
-                    if SETTINGS['stroke_detect_pressed_runs_only'] is True:
-                        # 4b) Detect pen stroke boundaries within each sample
-                        #  Run
-                        self.findstrokes(pseries[si:ei + 1], psb_start_ix + si,
-                                         curr_press_series_id)
-                    updateDataFileLoadingProgressDialog(self._mwapp)
-
-        # Convert run_boundaries list of lists into an ndarray
-        run_dtype = np.dtype({
-        'names': ['id', 'parent_id', 'start_ix', 'start_time', 'end_ix',
-                  'end_time'],
-        'formats': [np.uint16, np.uint16, np.uint32, np.float64, np.uint32,
-                    np.float64]})
-        self.run_boundaries = np.asarray(self.run_boundaries, dtype=run_dtype)
-        # Convert stroke_boundaries list of lists into an ndarray
-        self.stroke_boundaries = np.asarray(self.stroke_boundaries,
-                                            dtype=run_dtype)
-
-        # Create ndarray of pen samples that are the detected stroke
-        # boundary points.
-        self.velocity_minima_samples = self.pendata[self._velocity_minima_ixs]
-
-        if self._mwapp:
-            # If project is being created via MarkWrite GUI, create
-            # SelectedTimePeriodItem widget.
-            if self._selectedtimeregion is None:
-                MarkWriteProject._selectedtimeregion = SelectedTimePeriodItem(
-                    project=self)
-            else:
-                MarkWriteProject._selectedtimeregion.project = self
-        else:
-            # Otherwise, project is being created via custom script using
-            # markwrite api, so create segments for any detected
-            # trial periods.
-            for t, tbounds in enumerate(self.trial_boundaries):
-                self.createSegmentForTimePeriod(u"Trial%d" % (t + 1),
-                                                self.segmenttree.id,
-                                                tbounds['start_time'],
-                                                tbounds['end_time'],
-                                                update_segid_field=True)
-            self._mapTrialConditions2TrialSegments()
-        updateDataFileLoadingProgressDialog(self._mwapp, 5)
-
-
-    def findstrokes(self, searchsamplearray, obsolute_offset, parent_id):
+    def _findstrokes(self, searchsamplearray, obsolute_offset, parent_id):
         edge_type = SETTINGS['stroke_detect_edge_type']
         if edge_type == 'none':
             edge_type = None
@@ -741,212 +1143,6 @@ class MarkWriteProject(object):
                  searchsamplearray['time'][0],
                  obsolute_offset + len(searchsamplearray) - 1,
                  searchsamplearray['time'][-1]))
-
-    def getTrialConditionsForSample(self, sample):
-        '''
-        Returns the trial condition variable data for the given sample.
-        None is returned if no trial condition variables were found for the
-        given sample.
-
-        sample can be one of:
-
-        - int: index of sample in project.pendata
-        - float: time of sample
-        - ndarray: a row from the project.pendata ndarray.
-
-        :param sample: in, float, or ndarray
-        :return: ndarray or None
-        '''
-        tbounds = self.trial_boundaries
-        tvars = self.trial_cond_vars
-        tvar_ix = -1
-        if len(tbounds) > 0 and len(tvars) > 0:
-            if isinstance(sample, (int, long)):
-                tb = tbounds[(tbounds['start_ix'] <= sample) & (
-                tbounds['end_ix'] >= sample)]
-                if len(tb):
-                    tvar_ix = tb[0]['cvrow_ix']
-            elif isinstance(sample, float):
-                tb = tbounds[(tbounds['start_time'] <= sample) & (
-                tbounds['end_time'] >= sample)]
-                if len(tb):
-                    tvar_ix = tb[0]['cvrow_ix']
-            else:
-                try:
-                    tb = tbounds[(tbounds['start_time'] <= sample['time']) & (
-                    tbounds['end_time'] >= sample['time'])]
-                    if len(tb):
-                        tvar_ix = tb[0]['cvrow_ix']
-                except:
-                    pass
-        if tvar_ix >= 0:
-            return tvars[tvar_ix]
-
-    def getSeriesPeriodForTime(self, atime, positions='current'):
-        """
-        Find sample Series that occur relative to the atime param, a
-        sec.usec time in the normalized project data time space.
-
-        By default the Series that contains atime is returned, or None if atime
-        is outside any of the sample Series.
-
-        The positions argument can be used to request additional or
-        alternative sample Series relative to atime:
-
-        - 'current': default
-        - 'previous': return the Series that occurred prior to the current Series
-        - 'next': return the Series that occurred after to the current Series
-        - 'all': return ['previous', 'current', 'next'] Series
-
-        :param atime: the time to find the series for (if any)
-        :param position: 'all', 'current', 'previous', 'next', or a list with >= 1 of these str values.
-        :return:
-        """
-        sb_start_times = self.series_boundaries['start_time']
-        sb_end_times = self.series_boundaries['end_time']
-
-        if positions == 'all':
-            positions = ['previous', 'current', 'next']
-        elif isinstance(positions, basestring):
-            positions = [positions, ]
-
-        result = {}
-
-        if 'current' in positions:
-            result['current'] = None
-            current = self.series_boundaries[
-                (atime >= sb_start_times) & (atime <= sb_end_times)]
-            if len(current) > 0:
-                result['current'] = current[0]
-
-        nstime = pstime = atime
-        current = result.get('current', None)
-        if current:
-            nstime = current['end_time']
-            pstime = current['start_time']
-
-        if 'next' in positions:
-            result['next'] = None
-            nexts = self.series_boundaries[sb_start_times >= nstime]
-            if len(nexts) > 0:
-                result['next'] = nexts
-
-        if 'previous' in positions:
-            result['previous'] = None
-            prevs = self.series_boundaries[sb_end_times <= pstime]
-            if len(prevs) > 0:
-                result['previous'] = prevs
-
-        return result
-
-    def getNextUnitStartTime(self, unit_lookup_table, current_time):
-        '''
-        Return the time of the first sample contained within the next pen sample
-        grouping unit relative to current_time project data time.
-
-        |---------------------------------------------------------------|
-        |Pen Sample Grouping Unit | unit_lookup_table project attribute |
-        |-------------------------|-------------------------------------|
-        | Sample Series           | series_boundaries |
-        | Sample Run              | run_boundaries |
-        | Stroke                  | stroke_boundaries |
-        |---------------------------------------------------------------|
-
-        :param unit_lookup_table: project.series_boundaries, run_boundaries, or stroke_boundaries attribute
-        :param current_time: float (time in sec.usec format)
-        :return: float (time in sec.usec format)
-        '''
-        next_unit_ends = unit_lookup_table[
-            unit_lookup_table['start_time'] > current_time]
-        try:
-            return next_unit_ends[0]['start_time']
-        except:
-            return None
-
-    def getNextUnitEndTime(self, unit_lookup_table, current_time,
-                           adjust_end_time=False):
-        '''
-        Return the time of the last sample* contained within the next pen sample
-        grouping unit relative to the project data time 'current_time'.
-
-        |---------------------------------------------------------------|
-        |Pen Sample Grouping Unit | unit_lookup_table project attribute |
-        |-------------------------|-------------------------------------|
-        | Sample Series           | series_boundaries |
-        | Sample Run              | run_boundaries |
-        | Stroke                  | stroke_boundaries |
-        |---------------------------------------------------------------|
-
-        *If adjust_end_time is True, the second to last sample time is returned.
-
-        :param unit_lookup_table: project.series_boundaries, run_boundaries, or stroke_boundaries attribute
-        :param current_time: float (time in sec.usec format)
-        :param adjust_end_time: bool
-        :return: float (time in sec.usec format)
-        '''
-        next_unit_ends = unit_lookup_table[
-            unit_lookup_table['end_time'] > current_time]
-        try:
-            if adjust_end_time is True:
-                return self.pendata['time'][next_unit_ends[0]['end_ix'] - 1]
-            return next_unit_ends[0]['end_time']
-        except:
-            return None
-
-    def getPrevUnitStartTime(self, unit_lookup_table, current_time):
-        '''
-        Return the time of the first sample contained within the previous
-        pen sample grouping unit relative to current_time project data time.
-
-        |---------------------------------------------------------------|
-        |Pen Sample Grouping Unit | unit_lookup_table project attribute |
-        |-------------------------|-------------------------------------|
-        | Sample Series           | series_boundaries |
-        | Sample Run              | run_boundaries |
-        | Stroke                  | stroke_boundaries |
-        |---------------------------------------------------------------|
-
-        :param unit_lookup_table: project.series_boundaries, run_boundaries, or stroke_boundaries attribute
-        :param current_time: float (time in sec.usec format)
-        :return: float (time in sec.usec format)
-        '''
-        prev_unit_starts = unit_lookup_table[
-            unit_lookup_table['start_time'] < current_time]
-        try:
-            return prev_unit_starts[-1]['start_time']
-        except:
-            return None
-
-    def getPrevUnitEndTime(self, unit_lookup_table, current_time,
-                           adjust_end_time=False):
-        '''
-        Return the time of the last sample* contained within the previous
-        pen sample grouping unit relative to the project data time
-        'current_time'.
-
-        |---------------------------------------------------------------|
-        |Pen Sample Grouping Unit | unit_lookup_table project attribute |
-        |-------------------------|-------------------------------------|
-        | Sample Series           | series_boundaries |
-        | Sample Run              | run_boundaries |
-        | Stroke                  | stroke_boundaries |
-        |---------------------------------------------------------------|
-
-        *If adjust_end_time is True, the second to last sample time is returned.
-
-        :param unit_lookup_table: project.series_boundaries, run_boundaries, or stroke_boundaries attribute
-        :param current_time: float (time in sec.usec format)
-        :param adjust_end_time: bool
-        :return: float (time in sec.usec format)
-        '''
-        prev_unit_ends = unit_lookup_table[
-            unit_lookup_table['end_time'] < current_time]
-        try:
-            if adjust_end_time is True:
-                return self.pendata['time'][prev_unit_ends[-1]['end_ix'] - 1]
-            return prev_unit_ends[-1]['end_time']
-        except:
-            return None
 
     def _getNextUnitTimeRange(self, unit_lookup_table, adjust_end_time=False):
         '''
@@ -1002,74 +1198,6 @@ class MarkWriteProject(object):
             except:
                 return None
 
-    def getSeriesForSample(self, sample_index):
-        '''
-        Return a record from the series_boundaries ndarray for the sample
-        Series that contains sample_index.
-
-        If the sample at pendata[sample_index] is not within a Series,
-        return None.
-
-        :param sample_index: int (valid value range 0 : len(pendata)-1)
-        :return: Record / row from series_boundaries attribute, or None
-        '''
-        starts = self.series_boundaries['start_ix']
-        ends = self.series_boundaries['end_ix']
-        series = self.series_boundaries[
-            (sample_index >= starts) & (sample_index <= ends)]
-        if len(series) > 1:
-            print "Error, > 1 stroke found:", sample_index, series
-        elif len(series) == 1:
-            return series['id'][0] + 1
-        return 0
-
-    def getPressedRunForSample(self, sample_index):
-        '''
-        Return a record from the run_boundaries ndarray for the sample
-        Run that contains sample_index.
-
-        If the sample at pendata[sample_index] is not within a Run,
-        return None.
-
-        :param sample_index: int (valid value range 0 : len(pendata)-1)
-        :return: Record / row from run_boundaries attribute, or None
-        '''
-        starts = self.run_boundaries['start_ix']
-        ends = self.run_boundaries['end_ix']
-        run = self.run_boundaries[
-            (sample_index >= starts) & (sample_index <= ends)]
-        if len(run) > 1:
-            print "Error, > 1 stroke found:", sample_index, run
-        elif len(run) == 1:
-            return run['id'][0] + 1
-        return 0
-
-    def getStrokeForSample(self, sample_index):
-        '''
-        Return a record from the stroke_boundaries ndarray for the pen Stroke
-        that contains sample_index.
-
-        If the sample at pendata[sample_index] is not within a pen Stroke,
-        return None.
-
-        :param sample_index: int (valid value range 0 : len(pendata)-1)
-        :return: Record / row from stroke_boundaries attribute, or None
-        '''
-        starts = self.stroke_boundaries['start_ix']
-        ends = self.stroke_boundaries['end_ix'] - 1
-        stroke = self.stroke_boundaries[
-            (sample_index >= starts) & (sample_index <= ends)]
-        if len(stroke) > 1:
-            print ">>>>>>>>\nError, %d strokes found for sample ix %d:" % (
-            len(stroke), sample_index)
-            for i, s in enumerate(stroke):
-                print "\tSelected Stroke %d: " % (i), s
-            print "Using last detected stroke for report.\n<<<<<<<"
-
-        if len(stroke) > 0 and len(stroke) <= 2:
-            return stroke['id'][-1] + 1
-        return 0
-
     def _getSelectedDataSegmentIDs(self):
         '''
         This method can only be used by the MarkWrite GUI app.
@@ -1081,20 +1209,6 @@ class MarkWriteProject(object):
         if len(self.selectedpendata) > 0:
             return np.unique(self.selectedpendata['segment_id'])
         return []
-
-    def getPenDataForTimePeriod(self, tstart, tend, pendata=None):
-        '''
-        Given the pen samples ndarray 'pendata', return the sub-array that only
-        contains samples with time >= tstart and <= tend.
-
-        :param tstart: float (sec.usec time format)
-        :param tend:  float (sec.usec time format)
-        :param pendata: ndarray of dtype markwrite.file_io.markwrite_pendata_format
-        :return: ndarray of dtype markwrite.file_io.markwrite_pendata_format
-        '''
-        if pendata is None:
-            pendata = self.pendata
-        return pendata[(pendata['time'] >= tstart) & (pendata['time'] <= tend)]
 
     def createSegmentForTimePeriod(self, tag, parent_id, tstart, tend, id=None,
                                    update_segid_field=False):
@@ -1168,33 +1282,6 @@ class MarkWriteProject(object):
         self._modified = bool(v)
 
     @property
-    def allpendata(self):
-        '''
-        TODO: DOCSTR
-
-        :return:
-        '''
-        return self.pendata
-
-    @property
-    def unsegmentedpendata(self):
-        '''
-        TODO: DOCSTR
-
-        :return:
-        '''
-        return self.pendata[self.pendata['segment_id'] == 0]
-
-    @property
-    def segmentedpendata(self):
-        '''
-        TODO: DOCSTR
-
-        :return:
-        '''
-        return self.pendata[self.pendata['segment_id'] > 0]
-
-    @property
     def selectedtimeregion(self):
         '''
         This property can only be used by the MarkWrite GUI app.
@@ -1251,33 +1338,6 @@ class MarkWriteProject(object):
                     return True
         return False
 
-    def save(self):
-        '''
-        TODO: DOCSTR
-
-        :return:
-        '''
-        if os.path.exists(self.projectfileinfo['abspath']):
-            return self.saveAs(self.projectfileinfo['abspath'])
-        return False
-
-
-    def saveAs(self, tofile):
-        '''
-        TODO: DOCSTR
-
-        :return:
-        '''
-        try:
-            self._updateProjectFileInfo(tofile, saved=True)
-            projdict = self.toDict()
-            pdir, pfile = os.path.split(tofile)
-            writePickle(pdir, pfile, projdict)
-            self.modified = False
-            return True
-        except:
-            return False
-
     def _openFromProjectFile(self, proj_file_path, fimporter):
         '''
         This method can only be used by the MarkWrite GUI app.
@@ -1315,20 +1375,6 @@ class MarkWriteProject(object):
                 MarkWriteProject._selectedtimeregion.project = self
         self.modified = False
         updateDataFileLoadingProgressDialog(self._mwapp)
-
-    def close(self):
-        """
-        Close the MarkWrite project. Attempts to leave project instance in a
-        state that allows for clean GCing.
-
-        **DO NOT call saveAs or save methods on a project that is closed!**
-        Return a bool indicating if the close operation was successful or not.
-        :return: bool
-        """
-        self._selectedtimeregion = None
-        for a in self.serialize_attributes:
-            setattr(self, a, None)
-        return True
 
     def __del__(self):
         self.close()
