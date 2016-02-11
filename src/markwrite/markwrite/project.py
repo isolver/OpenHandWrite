@@ -245,8 +245,12 @@ class MarkWriteProject(object):
 
         self.autodetected_segment_tags = []
         self.pendata = []
+
+        # TODO: Remove nonzero_pressure_mask and nonzero_region_ix attributes
+        #       from project, switching to use of run_boundaries instead.
         self.nonzero_pressure_mask = []
         self.nonzero_region_ix = []
+
         # self.sampling_interval = 0
         self.series_boundaries = []
         self.run_boundaries = []
@@ -629,7 +633,7 @@ class MarkWriteProject(object):
                     pass
         if tvar_ix >= 0:
             return tvars[tvar_ix]
-        
+
     def toDict(self):
         '''
         Return a dict representation of the project, suitable for
@@ -709,7 +713,7 @@ class MarkWriteProject(object):
 
     def _createNewProject(self, file_path, fimporter):  # , condvars=None,
         # stime_var=None, etime_var=None):
-        PenDataSegmentCategory.clearSegmentCache()
+        PenDataSegmentCategory._clearSegmentCache()
 
         self._updateProjectFileInfo(file_path, saved=False)
         self._updatePenDataFileInfo(file_path)
@@ -1344,7 +1348,7 @@ class MarkWriteProject(object):
 
         :return:
         '''
-        PenDataSegmentCategory.clearSegmentCache()
+        PenDataSegmentCategory._clearSegmentCache()
         updateDataFileLoadingProgressDialog(self._mwapp, 10)
         projdict = fimporter(*os.path.split(proj_file_path))
         projattrnames = projdict.keys()

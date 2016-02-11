@@ -24,6 +24,14 @@ from markwrite.gui.projectsettings import SETTINGS
 from markwrite.gui import X_FIELD, Y_FIELD
 
 class PenDataSegmentCategory(object):
+    '''
+    PenDataSegmentCategory is the root of a MarkWriteProject segment tree.
+    Currently MarkWrite only supports a single root segment node, which covers
+    the all pendata samples.
+
+    When a user creates a Segment in the MarkWrite GUI App, a PenDataSegment
+    is created, which is a subclass of this class.
+    '''
     _nextid=0
     totalsegmentcount=0
     id2obj=WeakValueDictionary()
@@ -79,7 +87,7 @@ class PenDataSegmentCategory(object):
                 PenDataSegmentCategory._project = proxy(project)
 
     @classmethod
-    def clearSegmentCache(cls):
+    def _clearSegmentCache(cls):
         cls._id=0
         cls.id2obj.clear()
         cls._project=None
@@ -94,8 +102,9 @@ class PenDataSegmentCategory(object):
     @property
     def id(self):
         """
+        A unique positive int value identifying the segment.
 
-        :return:
+        :return: int
         """
         return self._id
 
@@ -104,9 +113,8 @@ class PenDataSegmentCategory(object):
         """
         TODO: Ensure id being set is not already in use by another segment in
               the project.
-
         :param n:
-        :return:
+        :return: None
         """
         self._id = n
         if self._nextid <= n:
@@ -114,22 +122,58 @@ class PenDataSegmentCategory(object):
 
     @property
     def name(self):
+        '''
+        Return the segment's name / label.
+
+        :return: basestring
+        '''
         return self._name
 
     @name.setter
     def name(self, n):
+        '''
+        Set the segment's name / label.
+
+
+        :param n:
+        :return:
+        '''
         self._name = n
 
     @property
     def locked(self):
+        '''
+        Return whether the segment is in a locked state or not.
+        If a segment is locked, it can not be deleted from the project and it's
+        name can not be set.
+
+        :return: bool
+        '''
         return self._locked
 
     @locked.setter
-    def locked(self, n):
-        self._locked = n
+    def locked(self, l):
+        '''
+        Set whether the segment is locked or not. When a
+        segment is locked (l = True), it can not be deleted from the project
+        and it's name can not be changed.
+
+        :param l: bool
+        :return: None
+        '''
+        self._locked = l
 
     @property
     def cond_vars(self):
+        '''
+        The property is of of use when the current project was created from
+        loading an ioHub HDF5 file.
+
+        Returns the experiment condition variables associated with the
+        Trial Segment (l1seg) of the current segment's (which maybe self).
+
+        :return: PenDataSegment
+        '''
         if self._cond_vars:
             return self._cond_vars
         if self.l1seg:
@@ -137,22 +181,54 @@ class PenDataSegmentCategory(object):
 
     @cond_vars.setter
     def cond_vars(self, cv):
+        '''
+        cond_vars property setter. To be used by MarkWrite GUI app only.
+
+        :param cv:
+        :return: None
+        '''
         self._cond_vars = cv
         
     @property
     def children(self):
+        '''
+        If the current segment has children, return them as a list of
+        PenDataSegment objects. Child segments are returned sorted
+        by segment start time.
+
+        :return: list of 0 to N PenDataSegment objects
+        '''
         return self._childsegments
 
     def getChildIndex(self, segment):
+        '''
+        Return the index of `segment` within the current segments children.
+
+        :param segment: PenDataSegment
+        :return: int
+        '''
         return self._childsegment_ids.index(segment.id)
 
     def addChild(self, s):
+        '''
+        This method can only be used by the MarkWrite GUI app.
+
+        :param s:
+        :return:
+        '''
         self._childsegments.append(s)
         self._childsegments = sorted(self._childsegments, key=attrgetter('starttime'))
         self._childsegment_ids.insert(self._childsegments.index(s),s.id)
         PenDataSegmentCategory.totalsegmentcount+=1
 
     def removeChild(self, s):
+        '''
+        This method can only be used by the MarkWrite GUI app.
+
+        Remove the PenDataSegment `s` from the current segments children.
+        :param s: PenDataSegment
+        :return: None
+        '''
         seg_index = self._childsegment_ids.index(s.id)
         self._childsegment_ids.remove(s.id)
         self._childsegments.pop(seg_index)
@@ -160,6 +236,12 @@ class PenDataSegmentCategory(object):
 
     @property
     def parent(self):
+        '''
+        Return the parent of the current segment, or None if the current segment
+        is the root segment of the project.
+
+        :return: PenDataSegment or None
+        '''
         return self._parent
 
     @parent.setter
@@ -167,12 +249,32 @@ class PenDataSegmentCategory(object):
         self._parent = s
 
     def hasChildren(self):
+        '''
+        Return True if the current segment has >= 1 child segment.
+
+        :return: bool
+        '''
         return len(self.children)>0
 
     def isRoot(self):
+        '''
+        Return True if the current segment is the top level, root, segment
+        of the project.
+
+        If True, then the current segment will equal the project.segmenttree
+        object.
+
+        :return: bool
+
+        '''
         return self.parent is None
 
     def getRoot(self):
+        '''
+        Return the root segment for the project.
+
+        :return: PenDataSegmentCategory
+        '''
         p = self
         while p.parent is not None:
             p=p.parent
@@ -180,10 +282,23 @@ class PenDataSegmentCategory(object):
 
     @property
     def project(self):
+        '''
+        Return a weakref to the MarkWriteProject that the segment is part of.
+
+        :return: MarkWriteProject
+        '''
         return self._project
 
     @property
     def path(self):
+        '''
+        Return a list of segment names, representing the current segments
+        position within the project's segment hierarchy. The first element of
+        the path list is always the project's root segment name. The last
+        element of the path list is the current parent segment's name.
+
+        :return: list of basestrings
+        '''
         spath=[]
         p = self.parent
         while p is not None:
@@ -193,6 +308,13 @@ class PenDataSegmentCategory(object):
 
     @property
     def tree(self):
+        '''
+        Return a list of PenDataSegments. The first element of
+        the list is the parent of the current segment. The last
+        element of the list is always the root segment.
+
+        :return: list of PenDataSegments
+        '''
         spath=[]
         p = self.parent
         while p is not None:
@@ -230,6 +352,21 @@ class PenDataSegmentCategory(object):
         return kwargs
 
     def contains(self, *args, **kwargs):
+        '''
+        Returns True if all arguments passed to the method evaluate to be
+        'within' the current segment. The definition of 'within' depends on the
+        argument data type or kwarg name.
+
+        | arg data types | kwarg name | evaluation |
+        | float, np.float, np.float32, np.float64 | time       | self.starttime <= time <= self.endtime |
+        | list or tuple of two floats | position   | np.any(self.pendata[X_FIELD]==x & self.pendata[Y_FIELD]==y) |
+        | int, long, np.int, np.int16, np.int32, np.int64 | pressure   | np.any(self.pendata['pressure']==v) |
+        | list or tuple of two ints | timeperiod | timeperiod[0] > self.starttime and timeperiod[1] < self.endtime |
+        | basestring | tag        | self.name is tag |
+        | PenDataSegment | child      | child.id in self._childsegment_ids|
+
+        :return: bool
+        '''
         kwargs = self._args2kwargs(args,kwargs)
         for k,v in kwargs.items():
             if k == 'time':
@@ -251,6 +388,12 @@ class PenDataSegmentCategory(object):
                 return False
     @property
     def level(self):
+        '''
+        The number of parent segments to reach the root segment.
+        The root segment has level == 0.
+
+        :return: int
+        '''
         lvl = 0
         p = self.parent
         while p is not None:
@@ -259,6 +402,11 @@ class PenDataSegmentCategory(object):
         return lvl
 
     def getLevelCount(self, curlvl=None, visitedlvls=[]):
+        '''
+        Return the maximum level depth in the project segment tree.
+
+        :return: int
+        '''
         if curlvl is None:
             curlvl=self.level
 
@@ -270,6 +418,13 @@ class PenDataSegmentCategory(object):
         return max(visitedlvls)
 
     def getLeveledSegments(self, curlvl=None, segsbylvl=None):
+        '''
+        Return a dict with all segment levels as the keys,
+        and a list of all the PenDataSegments at a given level,
+        regardless of parent, as the dict values.
+
+        :return: dict
+        '''
         if segsbylvl is None:
             segsbylvl = OrderedDict()
         if curlvl is None:
@@ -291,6 +446,11 @@ class PenDataSegmentCategory(object):
 
     @property
     def l1seg(self):
+        '''
+        Return the current segment's level 1 parent.
+
+        :return: PenDataSegment
+        '''
         segtree=self.tree
         if len(segtree) == 1:
             return self
@@ -299,22 +459,51 @@ class PenDataSegmentCategory(object):
             
     @property
     def pendata(self):
+        '''
+        Return the pen samples contained within the segment time period.
+
+        :return: ndarray
+        '''
         return self._project.pendata
 
     @property
     def starttime(self):
+        '''
+        Return the current segment's sec.msec start time.
+        This will be equal to `self.pendata['time'][0]`.
+
+        :return: float
+        '''
         return self.pendata['time'][0]
 
     @property
     def endtime(self):
+        '''
+        Return the current segment's sec.msec end time.
+        This will be equal to `self.pendata['time'][-1]`.
+
+        :return: float
+        '''
         return self.pendata['time'][-1]
 
     @property
     def duration(self):
+        '''
+        Return the sec.msec duration of the segment, which is equal to
+        self.endtime - self.starttime.
+
+        :return: float
+        '''
         return self.pendata['time'][-1] - self.pendata['time'][0]
 
     @property
     def timerange(self):
+        '''
+        Return the segment's starttime, endtime as an array of two sec.msec
+        times.
+
+        :return:
+        '''
         return self.pendata['time'][[0,-1]]
 
     @timerange.setter
@@ -323,22 +512,42 @@ class PenDataSegmentCategory(object):
 
     @property
     def pointcount(self):
+        '''
+        Return the number of pen samples that are contained in the segment.
+
+        :return: int
+        '''
         return self.pendata.shape[0]
 
     @property
     def nonzeropressurependata(self):
+        '''
+        Return the pen samples contained within the segment time period where
+        the samples pressure value is greater than 0.
+
+        :return: ndarray
+        '''
         return self.pendata[self.pendata['pressure']>0]
 
     @property
     def zeropressurependata(self):
+        '''
+        Return the pen samples contained within the segment time period where
+        the samples pressure value is equal to 0.
+
+        :return: ndarray
+        '''
         return self.pendata[self.pendata['pressure']==0]
 
     @classmethod
     def calculateTrimmedSegmentIndexBoundsFromTimeRange(cls, starttime, endtime):
         """
-        Calculates the first and last array indices in the full projects
-        pen data that would be used for creating a segment with the uncorrected time range
-        provided by starttime, endtime.
+        This method should only be used by the MarkWrite GUI app.
+
+        Calculates the first and last array indices in self.project.pendata
+        that would be used for creating a segment with the uncorrected
+        time range provided by starttime, endtime.
+
         :param startt:
         :param endt:
         :return:
@@ -355,6 +564,12 @@ class PenDataSegmentCategory(object):
         return []
 
     def toDict(self):
+        '''
+        Returns a dict representation of the segment, suitable for serialization
+        as part of a serializable markwrite project representation.
+
+        :return: dict
+        '''
         segdict = dict()
         for a in self._serialize_attributes:
             if hasattr(self, a):
@@ -374,6 +589,14 @@ class PenDataSegmentCategory(object):
 
     @classmethod
     def fromDict(cls, d, project=None, parent = None):
+        '''
+        This method should only be used by the MarkWrite GUI app.
+
+        Return a PenDataSegmentCategory or PenDataSegment instance given the
+        data provided in `d`.
+
+        :return: PenDataSegment
+        '''
         if parent is None:
             seg = PenDataSegmentCategory(name=d['_name'], project=project, id=d['id'])
             PenDataSegmentCategory.totalsegmentcount=d['totalsegmentcount']
@@ -391,6 +614,8 @@ class PenDataSegmentCategory(object):
 
     def propertiesTableData(self):
         """
+        This method should only be used by the MarkWrite GUI app.
+
         Return a dict of segment properties to display in the Selected Project
         Tree Node Object Properties Table.
 
@@ -440,10 +665,20 @@ class PenDataSegment(PenDataSegmentCategory):
 
     @property
     def starttime(self):
+        '''
+        TODO: DOCSTR
+
+        :return:
+        '''
         return self._timerange[0]
 
     @property
     def endtime(self):
+        '''
+        TODO: DOCSTR
+
+        :return:
+        '''
         return self._timerange[1]
 
     @property
