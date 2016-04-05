@@ -95,12 +95,12 @@ class SegmentLevelReportExporter(ReportExporter):
                 next_penpress_time=''
 
                 if start_index>0:
-                    prev_nonzero_ix = np.searchsorted(nonzero_pressure_ixs, start_index, side='left')-1
+                    prev_nonzero_ix = nonzero_pressure_ixs[np.searchsorted(nonzero_pressure_ixs, start_index, side='left')-1]
                     prev_penpress_time = pendata['time'][prev_nonzero_ix]
-                if end_index < pointcount:
-                    next_nonzero_ix = np.searchsorted(nonzero_pressure_ixs, end_index, side='left')+1
+                if end_index < pointcount-1:
+                    next_nonzero_ix = nonzero_pressure_ixs[np.searchsorted(nonzero_pressure_ixs, end_index, side='left')+1]
                     next_penpress_time = pendata['time'][next_nonzero_ix]
-
+                    
                 yield [filename,
                            segment.id,
                            catname,
