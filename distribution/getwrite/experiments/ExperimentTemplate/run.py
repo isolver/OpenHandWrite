@@ -296,7 +296,7 @@ from constants import *
 
 from psychopy import core
 from psychopy.data import TrialHandler,importConditions
-from psychopy.iohub.client.wintabtablet import ScreenPositionValidation
+from wintabgraphics import ScreenPositionValidation
 
 def runPracticePeriod(window,
                       io,
