@@ -15,6 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import division
+
+import functools
+
 import numpy as np
 import pyqtgraph as pg
 
@@ -703,9 +706,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         exportMenu.addAction(self.exportSegmentReportAction)
         exportMenu.addSeparator()
         self.customReportActions=[]
+
         for custom_report in custom_report_classes:
             self.available_reports[custom_report.reportlabel()]=custom_report
-            a = exportMenu.addAction(custom_report.reportlabel(), lambda: self.exportCustomReport(custom_report))
+            a = exportMenu.addAction(custom_report.reportlabel(), functools.partial(self.exportCustomReport, custom_report))
             a.setEnabled(False)
             self.customReportActions.append(a)
             self.exportSampleReportAction.enableActionsList.append(a)
