@@ -19,7 +19,7 @@ file_token_labels = (u'Part_ID', u'Trial_ID', u'Trial_Word')
 order_inputs_by = 1  # Index of file_token_labels element to order inputs with.
 
 trial_cv_labels = list(file_token_labels)
-trial_cv_labels.extend([u"TRIAL_START", u"TRIAL_END"])
+trial_cv_labels.extend([u"DV_TRIAL_START", u"DV_TRIAL_END"])
 
 
 def fileNameTokens(file_path):
@@ -48,6 +48,7 @@ if __name__ == '__main__':
     print
     session_time_offset = 0
     with io.open(output_path, 'w', encoding='utf8') as fout:
+        fout.write(u'T	X	Y	P\n')
         fout.write(u"!TRIAL_CV_LABELS {}\n".format(u" ".join(trial_cv_labels)))
         for input_fname in input_file_paths:
             _, fname = os.path.split(input_fname)
