@@ -202,9 +202,6 @@ class TabDelimitedDataImporter(DataImporter):
         line1 = u'T	X	Y	P'
         with codecs.open(file_path, "r", "utf-8") as f:
             ffl1=f.readline().strip(u' \r\n')
-            print "ffl1:",ffl1
-            print 'line1:',line1
-            print 'line1==ffl1:',ffl1 == line1
             return ffl1.startswith(line1)
         return False
 
@@ -272,7 +269,6 @@ class TabDelimitedDataImporter(DataImporter):
                                 cv = float(cv)
                             except: 
                                 pass
-                        print cls.condvars_names[i],cls.condvars_names[i].find("TIME")
                         if cls.condvars_names[i].find("TRIAL_START")>=0:
                             cv = cv / 1000.0    
                         elif cls.condvars_names[i].find("TRIAL_END")>=0:
