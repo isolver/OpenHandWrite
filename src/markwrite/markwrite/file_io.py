@@ -191,6 +191,9 @@ class TabDelimitedDataImporter(DataImporter):
 
     DATA_START_LINE_INDEX = 1
 
+    exp_condvars = None
+    condvars_names = None  
+            
     def __init__(self):
         DataImporter.__init__(self)
 
@@ -198,31 +201,87 @@ class TabDelimitedDataImporter(DataImporter):
     def validate(cls, file_path):
         line1 = u'T	X	Y	P'
         with codecs.open(file_path, "r", "utf-8") as f:
-            ffl1=f.readline()
+            ffl1=f.readline().strip(u' \r\n')
+            print "ffl1:",ffl1
+            print 'line1:',line1
+            print 'line1==ffl1:',ffl1 == line1
             return ffl1.startswith(line1)
         return False
 
     @classmethod
     def parse(cls, file_path):
         list_result = []
+        condvars_array=[]
         with codecs.open(file_path, "r", "utf-8") as f:
+            cls.exp_condvars = None
+            cls.condvars_names = None  
             for line_index, tab_line in enumerate(f):
+                tab_line = tab_line.strip(u' \r\n')
                 if line_index < cls.DATA_START_LINE_INDEX:
                     # skip hearer row
                     continue
                 try:
-                    line_tokens = tab_line.split(u'\t')
+                    tab_line = tab_line.replace(u'\t', u' ')
+                    if tab_line.startswith(u'!TRIAL_CV_LABELS'):
+                        if cls.condvars_names is None:
+                            line_tokens = tab_line.split(u' ')
+                            cls.condvars_names = [str(n) for n in line_tokens[1:]]
+                        continue
+
+                    if tab_line.startswith(u'!TRIAL_CV_VALUES'):
+                        line_tokens = tab_line.split(u' ')
+                        condvars_array.append(tuple(line_tokens[1:]))
+                        continue
+                    
+                    line_tokens = tab_line.split(u' ')
                     list_result.append(
                     (float(line_tokens[cls.TIME_COLUMN_IX].strip())/1000.0,
                          int(line_tokens[cls.X_COLUMN_IX].strip()),
                          int(line_tokens[cls.Y_COLUMN_IX].strip()),
-                         int(line_tokens[cls.PRESS_COLUMN_IX].strip(u' \r\n')),
+                         int(line_tokens[cls.PRESS_COLUMN_IX]),
                          0
                          ))
 
                 except IndexError:
                     print("Note: Skipping Line {0}. Contains {1} Tokens.".format(len(list_result), len(line_tokens)))
 
+            if cls.condvars_names and condvars_array:
+                cvdtype=[]
+                for i, lt in enumerate(condvars_array[0]):
+                    etype = 'U16'
+                    try:
+                        lt = int(lt)
+                        etype = np.int64
+                    except:
+                        try:
+                            lt = float(lt)
+                            etype = np.float64
+                        except: 
+                            pass
+                    cvdtype.append((cls.condvars_names[i], etype))
+                cvdtype = np.dtype(cvdtype)
+                    
+                temparray_ = []
+                for cv_list in condvars_array:
+                    temp_elem_=[]
+                    for i, cv in enumerate(cv_list):
+                        try:
+                            cv = int(cv)
+                        except:
+                            try:
+                                cv = float(cv)
+                            except: 
+                                pass
+                        print cls.condvars_names[i],cls.condvars_names[i].find("TIME")
+                        if cls.condvars_names[i].find("TRIAL_START")>=0:
+                            cv = cv / 1000.0    
+                        elif cls.condvars_names[i].find("TRIAL_END")>=0:
+                            cv = cv / 1000.0    
+                        temp_elem_.append(cv)                        
+                    temparray_.append(tuple(temp_elem_))
+                condvars_array = temparray_
+
+                cls.exp_condvars = np.asarray(condvars_array, dtype=cvdtype)
         return list_result
 
     @classmethod
@@ -258,7 +317,10 @@ class TabDelimitedDataImporter(DataImporter):
         if SETTINGS['series_detect_max_isi_msec'] > 0:
             series_isi_thresh = SETTINGS['series_detect_max_isi_msec']/1000.0
         else:
-            series_isi_thresh = np.percentile(sample_dts,99.0,interpolation='nearest')*2.5
+            try:
+                series_isi_thresh = np.percentile(sample_dts,99.0,interpolation='nearest')*2.5
+            except TypeError: 
+                series_isi_thresh = np.percentile(sample_dts,99.0)*2.5
         print "series_isi_thresh:",series_isi_thresh
         print
         
