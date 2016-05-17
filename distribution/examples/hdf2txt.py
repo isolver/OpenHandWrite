@@ -16,8 +16,8 @@ from psychopy.core import getTime
 from psychopy import gui
 from psychopy.iohub.datastore.util import displayDataFileSelectionDialog, \
                                             ExperimentDataAccessUtility
-from psychopy.iohub import EventConstants, _DATA_STORE_AVAILABLE, \
-                                            module_directory
+from psychopy.iohub.constants import EventConstants
+from psychopy.iohub import _DATA_STORE_AVAILABLE, module_directory
 from collections import OrderedDict
 
 if _DATA_STORE_AVAILABLE is False:

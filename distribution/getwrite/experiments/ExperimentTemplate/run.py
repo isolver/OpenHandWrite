@@ -700,7 +700,6 @@ if __name__ == "__main__":
 
         # hide the OS system mouse when on experiment window
         mouse.setPosition((0,0))
-        mouse.setSystemCursorVisibility(False)
 
         # Create the PsychoPy Window and Graphics stim used during the test....
         myWin, all_stim = createPsychopyGraphics(display)

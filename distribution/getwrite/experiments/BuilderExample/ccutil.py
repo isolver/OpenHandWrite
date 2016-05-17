@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-from psychopy.iohub import OrderedDict,launchHubServer
+
+from collections import OrderedDict
+
+from psychopy.iohub.client import launchHubServer
+
 #
 ### Misc. functions used by the Builder project's custom code.
 #

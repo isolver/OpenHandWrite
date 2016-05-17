@@ -22,6 +22,7 @@ import psychopy
 from psychopy import visual, core
 from constants import *
 from util import getImageFilePath
+import wintabgraphics
 
 def addTriggerImage(win, all_stim, image_file):
     img_path = getImageFilePath(image_file)
@@ -59,8 +60,8 @@ def createPsychopyGraphics(display):
     all_stim = dict()
 
     all_stim['pen'] = {
-                    'pos': psychopy.iohub.client.wintabtablet.PenPositionStim(myWin),
-                    'traces': psychopy.iohub.client.wintabtablet.PenTracesStim(myWin)
+                    'pos': wintabgraphics.PenPositionStim(myWin),
+                    'traces': wintabgraphics.PenTracesStim(myWin)
                     }
 
     all_stim['triggers']=dict()
