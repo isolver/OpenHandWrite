@@ -23,7 +23,7 @@ trial_cv_labels.extend([u"DV_TRIAL_START", u"DV_TRIAL_END"])
 
 
 def fileNameTokens(file_path):
-    fpath, fname = os.path.split(file_path)
+    fname = unicode(os.path.basename(file_path), "cp1252")
     return fname[:-len('.txyp')].split('_')
 
 
