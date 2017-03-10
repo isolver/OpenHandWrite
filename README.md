@@ -25,7 +25,7 @@ OpenHandWrite is targeted particularly at researchers **exploring the cognitive 
 
 This version is being distributed for beta testing and use. It is open source and can be modified and distributed under the terms of the GNU General Public License. We think you'll find it useful, but it is distributed without any warranty and without even the implied warranty of merchantability (whatever that is) or fitness for purpose.
 
-Coding by [Sol Simpson](http://www.isolver-software.com/). Design by Sol, [Guido Nottbusch](http://www.uni-potsdam.de/gsp-deutsch/prof-dr-guido-nottbusch.html) and [Mark Torrance](https://www.ntu.ac.uk/apps/staff_profiles/staff_directory/125084-0/26/Mark_Torrance.aspx). Funding from the School of Social Sciences, Nottingham Trent University, UK and University of Potsdam, Germany.
+Coding by [Sol Simpson](http://www.isolver-software.com/). Design by Sol, [Guido Nottbusch](https://www.uni-potsdam.de/gsp-deutsch/studiumlehre/personen/nottbusch.html) and [Mark Torrance](https://www.ntu.ac.uk/apps/staff_profiles/staff_directory/125084-0/26/Mark_Torrance.aspx). Funding from the School of Social Sciences, Nottingham Trent University, UK and University of Potsdam, Germany.
 
 GNU General Public License (GPL) Version 3
 
