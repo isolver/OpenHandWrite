@@ -78,13 +78,15 @@ class SegmentLevelReportExporter(ReportExporter):
         pointcount=pendata.shape[0]
         nonzero_pressure_ixs = np.nonzero(pendata['pressure'])[0]
         segment_tree = cls.project.segmenttree
-
         catname = segment_tree.name
         filename=catname=segment_tree.name
 
         for level_num, segment_list in cls.project.segmenttree.getLeveledSegments().items():
             for segment in segment_list:
-                segpath = cls.segpathsep.join(segment.path)
+                # Some QString's seem to be slipping through
+                # so convert all to unicode str. This could be optimized.
+                splist = [u"{}".format(sl) for sl in segment.path]
+                segpath = cls.segpathsep.join(splist)
 
                 stime, etime = segment.timerange
                 start_index, end_index = segment_tree.calculateTrimmedSegmentIndexBoundsFromTimeRange(stime, etime)

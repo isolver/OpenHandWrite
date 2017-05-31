@@ -431,13 +431,19 @@ class PenDataSegmentCategory(object):
             curlvl=self.level+1
 
         if not segsbylvl.has_key(curlvl):
-            if self.parent:
-                lsegs=[]
-                for c in self.parent.children:
-                    lsegs+=c.children
-                segsbylvl[curlvl] = lsegs
-            else:
-                segsbylvl[curlvl]=list(self.children)
+            segsbylvl[curlvl]=[]
+            
+        if self.parent:
+            lsegs=[]
+            for c in self.parent.children:
+                lsegs+=c.children
+            for s in lsegs:
+                if s not in segsbylvl[curlvl]: 
+                    segsbylvl[curlvl].append(s)
+        else:
+            for s in list(self.children):
+                if s not in segsbylvl[curlvl]: 
+                    segsbylvl[curlvl].append(s)
 
         for c in self.children:
             c.getLeveledSegments(curlvl+1,segsbylvl)
