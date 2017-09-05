@@ -1,5 +1,5 @@
 # OpenHandWrite
-Link to the [Wiki](https://github.com/isolver/OpenHandWrite/wiki)
+Link to the [Wiki](https://github.com/isolver/OpenHandWrite/wiki), which includes download information
 
 OpenHandWrite is a suite of programs designed to provide behavioural scientists with **tools for capturing and analysing pen movement**. These programs provide accurately timed capture of pen movement data from digitising tablets and tabletPCs, and a markup and analysis tool that allows users to manually segment the pen trace into meaningful units (sentences, words, syllables, letters, lines, strokes) and then computes by-segment summary statistics. OpenHandWrite comprises...
 
