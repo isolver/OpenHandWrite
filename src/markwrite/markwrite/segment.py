@@ -302,7 +302,7 @@ class PenDataSegmentCategory(object):
         spath=[]
         p = self.parent
         while p is not None:
-            spath.append(p.name)
+            spath.append(unicode(p.name))
             p=p.parent
         return spath[::-1]
 
