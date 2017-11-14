@@ -95,17 +95,18 @@ class SegmentLevelReportExporter(ReportExporter):
 
                 prev_penpress_time=''
                 next_penpress_time=''
-                next_nonzero_ix = -1
-                prev_nonzero_ix = -1
                 if start_index>0:
-                    prev_nonzero_ix = nonzero_pressure_ixs[np.searchsorted(nonzero_pressure_ixs, start_index, side='left')-1]
-                    prev_penpress_time = pendata['time'][prev_nonzero_ix]
+                    prev_non_zeros = pendata['time'][0:start_index][pendata['pressure'][0:start_index] > 0]
+                    if prev_non_zeros.shape[0]>0:                    
+                        prev_penpress_time = prev_non_zeros[-1]
                 if end_index < pointcount-1:
-                    next_nonzero_ix = nonzero_pressure_ixs[np.searchsorted(nonzero_pressure_ixs, end_index, side='left')+1]
+                    nix = np.searchsorted(nonzero_pressure_ixs, end_index, side='left')+1
+                    if nix >= nonzero_pressure_ixs.shape[0]:
+                        nix = nonzero_pressure_ixs.shape[0]-1
+                    next_nonzero_ix = nonzero_pressure_ixs[nix]
                     if next_nonzero_ix >= pointcount:
-                        raise RuntimeWarning("WANING: next_nonzero_ix of {} >= {} pen data array length. Setting to {}".format(next_nonzero_ix, pointcount, pointcount-1))                        
-                        next_nonzero_ix = pointcount-1
-                        
+                        raise RuntimeWarning("WARNING: next_nonzero_ix of {} >= {} pen data array length. Setting to {}".format(next_nonzero_ix, pointcount, pointcount-1))                        
+                        next_nonzero_ix = pointcount-1                      
                     next_penpress_time = pendata['time'][next_nonzero_ix]
                     
                 yield [filename,
