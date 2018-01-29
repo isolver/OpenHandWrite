@@ -156,17 +156,13 @@ class SegmentInfoDockArea(DockArea):
             self.handleSegmentCreated(seg)
 
     def handleSegmentRemoved(self, segment, segment_index):
-        #print '>> TREE.handleSegmentRemoved:',segment,segment_index
         self.doNotSetActiveObject = True
-        parent_tree_node = self.segid2treenode[
-            segment.parent.id]  #self.project_tree.topLevelItem(0)
+        parent_tree_node = self.segid2treenode[segment.parent.id]
         segmenttreeitem = parent_tree_node.child(segment_index)
-        #segmenttreeitem.setSelected(False)
         parent_tree_node.removeChild(segmenttreeitem)
-        self.project_tree.setCurrentItem(None)
-        self.project_tree.clearSelection()
         self.doNotSetActiveObject = False
-        #print '<< TREE.handleSegmentRemoved'
+        if MarkWriteMainWindow.instance():
+            MarkWriteMainWindow.instance().setActiveObject(segment.parent)
 
     def handleActiveObjectChanged(self,activeobj, prevactiveobj):
         #if activeobj != prevactiveobj:
