@@ -24,6 +24,9 @@ import string, os, sys, json
 
 OK = QtGui.QDialogButtonBox.Ok
 
+_last_openfile_dir = ''
+_last_savefile_dir = ''
+
 def fileSaveDlg(initFilePath="", initFileName="",
                 prompt=u"Save MarkWrite Project",
                 allowed=None, parent=None):
@@ -48,17 +51,21 @@ def fileSaveDlg(initFilePath="", initFileName="",
 
     If user cancels the None is returned.
     """
+    global _last_savefile_dir
     if allowed is None:
         allowed = "All files (*.*);;" \
                   "Text files (*.txt)"
 
+    if initFilePath == "":
+        initFilePath = _last_savefile_dir
+        
     r = QtGui.QFileDialog.getSaveFileName(parent=parent,
                                           caption=prompt,
-                                          directory=os.path.join(initFilePath,
-                                                                 initFileName),
+                                          directory=initFilePath,
                                           filter=allowed)
     if len(r) == 0:
         return None
+    _last_savefile_dir = os.path.split(unicode(r))
     return unicode(r)
 
 def fileOpenDlg(tryFilePath="",
@@ -87,7 +94,7 @@ def fileOpenDlg(tryFilePath="",
 
     If user cancels, then None is returned.
     """
-
+    global _last_openfile_dir
     if allowed is None:
         from markwrite.project import MarkWriteProject
         ftypes = ' *.'.join(MarkWriteProject.input_file_loaders.keys())
@@ -96,14 +103,18 @@ def fileOpenDlg(tryFilePath="",
     if allow_multiple_select is True:
         fdlg = QtGui.QFileDialog.getOpenFileNames
 
-    filesToOpen = fdlg(parent=None,
-                       caption=prompt,
-                       directory=os.path.join(tryFilePath,tryFileName),
-                       filter=allowed)
+    if tryFilePath == "":
+        tryFilePath = _last_openfile_dir
+        
+    filesToOpen = fdlg(None,
+                       prompt,
+                       tryFilePath,#os.path.join(tryFilePath,tryFileName),
+                       allowed)#, None, QtGui.QFileDialog.DontUseNativeDialog)
     if allow_multiple_select is True:
         filesToOpen = [unicode(fpath) for fpath in filesToOpen if
                        os.path.exists(fpath)]
     else:
+        _last_openfile_dir, _ = os.path.split(unicode(filesToOpen)) 
         filesToOpen = [unicode(filesToOpen),]
 
     if len(filesToOpen) == 0:
