@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
-__version__ = "0.3.4"
+__version__ = "0.3.5"
 #
 # This file is part of the open-source MarkWrite application.
 #
