@@ -923,19 +923,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
     def createPenSampleLevelReportFile(self):
         self.exportCustomReport(PenSampleReportExporter)
-#        default_file_name = u"pen_samples_{0}.txt".format(self.project.name)
-#        file_path = fileSaveDlg(initFileName=default_file_name,
-#                                prompt="Export Pen Sample Report")
-#        if file_path:
-#            PenSampleReportExporter().export(file_path, self.project)
 
     def createSegmentLevelReportFile(self):
         self.exportCustomReport(SegmentLevelReportExporter)
-        #default_file_name = u"segments_{0}.txt".format(self.project.name)
-        #file_path = fileSaveDlg(initFileName=default_file_name,
-        #                        prompt="Export Segment Level Report")
-        #if file_path:
-        #    SegmentLevelReportExporter().export(file_path, self.project)
 
     def exportCustomReport(self,reportcls):
         default_file_name = u"{}_{}.txt".format(reportcls.outputfileprefix(),self.project.name)
