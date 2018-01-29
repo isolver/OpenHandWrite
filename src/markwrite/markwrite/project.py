@@ -725,7 +725,7 @@ class MarkWriteProject(object):
         pen_data = fimporter.asarray(file_path)
         updateDataFileLoadingProgressDialog(self._mwapp)
 
-        self._detectTrialPeriodConditionVariables(fimporter)
+        self._detectTrialPeriodConditionVariables(fimporter, pen_data)
         updateDataFileLoadingProgressDialog(self._mwapp)
 
         self.pendata = self._parsePenDataByTrials(pen_data)
@@ -911,7 +911,7 @@ class MarkWriteProject(object):
 
         self.pendatafileinfo['utcdateloaded'] = datetime.datetime.utcnow()
 
-    def _detectTrialPeriodConditionVariables(self, fimporter):
+    def _detectTrialPeriodConditionVariables(self, fimporter, pen_data):
         # If file opened was an iohub hdf5 file, and had a
         # cond var table, get the cond var table as a ndarray.
         try:
@@ -953,6 +953,25 @@ class MarkWriteProject(object):
             if dictDlg.OK:
                 self._stimevar = tvarlists["Start Time Variable"]
                 self._etimevar = tvarlists["End Time Variable"]
+
+                #remove entries in trial cond vars for trails with no pen samples
+                to_remove=[]
+                for tix, t in enumerate(self.trial_cond_vars):
+                        trialstart = float(t[self._stimevar])
+                        trialend = float(t[self._etimevar])
+                        if trialend-trialstart <= 0.0:
+                            to_remove.append(tix)
+                            continue
+    
+                        trial_time_mask = (pen_data['time'] >= trialstart) & (pen_data['time'] < trialend)
+                        trial_samples = pen_data[trial_time_mask]  
+                        if len(trial_samples)==0:
+                            to_remove.append(tix)
+                
+                if len(to_remove):            
+                    print("Removing Trials with no data: {}".format(to_remove))
+                    for tix in to_remove:
+                        self.trial_cond_vars = np.delete(self.trial_cond_vars, tix)
 
     def _parsePenDataByTrials(self, pen_data):
         trials = []  # list of tuples; each being (cvrow_index,
@@ -1337,7 +1356,7 @@ class MarkWriteProject(object):
             if len(sids) == 1:
                 if sids[0] == 0:
                     return True
-                if self.segmenttree.id2obj[sids[0]].pointcount > \
+                if self.segmenttree.id2obj[sids[0]].pointcount >= \
                         self.selectedpendata.shape[0]:
                     return True
         return False
