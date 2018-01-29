@@ -152,7 +152,6 @@ class DetailedSegmentReportExporter(ReportExporter):
         for level_num, segment_list in cls.project.segmenttree.getLeveledSegments().items():
             for segment in segment_list:
                 segpath = cls.segpathsep.join(segment.path)
-                
                 stime, etime = segment.timerange
                 six, eix = segment_tree.calculateTrimmedSegmentIndexBoundsFromTimeRange(stime, etime)
                 duration = round(etime - stime,4)
@@ -176,6 +175,19 @@ class DetailedSegmentReportExporter(ReportExporter):
                 prev_notpress_tracelength=''
                 prev_trace_disp_ratio = ''
                 
+                #default values
+                x_disp = cls.missingval
+                y_disp = cls.missingval
+                xy_disp = cls.missingval
+                hover_xy_disp = cls.missingval
+                press_xy_disp = cls.missingval
+                pause_counts = []
+                duration2 = cls.missingval             
+                hovertime = cls.missingval 
+                presstime = cls.missingval
+                not_presstime = cls.missingval
+                outrange_time = cls.missingval
+
 
                 if six > 0:
                     try:
@@ -201,21 +213,21 @@ class DetailedSegmentReportExporter(ReportExporter):
                 
                 starts_with_press = pendata['pressure'][six] > 0
                 
-                x_disp = int(pendata['x_filtered'][eix]-pendata['x_filtered'][six])
-                y_disp = int(pendata['y_filtered'][eix]-pendata['y_filtered'][six])
-                            
-                xy_disp = int(sum(xy_disps[six+1:eix]))
-                hover_xy_disp = int(sum(xy_disps[six+1:eix]*vin_state(states,'HOVERING')[:-1]))
-                press_xy_disp = int(sum(xy_disps[six+1:eix]*vin_state(states,'PRESSED')[:-1]))                
+                if eix > six:
+                    x_disp = int(pendata['x_filtered'][eix]-pendata['x_filtered'][six])
+                    y_disp = int(pendata['y_filtered'][eix]-pendata['y_filtered'][six])
+                    xy_disp = int(sum(xy_disps[six+1:eix]))
+
+                    hover_xy_disp = int(sum(xy_disps[six+1:eix]*vin_state(states,'HOVERING')[:-1]))
+                    press_xy_disp = int(sum(xy_disps[six+1:eix]*vin_state(states,'PRESSED')[:-1]))                
                 
-                duration2 = sum(SISIs)   #for checking against duration             
-                hovertime = sum(SISIs*vin_state(states,'HOVERING')) 
-                presstime = sum(SISIs*vin_state(states,'PRESSED'))
-                not_presstime = round(duration - presstime, 4)
-                outrange_time = round(duration - presstime - hovertime, 4)
+                    duration2 = sum(SISIs)   #for checking against duration             
+                    hovertime = sum(SISIs*vin_state(states,'HOVERING')) 
+                    presstime = sum(SISIs*vin_state(states,'PRESSED'))
+                    not_presstime = round(duration - presstime, 4)
+                    outrange_time = round(duration - presstime - hovertime, 4)
                 
                 #get puase vars
-                pause_counts = []
                 for mn,mx in DetailedSegmentReportExporter().pbs:
                     pause_counts.append(len(pressed_SISIs[(pressed_SISIs >= mn) & (pressed_SISIs < mx)]))             
                                                     
