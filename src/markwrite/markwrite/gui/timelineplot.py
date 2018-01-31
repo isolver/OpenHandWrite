@@ -292,6 +292,9 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                                                 'timeplot_vtrace_size'],
                                             symbolPen=penarray,
                                             symbolBrush=brusharray)
+                
+            self.velocity_plot.setLimits(xMin=penpoints['time'][0],
+                                     xMax=penpoints['time'][-1])
 
         if hasattr(self, 'acceleration_plot'):
             penarray, brusharray = self.getPenBrush('timeplot_atrace_color', 'timeplot_atrace_size',penpoints, penarray,
@@ -304,6 +307,9 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                                                 'timeplot_atrace_size'],
                                             symbolPen=penarray,
                                             symbolBrush=brusharray)
+
+            self.acceleration_plot.setLimits(xMin=penpoints['time'][0],
+                                     xMax=penpoints['time'][-1])
 
         if added:
             # Add a Selection Region that is used to create segments by user
