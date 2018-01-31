@@ -143,6 +143,8 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
             delattr(self,'velocity_plot')
             self.removeItem(self.dataplots['velocity_plot'])
             if self.plotitems.get('velocity_plot'):
+                if self.plotitems['velocity_plot'].get('boundary_points'):
+                    del self.plotitems['velocity_plot']['boundary_points']   
                 del self.plotitems['velocity_plot']
             if self.dataplots.get('velocity_plot'):
                 del self.dataplots['velocity_plot']
@@ -152,6 +154,8 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
             delattr(self,'acceleration_plot')
             self.removeItem(self.dataplots['acceleration_plot'])
             if self.plotitems.get('acceleration_plot'):
+                if self.plotitems['acceleration_plot'].get('boundary_points'):
+                    del self.plotitems['acceleration_plot']['boundary_points']   
                 del self.plotitems['acceleration_plot']
             if self.dataplots.get('acceleration_plot'):
                 del self.dataplots['acceleration_plot']
@@ -206,27 +210,35 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
 
     def addStrokeBoundaryPoints(self, strokeboundries):
         ssize = SETTINGS['pen_stroke_boundary_size']
-        bpoints = self.plotitems['xy_plot'].get('boundary_points')
-        if ssize == 0:
-            if bpoints:
-                bpoints.clear()
-            return
         scolor = SETTINGS['pen_stroke_boundary_color']
         pen = pg.mkPen(scolor, width=ssize)
         brush = pg.mkBrush(scolor)
-        if bpoints is None:
-            bpoints = self.plotitems['xy_plot']['boundary_points'] = pg.ScatterPlotItem(size=ssize, pen=pen, brush=brush)
-            self.xy_plot.addItem(bpoints)
-        else:
-            bpoints.clear()
-        bpoints.addPoints(x=strokeboundries['time'],
-                                             y=strokeboundries[X_FIELD],
-                                             size=ssize, pen=pen, brush=brush)
-        bpoints.addPoints(x=strokeboundries['time'],
-                                             y=strokeboundries[Y_FIELD],
-                                             size=ssize, pen=pen, brush=brush
-                                            )
-
+        
+        def addBoundaryPointsToSubPlot(plot_name, point_fields):
+            bpoints = self.plotitems[plot_name].get('boundary_points')
+            if ssize == 0:
+                if bpoints:
+                    bpoints.clear()
+                return
+            if bpoints is None:
+                bpoints = self.plotitems[plot_name]['boundary_points'] = pg.ScatterPlotItem(size=ssize, 
+                                                                                            pen=pen, 
+                                                                                            brush=brush) 
+                if hasattr(self, plot_name):
+                    getattr(self, plot_name).addItem(bpoints)
+            else:
+                bpoints.clear()
+            
+            for fname in point_fields:                
+                bpoints.addPoints(x=strokeboundries['time'],
+                                                     y=strokeboundries[fname],
+                                                     size=ssize, pen=pen, brush=brush)
+            
+        addBoundaryPointsToSubPlot('xy_plot', [X_FIELD, Y_FIELD])    
+        if hasattr(self, 'velocity_plot'):        
+            addBoundaryPointsToSubPlot('velocity_plot', ['xy_velocity',])    
+        if hasattr(self, 'acceleration_plot'):        
+            addBoundaryPointsToSubPlot('acceleration_plot'  , ['xy_acceleration',])    
 
     def handleResetPenData(self, project):
         '''
