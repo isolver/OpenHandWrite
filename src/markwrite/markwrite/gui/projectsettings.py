@@ -62,6 +62,8 @@ flattenned_settings_dict['stroke_detect_pressed_runs_only'] = {'name': 'Use Pres
 #flattenned_settings_dict['stroke_detect_min_value_threshold'] = {'name': 'Minimum Velocity Threshold', 'type': 'float', 'value': 0.0, 'step': 0.1, 'limits':(0.0, 500.0)}
 flattenned_settings_dict['stroke_detect_min_p2p_sample_count'] = {'name': 'Minimum Stroke Sample Count', 'type': 'int', 'value': 7, 'limits': (1, 50)}
 flattenned_settings_dict['stroke_detect_edge_type'] =  {'name': 'Detect Edge Type', 'type': 'list', 'values': ['none', 'rising', 'falling', 'both'], 'value': 'rising'}
+flattenned_settings_dict['stroke_detect_use_field'] =  {'name': 'Use Sample Field', 'type': 'list', 'values': ['xy_velocity', 'y_filtered'], 'value': 'xy_velocity'}
+flattenned_settings_dict['stroke_detect_peak_or_valley'] =  {'name': 'Detect Peaks / Valleys', 'type': 'list', 'values': ['Minima', 'Maxima', 'Minima & Maxima'], 'value': 'Minima'}
 
 flattenned_settings_dict['series_detect_max_isi_msec'] = {'name': 'Maximum Series ISI (msec)', 'type': 'int', 'value': 0, 'limits': (0, 100)}
 
@@ -87,6 +89,7 @@ flattenned_settings_dict['kbshortcut_selection_start_to_next_series_start'] = {'
 flattenned_settings_dict['kbshortcut_selection_start_to_prev_series_start'] = {'name': 'Move Selection Start to Previous Series Start', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Shift+Left').toString()}
 
 flattenned_settings_dict['kbshortcut_select_next_run'] = {'name': 'Select Next Sample Run', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Up').toString()}
+flattenned_settings_dict['kbshortcut_select_next_unmarked_run'] =  {'name': 'Select Next Unmarked Run', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Shift+Up').toString()}
 flattenned_settings_dict['kbshortcut_select_previous_run'] = {'name': 'Select Previous Sample Run', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Down').toString()}
 flattenned_settings_dict['kbshortcut_selection_end_to_next_run_end'] = {'name': 'Move Selection End to Next Run End', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Right').toString()}
 flattenned_settings_dict['kbshortcut_selection_end_to_prev_run_end'] = {'name': 'Move Selection End to Previous Run End', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Left').toString()}
@@ -94,6 +97,7 @@ flattenned_settings_dict['kbshortcut_selection_start_to_next_run_start'] = {'nam
 flattenned_settings_dict['kbshortcut_selection_start_to_prev_run_start'] = {'name': 'Move Selection Start to Previous Run Start', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Shift+Left').toString()}
 
 flattenned_settings_dict['kbshortcut_select_next_stroke'] = {'name': 'Select Next Stroke', 'type': 'str', 'value': QtGui.QKeySequence('Up').toString()}
+flattenned_settings_dict['kbshortcut_select_next_unmarked_stroke'] = {'name': 'Select Next Unmarked Stroke', 'type': 'str', 'value': QtGui.QKeySequence('Shift+Up').toString()}
 flattenned_settings_dict['kbshortcut_select_previous_stroke'] = {'name': 'Select Previous Stroke', 'type': 'str', 'value': QtGui.QKeySequence('Down').toString()}
 flattenned_settings_dict['kbshortcut_selection_end_to_next_stroke_end'] = {'name': 'Move Selection End to Next Stroke End', 'type': 'str', 'value': QtGui.QKeySequence('Right').toString()}
 flattenned_settings_dict['kbshortcut_selection_end_to_prev_stroke_end'] = {'name': 'Move Selection End to Previous Stroke End', 'type': 'str', 'value': QtGui.QKeySequence('Left').toString()}
@@ -114,7 +118,9 @@ settings_params = [
                  ]},
                {'name': 'Stoke Detection', 'type': 'group', 'children': [
                     'stroke_detect_pressed_runs_only',
+                    'stroke_detect_peak_or_valley',
 #                    'stroke_detect_min_value_threshold',
+                    'stroke_detect_use_field',
                     'stroke_detect_min_p2p_sample_count',
                     'stroke_detect_edge_type',
                  ]},
@@ -179,6 +185,7 @@ settings_params = [
             'kbshortcut_selection_start_to_next_series_start',
             'kbshortcut_selection_start_to_prev_series_start',
 
+            'kbshortcut_select_next_unmarked_run',
             'kbshortcut_select_next_run',
             'kbshortcut_select_previous_run',
             'kbshortcut_selection_end_to_next_run_end',
@@ -186,6 +193,7 @@ settings_params = [
             'kbshortcut_selection_start_to_next_run_start',
             'kbshortcut_selection_start_to_prev_run_start',
 
+            'kbshortcut_select_next_unmarked_stroke',
             'kbshortcut_select_next_stroke',
             'kbshortcut_select_previous_stroke',
             'kbshortcut_selection_end_to_next_stroke_end',

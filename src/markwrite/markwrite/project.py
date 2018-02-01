@@ -1127,12 +1127,35 @@ class MarkWriteProject(object):
         edge_type = SETTINGS['stroke_detect_edge_type']
         if edge_type == 'none':
             edge_type = None
-        ppp_minima = detect_peaks(searchsamplearray['xy_velocity'],
+        vtype = SETTINGS['stroke_detect_peak_or_valley']
+        # vtype 'Minima' == True        
+        valley_types = [True,]
+        if vtype == 'Maxima':
+            valley_types = [False,]
+        elif vtype == 'Minima & Maxima':
+            valley_types = [True, False]
+            
+        ppp_minima = None
+        
+        for vt in valley_types:
+            if ppp_minima is None:
+                ppp_minima = detect_peaks(searchsamplearray[SETTINGS['stroke_detect_use_field']],
                                   mph=None,
                                   mpd=SETTINGS[
                                       'stroke_detect_min_p2p_sample_count'],
                                   edge=edge_type,
-                                  valley=True)
+                                  valley=vt)
+            else:
+                ppp_minima2 = detect_peaks(searchsamplearray[SETTINGS['stroke_detect_use_field']],
+                                  mph=None,
+                                  mpd=SETTINGS[
+                                      'stroke_detect_min_p2p_sample_count'],
+                                  edge=edge_type,
+                                  valley=vt)
+                                  
+                ppp_minima = np.append(ppp_minima, ppp_minima2)
+                ppp_minima.sort()
+                
         if len(ppp_minima) > 1:
             for s, vmin_ix in enumerate(ppp_minima[:-1]):
                 if s == 0:
