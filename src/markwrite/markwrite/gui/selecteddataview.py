@@ -124,8 +124,8 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
                 else:
                     proj = MarkWriteMainWindow.instance().project
                     pstart, pend = pendata['time'][[0,-1]]
-                    vms_times = proj.velocity_minima_samples['time']
-                    vmpoints = proj.velocity_minima_samples[(vms_times >= pstart) & (vms_times <= pend)]
+                    vms_times = proj.stroke_boundary_samples['time']
+                    vmpoints = proj.stroke_boundary_samples[(vms_times >= pstart) & (vms_times <= pend)]
                     self.strokeBoundaryPoints.setData(x=vmpoints[X_FIELD], y=vmpoints[Y_FIELD], size=ssize, pen=self.qtpenbrushs['stroke_boundary_pen'], brush=self.qtpenbrushs['stroke_boundary_brush'])
 
         else:

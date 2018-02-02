@@ -179,7 +179,7 @@ class MarkWriteProject(object):
         'nonzero_region_ix',
         'series_boundaries',
         'run_boundaries',
-        'velocity_minima_samples',
+        'stroke_boundary_samples',
         'stroke_boundaries',
         'segmenttree'
     )
@@ -189,7 +189,7 @@ class MarkWriteProject(object):
                               hdf5=HubDatastoreImporter,
                               mwp=readPickle)
     _selectedtimeregion = None
-    schema_version = "0.2"
+    schema_version = "0.3"
 
     def __init__(self, name=u"New", file_path=None, mwapp=None,
                  tstart_cond_name=None, tend_cond_name=None):
@@ -254,11 +254,11 @@ class MarkWriteProject(object):
         # self.sampling_interval = 0
         self.series_boundaries = []
         self.run_boundaries = []
-        self.velocity_minima_samples = None
+        self.stroke_boundary_samples = None
         self.stroke_boundaries = []
         self.segmenttree = None
 
-        self._velocity_minima_ixs = []
+        self._stroke_boundary_ixs = []
         self._mwapp = None
         self._modified = True
 
@@ -752,8 +752,8 @@ class MarkWriteProject(object):
         #      a) full sample Series
         #      b) each sample Run within the Series
         self.run_boundaries = []
-        self._velocity_minima_ixs = []
-        self.velocity_minima_samples = None
+        self._stroke_boundary_ixs = []
+        self.stroke_boundary_samples = None
         self.stroke_boundaries = []
         press_run_count = 0
         for series_bounds in self.series_boundaries:
@@ -846,7 +846,7 @@ class MarkWriteProject(object):
 
         # Create ndarray of pen samples that are the detected stroke
         # boundary points.
-        self.velocity_minima_samples = self.pendata[self._velocity_minima_ixs]
+        self.stroke_boundary_samples = self.pendata[self._stroke_boundary_ixs]
 
         if self._mwapp:
             # If project is being created via MarkWrite GUI, create
@@ -1173,15 +1173,15 @@ class MarkWriteProject(object):
                 self.stroke_boundaries.append((
                 len(self.stroke_boundaries), parent_id, abs_vmin_ix, st,
                 next_abs_vmin_ix, et))
-                self._velocity_minima_ixs.append(abs_vmin_ix)
+                self._stroke_boundary_ixs.append(abs_vmin_ix)
             next_abs_vmin_ix = obsolute_offset + len(searchsamplearray) - 1
             if next_abs_vmin_ix >= len(self.pendata):
                 next_abs_vmin_ix = len(self.pendata) - 1
-            self._velocity_minima_ixs.append(next_abs_vmin_ix)
+            self._stroke_boundary_ixs.append(next_abs_vmin_ix)
         else:
             # add full run as one stroke
-            self._velocity_minima_ixs.append(obsolute_offset)
-            self._velocity_minima_ixs.append(
+            self._stroke_boundary_ixs.append(obsolute_offset)
+            self._stroke_boundary_ixs.append(
                 obsolute_offset + len(searchsamplearray) - 1)
             self.stroke_boundaries.append(
                 (len(self.stroke_boundaries), parent_id,
@@ -1394,7 +1394,15 @@ class MarkWriteProject(object):
         updateDataFileLoadingProgressDialog(self._mwapp, 10)
         projdict = fimporter(*os.path.split(proj_file_path))
         projattrnames = projdict.keys()
-
+        
+        # Check if project file was saved before change from
+        # velocity_minima_samples to stroke_boundary_samples attr
+        # and fix if needed.
+        if 'velocity_minima_samples' in projattrnames:
+            projdict['stroke_boundary_samples'] = projdict['velocity_minima_samples']
+            del projdict['velocity_minima_samples']
+            projattrnames = projdict.keys()
+            
         self._updateProjectFileInfo(proj_file_path)
 
         # Handle segment tree specially

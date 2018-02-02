@@ -476,6 +476,20 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         #
         # Next/Prev Pen Pressed Run Actions
         #
+
+        atext = 'Selected Next Unmarked Sample Run'
+        aicon = 'next_run&32.png'
+        self.selectNextUnmarkedRunAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        self.selectNextUnmarkedRunAction.setShortcut(SETTINGS['kbshortcut_select_next_unmarked_run'])
+        self.selectNextUnmarkedRunAction.setEnabled(False)
+        self.selectNextUnmarkedRunAction.setStatusTip(atext)
+        self.selectNextUnmarkedRunAction.triggered.connect(self.selectNextUnmarkedRun)
+        shortcutkey2action['kbshortcut_select_next_unmarked_run'] =self.selectNextUnmarkedRunAction
+        shortcutkey2action['kbshortcut_select_next_unmarked_run'].base_tip_txt=atext
+        
         atext = 'Selected Next Pressed Sample Run'
         aicon = 'next_run&32.png'
         self.selectNextPressedRunAction = ContextualStateAction(
@@ -557,6 +571,20 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         #
         # Next/Prev Stroke Actions
         #
+        atext = 'Selected Next Unmarked Pen Stroke'
+        aicon = 'next_stroke&32.png'
+        self.selectNextUnmarkedStrokeAction = ContextualStateAction(
+            QtGui.QIcon(getIconFilePath(aicon)),
+            atext,
+            self)
+        self.selectNextUnmarkedStrokeAction.setShortcut(SETTINGS['kbshortcut_select_next_unmarked_stroke'])
+        self.selectNextUnmarkedStrokeAction.setEnabled(False)
+        self.selectNextUnmarkedStrokeAction.setStatusTip(atext)
+        self.selectNextUnmarkedStrokeAction.triggered.connect(self.selectNextUnmarkedStroke)
+        shortcutkey2action['kbshortcut_select_next_unmarked_stroke'] =self.selectNextUnmarkedStrokeAction
+        shortcutkey2action['kbshortcut_select_next_unmarked_stroke'].base_tip_txt=atext
+        ###################
+        
         atext = 'Select the Next Pen Stroke'
         aicon = 'next_stroke&32.png'
         self.selectNextStrokeAction = ContextualStateAction(
@@ -648,12 +676,14 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         self.exportSampleReportAction.enableActionsList.append(self.selectNextPressedRunAction)
         self.exportSampleReportAction.enableActionsList.append(self.selectPrevPressedRunAction)
+        self.exportSampleReportAction.enableActionsList.append(self.selectNextUnmarkedRunAction)
         self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionEndToNextRunEndAction)
         self.exportSampleReportAction.enableActionsList.append(self.returnSelectionEndToPrevRunEndAction)
         self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionStartToNextRunStartAction)
         self.exportSampleReportAction.enableActionsList.append(self.returnSelectionStartToPrevRunStartAction)
 
         self.exportSampleReportAction.enableActionsList.append(self.selectNextStrokeAction)
+        self.exportSampleReportAction.enableActionsList.append(self.selectNextUnmarkedStrokeAction)
         self.exportSampleReportAction.enableActionsList.append(self.selectPrevStrokeAction)
         self.exportSampleReportAction.enableActionsList.append(self.advanceSelectionEndToNextStrokeEndAction)
         self.exportSampleReportAction.enableActionsList.append(self.returnSelectionEndToPrevStrokeEndAction)
@@ -750,6 +780,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.toolbarseriesselect.addAction(self.advanceSelectionEndToNextSeriesEndAction)
 
         self.toolbarrunselect = self.addToolBar('Pressed Run Selection')
+        self.toolbarrunselect.addAction(self.selectNextUnmarkedRunAction)
         self.toolbarrunselect.addAction(self.returnSelectionStartToPrevRunStartAction)
         self.toolbarrunselect.addAction(self.advanceSelectionStartToNextRunStartAction)
         self.toolbarrunselect.addAction(self.selectPrevPressedRunAction)
@@ -759,6 +790,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
 
         self.toolbarstrokeselect = self.addToolBar('Pen Stroke Selection')
+        self.toolbarstrokeselect.addAction(self.selectNextUnmarkedStrokeAction)
         self.toolbarstrokeselect.addAction(self.returnSelectionStartToPrevStrokeStartAction)
         self.toolbarstrokeselect.addAction(self.advanceSelectionStartToNextStrokeStartAction)
         self.toolbarstrokeselect.addAction(self.selectPrevStrokeAction)
@@ -1229,6 +1261,15 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         if runtimerange:
             self.project.selectedtimeregion.setRegion(runtimerange)
 
+    @not_implemented
+    def selectNextUnmarkedRun(self):
+        #spendata = self.project.getPenDataForTimePeriod(tstart, tend)
+        pass
+        #runtimerange = self.project._getNextUnitTimeRange(self.project.run_boundaries)
+        #
+        #if runtimerange:
+        #    self.project.selectedtimeregion.setRegion(runtimerange)
+
     def selectPrevPressedRun(self):
         runtimerange = self.project._getPreviousUnitTimeRange(self.project.run_boundaries)
         if runtimerange:
@@ -1249,6 +1290,14 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
     # >>>>>>
     # STROKE based selection region actions
+
+    @not_implemented
+    def selectNextUnmarkedStroke(self):
+        pass
+        #stroketimerange = self.project._getNextUnitTimeRange(self.project.stroke_boundaries, adjust_end_time = True)
+        #if stroketimerange:
+        #    self.project.selectedtimeregion.setRegion(stroketimerange)
+
     def selectNextStroke(self):
         stroketimerange = self.project._getNextUnitTimeRange(self.project.stroke_boundaries, adjust_end_time = True)
         if stroketimerange:

@@ -331,9 +331,9 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
 
         proj = MarkWriteMainWindow.instance().project
         pstart, pend = penpoints['time'][[0,-1]]
-        vms_times = proj.velocity_minima_samples['time']
+        vms_times = proj.stroke_boundary_samples['time']
         vms_mask = (vms_times >= pstart) & (vms_times <= pend)
-        self.addStrokeBoundaryPoints(proj.velocity_minima_samples[vms_mask])
+        self.addStrokeBoundaryPoints(proj.stroke_boundary_samples[vms_mask])
 
         self.xy_plot.setRange(xRange=(penpoints['time'][0], penpoints['time'][-1]),
                       yRange=self.fullPenValRange,
@@ -392,9 +392,9 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
             if k.startswith('pen_stroke_boundary'):
                 proj = MarkWriteMainWindow.instance().project
                 pstart, pend = penpoints['time'][[0,-1]]
-                vms_times = proj.velocity_minima_samples['time']
+                vms_times = proj.stroke_boundary_samples['time']
                 vms_mask = (vms_times >= pstart) & (vms_times <= pend)
-                self.addStrokeBoundaryPoints(proj.velocity_minima_samples[vms_mask])
+                self.addStrokeBoundaryPoints(proj.stroke_boundary_samples[vms_mask])
 
         self.xy_plot.getViewBox().setMouseEnabled(y=SETTINGS['timeplot_enable_ymouse'])
         if SETTINGS['timeplot_enable_ymouse'] is False:

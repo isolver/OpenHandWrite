@@ -168,9 +168,9 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
 
         proj = MarkWriteMainWindow.instance().project
         pstart, pend = pdat['time'][[0,-1]]
-        vms_times = proj.velocity_minima_samples['time']
+        vms_times = proj.stroke_boundary_samples['time']
         vms_mask = (vms_times >= pstart) & (vms_times <= pend)
-        self.addStrokeBoundaryPoints(proj.velocity_minima_samples[vms_mask])
+        self.addStrokeBoundaryPoints(proj.stroke_boundary_samples[vms_mask])
         #print "<< ### PenDataSpatialPlotWidget.handleResetPenData"
 
 
@@ -231,9 +231,9 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             if k.startswith('pen_stroke_boundary'):
                 proj = MarkWriteMainWindow.instance().project
                 pstart, pend = pdat['time'][[0,-1]]
-                vms_times = proj.velocity_minima_samples['time']
+                vms_times = proj.stroke_boundary_samples['time']
                 vms_mask = (vms_times >= pstart) & (vms_times <= pend)
-                self.addStrokeBoundaryPoints(proj.velocity_minima_samples[vms_mask])
+                self.addStrokeBoundaryPoints(proj.stroke_boundary_samples[vms_mask])
 
         if 'spatialplot_invert_y_axis' in updates.keys():
             self.getPlotItem().invertY(SETTINGS['spatialplot_invert_y_axis'])
