@@ -1,7 +1,7 @@
 OpenHandWrite Example 2 
 ------------------------------
 
-Wacom Wintab device required; Surface Pro 3 + no supported yet.
+Wacom Wintab device required; Surface Pro 3 + not supported yet.
 
 An example PsychoPy Builder project that uses the iohub.wintab device, plays video and audio files.
 
@@ -10,6 +10,8 @@ Please edit the iohub_config.yaml file to set the display device parameters so t
 Experiment design is in progress, based on the original builder example, and modified to more closely meet issue #194 requirements.
 
 Current experiment flow:
+
+SS: TODO UPDATE BELOW TEXT; IT IS OUT OF DATE
 
 1. Display Experiment Start Screen, wait for button press.
 
