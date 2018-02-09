@@ -47,6 +47,25 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         MarkWriteMainWindow.instance().sigActiveObjectChanged.connect(
             self.handleSelectedObjectChanged)
 
+    def mouseDoubleClickEvent(self, event):
+        """
+        On double click, find closest pen sample to mouse pos and select 
+        the sample's segment (if it has been assigned to one). 
+        """
+        if MarkWriteMainWindow.instance().project:
+            pdat = self.getCurrentPenData()
+            if len(pdat):                    
+                data_pos = self.getPlotItem().vb.mapSceneToView(event.pos())        
+                dx = pdat[X_FIELD]-data_pos.x()
+                dy = pdat[Y_FIELD]-data_pos.y()
+                dxy = np.sqrt(dx*dx+dy*dy)
+                min_ix = dxy.argmin()
+                seg_id = pdat[min_ix]['segment_id']
+                if seg_id:
+                    seg = PenDataSegment.id2obj[seg_id]    
+                    MarkWriteMainWindow.instance().setActiveObject(seg)
+        super(PenDataSpatialPlotWidget,self).mouseDoubleClickEvent(event)
+        
     def mouseMoveEvent(self, event):
         super(PenDataSpatialPlotWidget,self).mouseMoveEvent(event)
         if (self._enablePopupDisplay is True and event.buttons() and not 
