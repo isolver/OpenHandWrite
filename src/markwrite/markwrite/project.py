@@ -181,7 +181,8 @@ class MarkWriteProject(object):
         'run_boundaries',
         'stroke_boundary_samples',
         'stroke_boundaries',
-        'segmenttree'
+        'segmenttree',
+        'gui_state'
     )
     input_file_loaders = dict(xml=XmlDataImporter,
                               txyp=TabDelimitedDataImporter,
@@ -261,6 +262,8 @@ class MarkWriteProject(object):
         self._stroke_boundary_ixs = []
         self._mwapp = None
         self._modified = True
+        
+        self.gui_state = None
 
         if mwapp:
             self._mwapp = proxy(mwapp)
@@ -767,9 +770,9 @@ class MarkWriteProject(object):
             # 2) Calculate pen sample velocity and acceleration data.
             calculate_velocity(pseries)
 
-            if SETTINGS['stroke_detect_pressed_runs_only'] is False:
-                # 4a) Detect pen stroke boundaries within current Series
-                self._findstrokes(pseries, psb_start_ix, series_bounds['id'])
+            #SS: if SETTINGS['stroke_detect_pressed_runs_only'] is False:
+            #SS:     # 4a) Detect pen stroke boundaries within current Series
+            #SS:    self._findstrokes(pseries, psb_start_ix, series_bounds['id'])
 
             updateDataFileLoadingProgressDialog(self._mwapp)
 
@@ -798,13 +801,13 @@ class MarkWriteProject(object):
                         curr_press_series_id, series_bounds['id'],
                         psb_start_ix + si, st, psb_start_ix + ei, et))
 
-                        if len(pressed_run_ixs) > 1 and SETTINGS[
-                            'stroke_detect_pressed_runs_only'] is True:
-                            # 4b) Detect pen stroke boundaries within each
-                            # sample Run
-                            self._findstrokes(pseries[si:ei + 1],
-                                             psb_start_ix + si,
-                                             curr_press_series_id)
+                        #SS: if len(pressed_run_ixs) > 1 and SETTINGS[
+                        #SS:     'stroke_detect_pressed_runs_only'] is True:
+                        #SS:     # 4b) Detect pen stroke boundaries within each
+                        #SS:     # sample Run
+                        #SS:     self._findstrokes(pseries[si:ei + 1],
+                        #SS:                      psb_start_ix + si,
+                        #SS:                      curr_press_series_id)
                     updateDataFileLoadingProgressDialog(self._mwapp)
             else:
                 # If no FIRST_PRESS pen sample states are found,
@@ -826,11 +829,11 @@ class MarkWriteProject(object):
                     self.run_boundaries.append((
                     curr_press_series_id, series_bounds['id'],
                     psb_start_ix + si, st, psb_start_ix + ei, et))
-                    if SETTINGS['stroke_detect_pressed_runs_only'] is True:
-                        # 4b) Detect pen stroke boundaries within each sample
-                        #  Run
-                        self._findstrokes(pseries[si:ei + 1], psb_start_ix + si,
-                                         curr_press_series_id)
+                    #SS: if SETTINGS['stroke_detect_pressed_runs_only'] is True:
+                    #SS:     # 4b) Detect pen stroke boundaries within each sample
+                    #SS:     #  Run
+                    #SS:     self._findstrokes(pseries[si:ei + 1], psb_start_ix + si,
+                    #SS:                      curr_press_series_id)
                     updateDataFileLoadingProgressDialog(self._mwapp)
 
         # Convert run_boundaries list of lists into an ndarray
@@ -840,13 +843,17 @@ class MarkWriteProject(object):
         'formats': [np.uint16, np.uint16, np.uint32, np.float64, np.uint32,
                     np.float64]})
         self.run_boundaries = np.asarray(self.run_boundaries, dtype=run_dtype)
-        # Convert stroke_boundaries list of lists into an ndarray
-        self.stroke_boundaries = np.asarray(self.stroke_boundaries,
-                                            dtype=run_dtype)
+        
 
-        # Create ndarray of pen samples that are the detected stroke
-        # boundary points.
-        self.stroke_boundary_samples = self.pendata[self._stroke_boundary_ixs]
+        self._parseStrokeBoundaries()
+        updateDataFileLoadingProgressDialog(self._mwapp)
+        #SS: # Convert stroke_boundaries list of lists into an ndarray
+        #SS: self.stroke_boundaries = np.asarray(self.stroke_boundaries,
+        #SS:                                     dtype=run_dtype)
+        #SS: 
+        #SS: # Create ndarray of pen samples that are the detected stroke
+        #SS: # boundary points.
+        #SS: self.stroke_boundary_samples = self.pendata[self._stroke_boundary_ixs]
 
         if self._mwapp:
             # If project is being created via MarkWrite GUI, create
@@ -869,7 +876,47 @@ class MarkWriteProject(object):
             self._mapTrialConditions2TrialSegments()
         updateDataFileLoadingProgressDialog(self._mwapp, 5)
 
+    def _parseStrokeBoundaries(self):
 
+
+        # 1) Filter each sample Series
+        # 2) Calculate pen sample velocity and acceleration data.
+        # 3) Detect Sample Runs within each Series.
+        # 4) Detect pen stroke boundaries within
+        #      a) full sample Series
+        #      b) each sample Run within the Series
+        self._stroke_boundary_ixs = []
+        self.stroke_boundary_samples = None
+        self.stroke_boundaries = []
+        for series_bounds in self.series_boundaries:
+            # get sample array for current series
+            pseries = self.pendata[
+                      series_bounds['start_ix']:series_bounds['end_ix'] + 1]
+            psb_start_ix = series_bounds['start_ix']
+
+            if SETTINGS['stroke_detect_pressed_runs_only'] is False:
+                # 4a) Detect pen stroke boundaries within current Series
+                self._findstrokes(pseries, psb_start_ix, series_bounds['id'])
+            else:
+                # detect strokes in pressed runs only
+                for curr_press_series_id, rbp_id, si, rb_start_time, ei, rb_end_time in self.run_boundaries:
+                    self._findstrokes(self.pendata[si:ei + 1], si, 
+                                      curr_press_series_id)                    
+
+        # Convert run_boundaries list of lists into an ndarray
+        stroke_dtype = np.dtype({
+        'names': ['id', 'parent_id', 'start_ix', 'start_time', 'end_ix',
+                  'end_time'],
+        'formats': [np.uint16, np.uint16, np.uint32, np.float64, np.uint32,
+                    np.float64]})
+        # Convert stroke_boundaries list of lists into an ndarray
+        self.stroke_boundaries = np.asarray(self.stroke_boundaries,
+                                            dtype=stroke_dtype)
+        # Create ndarray of pen samples that are the detected stroke
+        # boundary points.
+        self.stroke_boundary_samples = self.pendata[self._stroke_boundary_ixs]
+        
+        
     def _detectAssociatedSegmentTagsFile(self, dir_path, fname, fext):
         tag_list = []
         same_named_files = [tagsf for tagsf in glob.glob(os.path.join(

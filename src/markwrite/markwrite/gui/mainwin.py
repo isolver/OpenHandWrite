@@ -908,6 +908,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                             self.setActiveObject(self.project.segmenttree.children[0])
                         else:
                             wmproj.selectedtimeregion.setRegion([wmproj.pendata['time'][0], wmproj.pendata['time'][0] + 1.0])
+                
+                    if wmproj.gui_state:
+                        self._dockarea.restoreState(wmproj.gui_state.get('pqg_state'))
+                        
                 except:
                     import traceback
                     ErrorDialog.info_text = u"An error occurred while " \
@@ -921,6 +925,12 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     def saveProject(self):
         if self.project is None:
             return
+            
+        pqg_gui_state = self._dockarea.saveState()
+        import json
+        self.project.gui_state = dict(pqg_state=json.loads(json.dumps(pqg_gui_state)))
+
+
         if self.project.projectfileinfo['saved'] is False:
             self.saveAsProject()
         else:
@@ -1190,7 +1200,19 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             if len(updatedsettings)>0:
                 writePickle(self._appdirs.user_config_dir,u'usersettings.pkl', SETTINGS)
                 self.updateActionToolTipText()
-            if self.project:
+
+                if self.project:            
+                    stroke_settings_changed = [s for s in updatedsettings.keys() if s.find('stroke_detect_')==0]
+                    if stroke_settings_changed:
+                        reply = QtGui.QMessageBox.question(self, 'Stroke Detection Settings', "Stroke detection setting have changed.\nReparse Stroke Boundaries?", QtGui.QMessageBox.Yes | 
+                                                            QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+                        if reply == QtGui.QMessageBox.Yes:
+                            self.project._parseStrokeBoundaries()
+                            
+                            # trick timeplot view etc. into updating stroke graphics
+                            if 'pen_stroke_boundary_size' not in updatedsettings:
+                                updatedsettings['pen_stroke_boundary_size'] = SETTINGS['pen_stroke_boundary_size']
+                
                 self.sigAppSettingsUpdated.emit(updatedsettings, allsettings)
 
     # >>>>>>
