@@ -142,3 +142,9 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
                 self.createPenBrushCache()
                 self.handlePenDataSelectionChanged(None,self._lastSelectedData)
                 break
+                            
+    def getState(self):
+        return self.getPlotItem().getViewBox().getState()
+        
+    def setState(self, s):
+        self.getPlotItem().getViewBox().setState(s)

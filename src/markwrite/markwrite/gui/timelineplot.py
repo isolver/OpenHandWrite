@@ -461,3 +461,24 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                 kwargs['padding']=0
                 self.xy_plot.setRange(**kwargs)
                 return
+                
+    def getState(self):
+        acceleration_plot_state = None
+        velocity_plot_state = None
+        if hasattr(self, 'acceleration_plot') and self.acceleration_plot:
+            acceleration_plot_state = self.acceleration_plot.getViewBox().getState()
+        if hasattr(self, 'velocity_plot') and self.velocity_plot:
+            velocity_plot_state = self.velocity_plot.getViewBox().getState()
+        return {'xy_plot': self.xy_plot.getViewBox().getState(),
+                'acceleration_plot': acceleration_plot_state,
+                'velocity_plot': velocity_plot_state
+                }
+        
+    def setState(self, s):
+        if s.get('xy_plot'):        
+            self.xy_plot.getViewBox().setState(s['xy_plot'])
+        if s.get('velocity_plot'):
+            self.velocity_plot.getViewBox().setState(s['velocity_plot'])
+        if s.get('acceleration_plot'):
+            self.acceleration_plot.getViewBox().setState(s['acceleration_plot'])
+            

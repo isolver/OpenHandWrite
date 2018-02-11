@@ -329,3 +329,9 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
 
             if xrange or yrange:
                 self.setRange(xRange=xrange, yRange=yrange, padding=0)
+                
+    def getState(self):
+        return self.getPlotItem().getViewBox().getState()
+        
+    def setState(self, s):
+        self.getPlotItem().getViewBox().setState(s)

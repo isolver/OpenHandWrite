@@ -911,7 +911,17 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                 
                     if wmproj.gui_state:
                         self._dockarea.restoreState(wmproj.gui_state.get('pqg_state'))
+
+                        self.project.selectedtimeregion.setRegion(self.project.gui_state['selectedtimeperiod'])                        
+                        ssid = self.project.gui_state['selectedsegmentid']
+                        if ssid:
+                            self.setActiveObject(self.project.segmenttree.id2obj[ssid])
                         
+                        self._penDataTimeLineWidget.setState(self.project.gui_state['timeplotview'])
+                        self._penDataSpatialViewWidget.setState(self.project.gui_state['spatialview'])
+                        self._selectedPenDataViewWidget.setState(self.project.gui_state['selecteddataview'])
+                        self._segmenttree.restoreState(self.project.gui_state['segmenttree'])
+
                 except:
                     import traceback
                     ErrorDialog.info_text = u"An error occurred while " \
@@ -928,8 +938,19 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             
         pqg_gui_state = self._dockarea.saveState()
         import json
-        self.project.gui_state = dict(pqg_state=json.loads(json.dumps(pqg_gui_state)))
-
+        
+        def _noQtStr(s):
+            return json.loads(json.dumps(s))
+            
+        self.project.gui_state = dict(pqg_state=_noQtStr(pqg_gui_state))
+        self.project.gui_state['timeplotview']=_noQtStr(self._penDataTimeLineWidget.getState())
+        self.project.gui_state['spatialview'] =_noQtStr(self._penDataSpatialViewWidget.getState())
+        self.project.gui_state['selecteddataview']=_noQtStr(self._selectedPenDataViewWidget.getState())
+        self.project.gui_state['segmenttree']=_noQtStr(self._segmenttree.saveState())
+        self.project.gui_state['selectedtimeperiod']=self.project.selectedtimeperiod
+        self.project.gui_state['selectedsegmentid']=0
+        if isinstance(self.activeobject, PenDataSegment):
+            self.project.gui_state['selectedsegmentid']=self.activeobject.id
 
         if self.project.projectfileinfo['saved'] is False:
             self.saveAsProject()
