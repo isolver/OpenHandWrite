@@ -570,15 +570,11 @@ class MarkWriteProject(object):
         '''
         starts = self.stroke_boundaries['start_ix']
         ends = self.stroke_boundaries['end_ix'] - 1
-        stroke = self.stroke_boundaries[
-            (sample_index >= starts) & (sample_index <= ends)]
+        stroke = self.stroke_boundaries[(sample_index >= starts) & (sample_index <= ends)]
         if len(stroke) > 1:
-            print ">>>>>>>>\nError, %d strokes found for sample ix %d:" % (
+            print "Warning, %d strokes found for sample ix %d. Using first detected stroke for report." % (
             len(stroke), sample_index)
-            for i, s in enumerate(stroke):
-                print "\tSelected Stroke %d: " % (i), s
-            print "Using last detected stroke for report.\n<<<<<<<"
-
+            return stroke['id'][0] + 1
         if len(stroke) > 0 and len(stroke) <= 2:
             return stroke['id'][-1] + 1
         return 0
