@@ -56,16 +56,22 @@ def fileSaveDlg(initFilePath="", initFileName="",
         allowed = "All files (*.*);;" \
                   "Text files (*.txt)"
 
-    if initFilePath == "":
+    initFilePath = unicode(initFilePath)
+    if len(initFilePath) == 0:
         initFilePath = _last_savefile_dir
         
+    if initFilePath and initFileName:
+        initFilePath = os.path.join(initFilePath,initFileName)
+    else:
+        initFilePath = initFileName
+
     r = QtGui.QFileDialog.getSaveFileName(parent=parent,
                                           caption=prompt,
                                           directory=initFilePath,
                                           filter=allowed)
     if len(r) == 0:
         return None
-    _last_savefile_dir = os.path.split(unicode(r))
+    _last_savefile_dir, _ = os.path.split(unicode(r))
     return unicode(r)
 
 def fileOpenDlg(tryFilePath="",
@@ -105,21 +111,24 @@ def fileOpenDlg(tryFilePath="",
 
     if tryFilePath == "":
         tryFilePath = _last_openfile_dir
-        
+
     filesToOpen = fdlg(None,
                        prompt,
                        tryFilePath,#os.path.join(tryFilePath,tryFileName),
                        allowed)#, None, QtGui.QFileDialog.DontUseNativeDialog)
+    filesToOpen = unicode(filesToOpen)
+
+    if  len(filesToOpen) == 0:
+        return None
+        
     if allow_multiple_select is True:
         filesToOpen = [unicode(fpath) for fpath in filesToOpen if
                        os.path.exists(fpath)]
     else:
-        _last_openfile_dir, _ = os.path.split(unicode(filesToOpen)) 
         filesToOpen = [unicode(filesToOpen),]
 
-    if len(filesToOpen) == 0:
-        return None
-
+    _last_openfile_dir, _ = os.path.split(unicode(filesToOpen[0])) 
+    
     return filesToOpen
 
 def singleSelectDialog(items, parent=None, title=u'singleSelectDialog', text='Select:'):
