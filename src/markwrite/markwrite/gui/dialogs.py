@@ -159,7 +159,7 @@ class ConfirmAction(object):
     @classmethod
     def display(cls):
         if cls.instance:
-            return cls.instance.exec_()
+            return cls.instance.exec_() == QtGui.QMessageBox.Yes
         else:
             msgBox = QtGui.QMessageBox()
             cls.instance = msgBox
@@ -169,9 +169,7 @@ class ConfirmAction(object):
             msgBox.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No);
             msgBox.setDefaultButton(QtGui.QMessageBox.No)
             msgBox.setIcon(QtGui.QMessageBox.Information)
-            r=msgBox.exec_()
-
-            return r == QtGui.QMessageBox.Yes
+            return msgBox.exec_() == QtGui.QMessageBox.Yes
 
 class ErrorDialog(object):
     instance = None
@@ -181,7 +179,8 @@ class ErrorDialog(object):
     @classmethod
     def display(cls):
         if cls.instance:
-            return cls.instance.exec_()
+            return cls.instance.exec_() == QtGui.QMessageBox.Ok
+            
         else:
             msgBox = QtGui.QMessageBox()
             cls.instance = msgBox

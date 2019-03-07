@@ -46,7 +46,7 @@ def start_iohub(sess_code=None):
             'session_code':sess_code,
             'datastore_name':save_to,
             'wintab.WintabTablet':{'name':'tablet', 
-                                   'mouse_simulation': {'enable':True,
+                                   'mouse_simulation': {'enable':False,
                                                         'leave_region_timeout':2.0
                                                        }
                                   }
