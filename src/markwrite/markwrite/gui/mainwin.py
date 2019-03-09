@@ -298,7 +298,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'accept&32.png'
         self.createSegmentAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Create New',
+            'Create Segment',
             self)
         self.createSegmentAction.setShortcut(SETTINGS['kbshortcut_create_segment'])
         self.createSegmentAction.setEnabled(False)
@@ -311,7 +311,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'delete&32.png'
         self.removeSegmentAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Delete',
+            'Delete Segment',
             self)
         self.removeSegmentAction.setShortcut(SETTINGS['kbshortcut_delete_segment'])
         self.removeSegmentAction.setEnabled(False)
@@ -328,7 +328,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'zoom_in&32.png'
         self.zoomInTimelineAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Zoom In 2x',
+            'Increase Timeplot Magnification 2x',
             self)
         self.zoomInTimelineAction.setShortcut(SETTINGS['kbshortcut_timeplot_increase_mag'])
         self.zoomInTimelineAction.setEnabled(False)
@@ -341,7 +341,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'zoom_out&32.png'
         self.zoomOutTimelineAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Zoom Out 2x',
+            'Decrease Timeplot Magnification 2x',
             self)
         self.zoomOutTimelineAction.setShortcut(SETTINGS['kbshortcut_timeplot_increase_mag'])
         self.zoomOutTimelineAction.setEnabled(False)
@@ -353,11 +353,11 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.exportSampleReportAction.enableActionsList.append(self.zoomInTimelineAction)
         self.exportSampleReportAction.enableActionsList.append(self.zoomOutTimelineAction)
 
-        atext = 'Reposition Views around Selected Time Period'
+        atext = 'Reposition Views on Selected Time Period'
         aicon = 'target&32.png'
         self.gotoSelectedTimePeriodAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Go To Selected Time Period',
+            'Reposition Views on Selected Time Period',
             self)
         self.gotoSelectedTimePeriodAction.setShortcut(SETTINGS['kbshortcut_move_plots_to_selection'])
         self.gotoSelectedTimePeriodAction.setEnabled(False)
@@ -370,7 +370,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'move_selection_forward&32.png'
         self.forwardSelectionAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Jump Forward',
+            'Move Selected Time Period Forward',
             self)
         self.forwardSelectionAction.setShortcut(SETTINGS['kbshortcut_selected_timeperiod_forward'])
         self.forwardSelectionAction.setEnabled(False)
@@ -383,7 +383,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'move_selection_backward&32.png'
         self.backwardSelectionAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Jump Backward',
+            'Move Selected Time Period Backward',
             self)
         self.backwardSelectionAction.setShortcut(SETTINGS['kbshortcut_selected_timeperiod_backward'])
         self.backwardSelectionAction.setEnabled(False)
@@ -490,7 +490,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 #        shortcutkey2action['kbshortcut_select_next_unmarked_run'] =self.selectNextUnmarkedRunAction
 #        shortcutkey2action['kbshortcut_select_next_unmarked_run'].base_tip_txt=atext
         
-        atext = 'Selected Next Pressed Sample Run'
+        atext = 'Selected Next Sample Run'
         aicon = 'next_run&32.png'
         self.selectNextPressedRunAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
@@ -503,7 +503,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_select_next_run'] =self.selectNextPressedRunAction
         shortcutkey2action['kbshortcut_select_next_run'].base_tip_txt=atext
 
-        atext = 'Selected Previous Pressed Sample Run'
+        atext = 'Selected Previous Sample Run'
         aicon = 'prev_run&32.png'
         self.selectPrevPressedRunAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
@@ -516,7 +516,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_select_previous_run'] = self.selectPrevPressedRunAction
         shortcutkey2action['kbshortcut_select_previous_run'].base_tip_txt=atext
 
-        atext = 'Move Selection End to Next Pressed Run End'
+        atext = 'Move Selection End to Next Run End'
         aicon = 'selectend_to_next_runend&32.png'
         self.advanceSelectionEndToNextRunEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
@@ -529,7 +529,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_selection_end_to_next_run_end'] = self.advanceSelectionEndToNextRunEndAction
         shortcutkey2action['kbshortcut_selection_end_to_next_run_end'].base_tip_txt=atext
 
-        atext = 'Move Selection End to Previous Pressed Run End'
+        atext = 'Move Selection End to Previous Run End'
         aicon = 'selectend_to_prev_runend&32.png'
         self.returnSelectionEndToPrevRunEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
@@ -542,7 +542,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_selection_end_to_prev_run_end'] = self.returnSelectionEndToPrevRunEndAction
         shortcutkey2action['kbshortcut_selection_end_to_prev_run_end'].base_tip_txt=atext
 
-        atext = 'Move Selection Start to Next Pressed Run Start'
+        atext = 'Move Selection Start to Next Run Start'
         aicon = 'selectstart_to_next_runstart&32.png'
         self.advanceSelectionStartToNextRunStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
@@ -555,7 +555,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         shortcutkey2action['kbshortcut_selection_start_to_next_run_start'] = self.advanceSelectionStartToNextRunStartAction
         shortcutkey2action['kbshortcut_selection_start_to_next_run_start'].base_tip_txt=atext
 
-        atext = 'Move Selection Start to Previous Pressed Run Start'
+        atext = 'Move Selection Start to Previous Run Start'
         aicon = 'selectstart_to_prev_runstart&32.png'
         self.returnSelectionStartToPrevRunStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
@@ -588,7 +588,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'next_stroke&32.png'
         self.selectNextStrokeAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Next Pen Stroke',
+            'Select Next Stroke',
             self)
         self.selectNextStrokeAction.setShortcut(SETTINGS['kbshortcut_select_next_stroke'])
         self.selectNextStrokeAction.setEnabled(False)
@@ -601,7 +601,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'prev_stroke&32.png'
         self.selectPrevStrokeAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Previous Pen Stroke',
+            'Select Previous Stroke',
             self)
         self.selectPrevStrokeAction.setShortcut(SETTINGS['kbshortcut_select_previous_stroke'])
         self.selectPrevStrokeAction.setEnabled(False)

@@ -33,6 +33,7 @@ from util import contiguous_regions, getFilteredStringList
 from gui.projectsettings import SETTINGS
 from .sigproc import filter_pen_sample_series, calculate_velocity, detect_peaks
 
+_warning_count = 0
 
 selectedtimeperiod_properties = None
 
@@ -568,12 +569,21 @@ class MarkWriteProject(object):
         :param sample_index: int (valid value range 0 : len(pendata)-1)
         :return: Record / row from stroke_boundaries attribute, or None
         '''
+        global _warning_count
         starts = self.stroke_boundaries['start_ix']
         ends = self.stroke_boundaries['end_ix'] - 1
         stroke = self.stroke_boundaries[(sample_index >= starts) & (sample_index <= ends)]
         if len(stroke) > 1:
-            print "Warning, %d strokes found for sample ix %d. Using first detected stroke for report." % (
-            len(stroke), sample_index)
+            if _warning_count<10:
+                print 'starts:', starts
+                print 'ends:', ends
+                print 'stroke:',stroke
+                print "Warning, %d strokes found for sample ix %d. Using first detected stroke for report." % (
+                len(stroke), sample_index)
+                print ""
+                _warning_count+=1
+                if _warning_count == 10:
+                    print "Will stop warning you!!!!!"
             return stroke['id'][0] + 1
         if len(stroke) > 0 and len(stroke) <= 2:
             return stroke['id'][-1] + 1
@@ -896,6 +906,9 @@ class MarkWriteProject(object):
             else:
                 # detect strokes in pressed runs only
                 for curr_press_series_id, rbp_id, si, rb_start_time, ei, rb_end_time in self.run_boundaries:
+                    # Issue #200 seems to occur when this branch is run.
+                    # Is a stroke being entered for every pressed run causing
+                    # the multiple duplicate entries?
                     self._findstrokes(self.pendata[si:ei + 1], si, 
                                       curr_press_series_id)                    
 
