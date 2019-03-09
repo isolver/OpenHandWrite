@@ -196,6 +196,11 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             return self.project.autodetected_segment_tags + self._predefinedtags
         return self._predefinedtags
 
+    def getToolTipTextForAction(self, ttext, scut=None):
+        if scut:
+            return "{} ({})".format(ttext, scut)
+        return ttext
+        
     def createGuiActions(self):
         #
         # File Menu / Toolbar Related Actions
@@ -205,7 +210,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'folder&32.png'
         self.openFileAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            '&Open',
+            self.getToolTipTextForAction('&Open','Ctrl+O'),
             self)
         self.openFileAction.setShortcut('Ctrl+O')
         self.openFileAction.setEnabled(True)
@@ -216,7 +221,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'save&32.png'
         self.saveProjectAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            '&Save',
+            self.getToolTipTextForAction('&Save','Ctrl+S'),
             self)
         self.saveProjectAction.setShortcut('Ctrl+S')
         self.saveProjectAction.setEnabled(False)
@@ -271,7 +276,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'settings&32.png'
         self.showProjectSettingsDialogAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            '&Settings',
+            self.getToolTipTextForAction('&Settings','Alt+S'),
             self)
         self.showProjectSettingsDialogAction.setShortcut('Alt+S')
         self.showProjectSettingsDialogAction.setEnabled(True)
@@ -283,7 +288,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'shut_down&32.png'
         self.exitAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Exit',
+            self.getToolTipTextForAction('Exit','Ctrl+Alt+Q'),
             self)
         self.exitAction.setShortcut('Ctrl+Alt+Q')
         self.exitAction.setEnabled(True)
@@ -298,7 +303,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'accept&32.png'
         self.createSegmentAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Create Segment',
+            self.getToolTipTextForAction('Create Segment',SETTINGS['kbshortcut_create_segment']),
             self)
         self.createSegmentAction.setShortcut(SETTINGS['kbshortcut_create_segment'])
         self.createSegmentAction.setEnabled(False)
@@ -311,7 +316,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'delete&32.png'
         self.removeSegmentAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Delete Segment',
+            self.getToolTipTextForAction('Delete Segment',SETTINGS['kbshortcut_delete_segment']),
             self)
         self.removeSegmentAction.setShortcut(SETTINGS['kbshortcut_delete_segment'])
         self.removeSegmentAction.setEnabled(False)
@@ -328,7 +333,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'zoom_in&32.png'
         self.zoomInTimelineAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Increase Timeplot Magnification 2x',
+            self.getToolTipTextForAction('Increase Timeplot Magnification 2x',
+                                         SETTINGS['kbshortcut_timeplot_increase_mag']),
             self)
         self.zoomInTimelineAction.setShortcut(SETTINGS['kbshortcut_timeplot_increase_mag'])
         self.zoomInTimelineAction.setEnabled(False)
@@ -341,9 +347,10 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'zoom_out&32.png'
         self.zoomOutTimelineAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Decrease Timeplot Magnification 2x',
+            self.getToolTipTextForAction('Decrease Timeplot Magnification 2x',
+                                         SETTINGS['kbshortcut_timeplot_decrease_mag']),
             self)
-        self.zoomOutTimelineAction.setShortcut(SETTINGS['kbshortcut_timeplot_increase_mag'])
+        self.zoomOutTimelineAction.setShortcut(SETTINGS['kbshortcut_timeplot_decrease_mag'])
         self.zoomOutTimelineAction.setEnabled(False)
         self.zoomOutTimelineAction.setStatusTip(atext)
         self.zoomOutTimelineAction.triggered.connect(self.zoomOutTimeline)
@@ -357,7 +364,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'target&32.png'
         self.gotoSelectedTimePeriodAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Reposition Views on Selected Time Period',
+            self.getToolTipTextForAction('Reposition Views on Selected Time Period',
+                                         SETTINGS['kbshortcut_move_plots_to_selection']),
             self)
         self.gotoSelectedTimePeriodAction.setShortcut(SETTINGS['kbshortcut_move_plots_to_selection'])
         self.gotoSelectedTimePeriodAction.setEnabled(False)
@@ -370,7 +378,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'move_selection_forward&32.png'
         self.forwardSelectionAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Move Selected Time Period Forward',
+            self.getToolTipTextForAction('Move Selected Time Period Forward',SETTINGS['kbshortcut_selected_timeperiod_forward']),
             self)
         self.forwardSelectionAction.setShortcut(SETTINGS['kbshortcut_selected_timeperiod_forward'])
         self.forwardSelectionAction.setEnabled(False)
@@ -383,7 +391,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'move_selection_backward&32.png'
         self.backwardSelectionAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Move Selected Time Period Backward',
+            self.getToolTipTextForAction('Move Selected Time Period Backward', SETTINGS['kbshortcut_selected_timeperiod_backward']),
             self)
         self.backwardSelectionAction.setShortcut(SETTINGS['kbshortcut_selected_timeperiod_backward'])
         self.backwardSelectionAction.setEnabled(False)
@@ -399,7 +407,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'next_series&32.png'
         self.selectNextSampleSeriesAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Select Next Sample Series',
+            self.getToolTipTextForAction('Select Next Sample Series',SETTINGS['kbshortcut_select_next_series']),
             self)
         self.selectNextSampleSeriesAction.setShortcut(SETTINGS['kbshortcut_select_next_series'])
         self.selectNextSampleSeriesAction.setEnabled(False)
@@ -412,7 +420,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'prev_series&32.png'
         self.selectPrevSampleSeriesAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Select Previous Sample Series',
+            self.getToolTipTextForAction('Select Previous Sample Series',SETTINGS['kbshortcut_select_previous_series']),
             self)
         self.selectPrevSampleSeriesAction.setShortcut(SETTINGS['kbshortcut_select_previous_series'])
         self.selectPrevSampleSeriesAction.setEnabled(False)
@@ -425,7 +433,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'selectend_to_next_seriesend&32.png'
         self.advanceSelectionEndToNextSeriesEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext, SETTINGS['kbshortcut_selection_end_to_next_series_end']),
             self)
         self.advanceSelectionEndToNextSeriesEndAction.setShortcut(SETTINGS['kbshortcut_selection_end_to_next_series_end'])
         self.advanceSelectionEndToNextSeriesEndAction.setEnabled(False)
@@ -438,7 +446,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'selectend_to_prev_seriesend&32.png'
         self.returnSelectionEndToPrevSeriesEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext,SETTINGS['kbshortcut_selection_end_to_prev_series_end']),
             self)
         self.returnSelectionEndToPrevSeriesEndAction.setShortcut(SETTINGS['kbshortcut_selection_end_to_prev_series_end'])
         self.returnSelectionEndToPrevSeriesEndAction.setEnabled(False)
@@ -451,7 +459,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'selectstart_to_next_seriesstart&32.png'
         self.advanceSelectionStartToNextSeriesStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext,SETTINGS['kbshortcut_selection_start_to_next_series_start']),
             self)
         self.advanceSelectionStartToNextSeriesStartAction.setShortcut(SETTINGS['kbshortcut_selection_start_to_next_series_start'])
         self.advanceSelectionStartToNextSeriesStartAction.setEnabled(False)
@@ -464,7 +472,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'selectstart_to_prev_seriesstart&32.png'
         self.returnSelectionStartToPrevSeriesStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext,SETTINGS['kbshortcut_selection_start_to_prev_series_start']),
             self)
         self.returnSelectionStartToPrevSeriesStartAction.setShortcut(SETTINGS['kbshortcut_selection_start_to_prev_series_start'])
         self.returnSelectionStartToPrevSeriesStartAction.setEnabled(False)
@@ -494,7 +502,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'next_run&32.png'
         self.selectNextPressedRunAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext,SETTINGS['kbshortcut_select_next_run']),
             self)
         self.selectNextPressedRunAction.setShortcut(SETTINGS['kbshortcut_select_next_run'])
         self.selectNextPressedRunAction.setEnabled(False)
@@ -507,7 +515,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'prev_run&32.png'
         self.selectPrevPressedRunAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext,SETTINGS['kbshortcut_select_previous_run']),
             self)
         self.selectPrevPressedRunAction.setShortcut(SETTINGS['kbshortcut_select_previous_run'])
         self.selectPrevPressedRunAction.setEnabled(False)
@@ -520,7 +528,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'selectend_to_next_runend&32.png'
         self.advanceSelectionEndToNextRunEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext,SETTINGS['kbshortcut_selection_end_to_next_run_end']),
             self)
         self.advanceSelectionEndToNextRunEndAction.setShortcut(SETTINGS['kbshortcut_selection_end_to_next_run_end'])
         self.advanceSelectionEndToNextRunEndAction.setEnabled(False)
@@ -533,7 +541,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'selectend_to_prev_runend&32.png'
         self.returnSelectionEndToPrevRunEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext,SETTINGS['kbshortcut_selection_end_to_prev_run_end']),
             self)
         self.returnSelectionEndToPrevRunEndAction.setShortcut(SETTINGS['kbshortcut_selection_end_to_prev_run_end'])
         self.returnSelectionEndToPrevRunEndAction.setEnabled(False)
@@ -546,7 +554,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'selectstart_to_next_runstart&32.png'
         self.advanceSelectionStartToNextRunStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext,SETTINGS['kbshortcut_selection_start_to_next_run_start']),
             self)
         self.advanceSelectionStartToNextRunStartAction.setShortcut(SETTINGS['kbshortcut_selection_start_to_next_run_start'])
         self.advanceSelectionStartToNextRunStartAction.setEnabled(False)
@@ -559,7 +567,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'selectstart_to_prev_runstart&32.png'
         self.returnSelectionStartToPrevRunStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext,SETTINGS['kbshortcut_selection_start_to_prev_run_start']),
             self)
         self.returnSelectionStartToPrevRunStartAction.setShortcut(SETTINGS['kbshortcut_selection_start_to_prev_run_start'])
         self.returnSelectionStartToPrevRunStartAction.setEnabled(False)
@@ -588,7 +596,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'next_stroke&32.png'
         self.selectNextStrokeAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Select Next Stroke',
+            self.getToolTipTextForAction('Select Next Stroke',SETTINGS['kbshortcut_select_next_stroke']),
             self)
         self.selectNextStrokeAction.setShortcut(SETTINGS['kbshortcut_select_next_stroke'])
         self.selectNextStrokeAction.setEnabled(False)
@@ -601,7 +609,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'prev_stroke&32.png'
         self.selectPrevStrokeAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            'Select Previous Stroke',
+            self.getToolTipTextForAction('Select Previous Stroke',SETTINGS['kbshortcut_select_previous_stroke']),
             self)
         self.selectPrevStrokeAction.setShortcut(SETTINGS['kbshortcut_select_previous_stroke'])
         self.selectPrevStrokeAction.setEnabled(False)
@@ -614,7 +622,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'selectend_to_next_strokeend&32.png'
         self.advanceSelectionEndToNextStrokeEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext,SETTINGS['kbshortcut_selection_end_to_next_stroke_end']),
             self)
         self.advanceSelectionEndToNextStrokeEndAction.setShortcut(SETTINGS['kbshortcut_selection_end_to_next_stroke_end'])
         self.advanceSelectionEndToNextStrokeEndAction.setEnabled(False)
@@ -627,7 +635,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'selectend_to_prev_strokeend&32.png'
         self.returnSelectionEndToPrevStrokeEndAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext,SETTINGS['kbshortcut_selection_end_to_prev_stroke_end']),
             self)
         self.returnSelectionEndToPrevStrokeEndAction.setShortcut(SETTINGS['kbshortcut_selection_end_to_prev_stroke_end'])
         self.returnSelectionEndToPrevStrokeEndAction.setEnabled(False)
@@ -640,7 +648,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'selectstart_to_next_strokestart&32.png'
         self.advanceSelectionStartToNextStrokeStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext,SETTINGS['kbshortcut_selection_start_to_next_stroke_start']),
             self)
         self.advanceSelectionStartToNextStrokeStartAction.setShortcut(SETTINGS['kbshortcut_selection_start_to_next_stroke_start'])
         self.advanceSelectionStartToNextStrokeStartAction.setEnabled(False)
@@ -653,7 +661,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'selectstart_to_prev_strokestart&32.png'
         self.returnSelectionStartToPrevStrokeStartAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            atext,
+            self.getToolTipTextForAction(atext,SETTINGS['kbshortcut_selection_start_to_prev_stroke_start']),
             self)
         self.returnSelectionStartToPrevStrokeStartAction.setShortcut(SETTINGS['kbshortcut_selection_start_to_prev_stroke_start'])
         self.returnSelectionStartToPrevStrokeStartAction.setEnabled(False)
