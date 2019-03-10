@@ -31,7 +31,7 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
 
         self.getPlotItem().invertY(SETTINGS['spatialplot_invert_y_axis'])
         self.getPlotItem().setAspectLocked(True, 1)
-
+        self.getPlotItem().setContentsMargins(5, 5, 5, 5)
         self.allPlotDataItem = None
         self.selectedPlotDataItem = None
         self.strokeBoundaryPoints = None
