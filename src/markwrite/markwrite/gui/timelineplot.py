@@ -61,6 +61,36 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
         MarkWriteMainWindow.instance().sigActiveObjectChanged.connect(
             self.handleSelectedObjectChanged)
 
+    def mouseDoubleClickEvent(self, event):
+        """
+        On double click, find closest pen sample to mouse pos and select 
+        the sample's segment (if it has been assigned to one). 
+        """
+        if MarkWriteMainWindow.instance().project:
+            pdat = self.getCurrentPenData()
+            if len(pdat):
+                streg = MarkWriteMainWindow.instance().project.selectedtimeregion
+                if streg:
+                    xmin, xmax = streg.getRegion()
+                    data_pos = self.dataplots['xy_plot'].vb.mapSceneToView(event.pos())        
+                    x = data_pos.x()
+                    if x < xmin or x > xmax:
+                        #print('data_pos.x():',data_pos.x())
+                        ptime_ix = len(pdat['time'][pdat['time']<=x])
+                        if ptime_ix > 0:
+                            #print('ptime_ix:',ptime_ix)
+                            seg_id = pdat[ptime_ix]['segment_id']
+                            if seg_id:
+                                seg = PenDataSegment.id2obj[seg_id]    
+                                MarkWriteMainWindow.instance().setActiveObject(seg)
+                                
+                        streg._ignore_events=True
+                        super(PenDataTemporalPlotWidget,self).mouseDoubleClickEvent(event)
+                        streg._ignore_events=False                       
+                    else:
+                        super(PenDataTemporalPlotWidget,self).mouseDoubleClickEvent(event)
+                        
+
     def mouseMoveEvent(self, event):
         super(PenDataTemporalPlotWidget,self).mouseMoveEvent(event)
         if (self._enablePopupDisplay is True and event.buttons() and not 

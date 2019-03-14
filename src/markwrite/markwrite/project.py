@@ -51,12 +51,15 @@ class SelectedTimePeriodItem(pg.LinearRegionItem):
         self._project = None
         if project:
             self.project = proxy(project)
+        self._ignore_events=False
 
     def mouseClickEvent(self, ev):
         self.project._mwapp.setActiveObject(self)
         pg.LinearRegionItem.mouseClickEvent(self, ev)
 
     def mouseDoubleClickEvent(self, event):
+        if self._ignore_events:
+            return
         pg.LinearRegionItem.mouseDoubleClickEvent(self, event)
         self.project._mwapp.setActiveObject(self)
         self.project._mwapp._penDataTimeLineWidget.zoomToPenData(
