@@ -259,13 +259,13 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             self.createSegmentLevelReportFile)
         self.exportSampleReportAction.enableActionsList.append(self.exportSegmentReportAction)
 
-        atext = 'Generate Report using Project Data.'
+        atext = self.getToolTipTextForAction('Generate Report using Project Data.','Ctrl+Shift+R')
         aicon = 'page&32.png'
         self.showExportReportDialogAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
             atext,
             self)
-        #self.showExportReportDialogAction.setShortcut('Ctrl+S')
+        self.showExportReportDialogAction.setShortcut('Ctrl+Shift+R')
         self.showExportReportDialogAction.setEnabled(False)
         self.showExportReportDialogAction.setStatusTip(atext)
         self.showExportReportDialogAction.triggered.connect(
