@@ -243,7 +243,9 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
         scolor = SETTINGS['pen_stroke_boundary_color']
         pen = pg.mkPen(scolor, width=ssize)
         brush = pg.mkBrush(scolor)
-        
+        display_x = SETTINGS['display_timeplot_xtrace']
+        display_y = SETTINGS['display_timeplot_ytrace']
+            
         def addBoundaryPointsToSubPlot(plot_name, point_fields):
             bpoints = self.plotitems[plot_name].get('boundary_points')
             if ssize == 0:
@@ -263,8 +265,15 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                 bpoints.addPoints(x=strokeboundries['time'],
                                                      y=strokeboundries[fname],
                                                      size=ssize, pen=pen, brush=brush)
-            
-        addBoundaryPointsToSubPlot('xy_plot', [X_FIELD, Y_FIELD])    
+        
+        
+        xy_fields=[]
+        if display_x:
+          xy_fields.append(X_FIELD)
+        if display_y:
+          xy_fields.append(Y_FIELD)
+          
+        addBoundaryPointsToSubPlot('xy_plot',xy_fields)    
         if hasattr(self, 'velocity_plot'):        
             addBoundaryPointsToSubPlot('velocity_plot', ['xy_velocity',])    
         if hasattr(self, 'acceleration_plot'):        
@@ -299,7 +308,8 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                                     symbolBrush=brusharray,
                                     pen=None, symbol='o',
                                     symbolSize=SETTINGS['timeplot_xtrace_size'])
-
+        self.plotitems['xy_plot']['x'].setVisible(SETTINGS['display_timeplot_xtrace'])
+        
         penarray, brusharray = self.getPenBrush('timeplot_ytrace_color', 'timeplot_ytrace_size',penpoints, penarray,
                                                  brusharray)
 
@@ -310,6 +320,7 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                                             'timeplot_ytrace_size'],
                                         symbolPen=penarray,
                                         symbolBrush=brusharray)
+        self.plotitems['xy_plot']['y'].setVisible(SETTINGS['display_timeplot_ytrace'])
 
         if hasattr(self, 'velocity_plot'):
             penarray, brusharray = self.getPenBrush('timeplot_vtrace_color', 'timeplot_vtrace_size',penpoints, penarray,
@@ -400,6 +411,11 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                         penarray, brusharray = self.updateTrace('acceleration_plot', 'xy_acceleration', 'timeplot_atrace_color', 'timeplot_atrace_size', penpoints, penarray, brusharray)
                     break
 
+        if 'display_timeplot_xtrace' in updates.keys():
+            self.plotitems['xy_plot']['x'].setVisible(SETTINGS['display_timeplot_xtrace'])
+        if 'display_timeplot_ytrace' in updates.keys():
+            self.plotitems['xy_plot']['y'].setVisible(SETTINGS['display_timeplot_ytrace'])
+
         if 'display_timeplot_vtrace' in updates.keys():
             plot_currently_displayed = hasattr(self,'velocity_plot') and self.velocity_plot is not None
             if plot_currently_displayed and updates['display_timeplot_vtrace'] is False:
@@ -419,13 +435,14 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
         self.bottom_plot.setLabel('bottom', text="Time", units='sec')
 
         for k in updates.keys():
-            if k.startswith('pen_stroke_boundary'):
+            if k.startswith('pen_stroke_boundary') or k.startswith('display_timeplot_xtrace') or k.startswith('display_timeplot_ytrace'):
                 proj = MarkWriteMainWindow.instance().project
                 pstart, pend = penpoints['time'][[0,-1]]
                 vms_times = proj.stroke_boundary_samples['time']
                 vms_mask = (vms_times >= pstart) & (vms_times <= pend)
                 self.addStrokeBoundaryPoints(proj.stroke_boundary_samples[vms_mask])
-
+                break
+            
         self.xy_plot.getViewBox().setMouseEnabled(y=SETTINGS['timeplot_enable_ymouse'])
         if SETTINGS['timeplot_enable_ymouse'] is False:
             self.xy_plot.setRange(yRange=self.fullPenValRange)

@@ -41,8 +41,10 @@ flattenned_settings_dict['pen_stroke_boundary_size'] ={'name': 'Stroke Boundary 
 flattenned_settings_dict['pen_stroke_boundary_color'] =  {'name': 'Stroke Boundary Sample Color', 'type': 'color', 'value': (224,0,224)}
 
 flattenned_settings_dict['timeplot_enable_ymouse'] = {'name': 'Enable Y Axis Pan / Scale with Mouse', 'type': 'bool', 'value': False}
+flattenned_settings_dict['display_timeplot_xtrace'] = {'name': 'Display', 'type': 'bool', 'value': True}
 flattenned_settings_dict['timeplot_xtrace_color'] = {'name': 'Point Color', 'type': 'color', 'value': (170,255,127)}
 flattenned_settings_dict['timeplot_xtrace_size'] ={'name': 'Point Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
+flattenned_settings_dict['display_timeplot_ytrace'] = {'name': 'Display', 'type': 'bool', 'value': True}
 flattenned_settings_dict['timeplot_ytrace_color'] = {'name': 'Point Color', 'type': 'color', 'value': (0,170,255)}
 flattenned_settings_dict['timeplot_ytrace_size'] ={'name': 'Point Size', 'type': 'int', 'value': 1, 'limits': (1, 5)}
 
@@ -137,10 +139,12 @@ settings_params = [
             {'name': 'TimeLine View', 'type': 'group', 'children': [
                 'timeplot_enable_ymouse',
                 {'name': 'Horizontal Pen Position Trace', 'type': 'group', 'children': [
+                    'display_timeplot_xtrace',
                     'timeplot_xtrace_color',
                     'timeplot_xtrace_size',
                 ]},
                {'name': 'Vertical Pen Position Trace', 'type': 'group', 'children': [
+                    'display_timeplot_ytrace',
                     'timeplot_ytrace_color',
                     'timeplot_ytrace_size',
                  ]},
