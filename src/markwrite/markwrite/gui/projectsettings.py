@@ -22,6 +22,7 @@ from pyqtgraph.Qt import QtCore, QtGui
 import pyqtgraph.parametertree.parameterTypes as pTypes
 from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, registerParameterType
 
+SETTINGS_DIALOG_SIZE_SETTING = 'gui_settings_dialog_size'
 
 flattenned_settings_dict = OrderedDict()
 
@@ -209,6 +210,7 @@ SETTINGS=dict()
 class ProjectSettingsDialog(QtGui.QDialog):
     path2key=dict()
     def __init__(self, parent = None, savedstate=None):
+        global  SETTINGS
         super(ProjectSettingsDialog, self).__init__(parent)
         self.setWindowTitle("Application Settings")
         layout = QtGui.QVBoxLayout(self)
@@ -250,9 +252,14 @@ class ProjectSettingsDialog(QtGui.QDialog):
         self.buttons.rejected.connect(self.reject)
 
         wscreen = QtGui.QDesktopWidget().screenGeometry()
-        if parent:
-            wscreen = QtGui.QDesktopWidget().screenGeometry(parent)
-        self.resize(min(500,int(wscreen.width()*.66)),min(700,int(wscreen.height()*.66)))
+        if savedstate and savedstate.get(SETTINGS_DIALOG_SIZE_SETTING):
+            w, h = savedstate.get(SETTINGS_DIALOG_SIZE_SETTING)
+            self.resize(w, h)
+            SETTINGS[SETTINGS_DIALOG_SIZE_SETTING]=(w, h)
+        else:          
+            if parent:
+                wscreen = QtGui.QDesktopWidget().screenGeometry(parent)
+            self.resize(min(500,int(wscreen.width()*.66)),min(700,int(wscreen.height()*.66)))
         # center dialog on same screen as is being used by markwrite app.
         qr = self.frameGeometry()
         cp = wscreen.center()
@@ -309,6 +316,14 @@ class ProjectSettingsDialog(QtGui.QDialog):
                 SETTINGS[setting_key]=data
                 self._updated_settings[setting_key] = data
                 param.orgvalue=data
+
+    def resizeEvent(self, event):
+        global SETTINGS
+        w, h  = self.size().width(), self.size().height()
+        SETTINGS[SETTINGS_DIALOG_SIZE_SETTING] = (w, h)
+        self._updated_settings[SETTINGS_DIALOG_SIZE_SETTING] = (w, h)
+        return super(QtGui.QDialog, self).resizeEvent(event)
+
 
     # static method to create the dialog and return (date, time, accepted)
     @staticmethod

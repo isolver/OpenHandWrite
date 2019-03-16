@@ -1229,7 +1229,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             if len(updatedsettings)>0:
                 writePickle(self._appdirs.user_config_dir,u'usersettings.pkl', SETTINGS)
                 self.updateActionToolTipText()
-
                 if self.project:            
                     stroke_settings_changed = [s for s in updatedsettings.keys() if s.find('stroke_detect_')==0]
                     if stroke_settings_changed:
@@ -1242,7 +1241,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
                             if 'pen_stroke_boundary_size' not in updatedsettings:
                                 updatedsettings['pen_stroke_boundary_size'] = SETTINGS['pen_stroke_boundary_size']
                 
-                self.sigAppSettingsUpdated.emit(updatedsettings, allsettings)
+                    self.sigAppSettingsUpdated.emit(updatedsettings, allsettings)
 
     # >>>>>>
     # Generic Unit based selection region actions
