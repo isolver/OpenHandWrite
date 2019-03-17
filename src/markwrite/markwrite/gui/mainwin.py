@@ -21,7 +21,7 @@ import functools
 import numpy as np
 import pyqtgraph as pg
 
-from markwrite.gui import ProjectSettingsDialog, SETTINGS,  X_FIELD, Y_FIELD
+from markwrite.gui import ProjectSettingsDialog, SETTINGS,  X_FIELD, Y_FIELD, APP_WIN_SIZE_SETTING
 from markwrite import __version__ as markwrite_version
 
 from pyqtgraph.Qt import QtCore, QtGui
@@ -34,8 +34,6 @@ from markwrite.segment import PenDataSegment
 from dialogs import ExitApplication, fileOpenDlg, ErrorDialog, warnDlg, \
     fileSaveDlg,ConfirmAction,infoDlg, singleSelectDialog
 from markwrite.project import MarkWriteProject
-
-DEFAULT_WIN_SIZE = (1200, 800)
 
 DEFAULT_DOCK_PLACEMENT = {
     u"Segment Tree": ('left', (.2, 1.0)),
@@ -91,6 +89,7 @@ def showSegmentNameDialog(tags, default=u""):
     )
 
 class MarkWriteMainWindow(QtGui.QMainWindow):
+    DEFAULT_WIN_SIZE = (1200, 800)
     SAMPLE_XY_FIELDS = ['x_filtered', 'y_filtered']
     sigProjectChanged = QtCore.Signal(object)  # new_project
     sigResetProjectData = QtCore.Signal(object)  # project
@@ -127,6 +126,11 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.sigAppSettingsUpdated.connect(self._penDataSpatialViewWidget.handleUpdatedSettingsEvent)
         self.sigAppSettingsUpdated.connect(self._selectedPenDataViewWidget.handleUpdatedSettingsEvent)
         self.sigAppSettingsUpdated.connect(self.handleUpdatedSettingsEvent)
+        if SETTINGS.get(APP_WIN_SIZE_SETTING):
+            self.resize(*SETTINGS.get(APP_WIN_SIZE_SETTING))
+        else:
+            self.resize(*self.DEFAULT_WIN_SIZE)
+
 
     def handleUpdatedSettingsEvent(self, updates, settings):
         for k, v in updates.items():
@@ -821,7 +825,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
         # Create Docking Layout
         def addDock(name, inner_widget=None):
-            ww, wh = DEFAULT_WIN_SIZE
+            ww, wh = self.DEFAULT_WIN_SIZE
+            if SETTINGS.get(APP_WIN_SIZE_SETTING):
+                ww, wh = SETTINGS.get(APP_WIN_SIZE_SETTING)
 
             dpos, (dw, dh) = DEFAULT_DOCK_PLACEMENT[name]
             if isinstance(dpos, basestring):
@@ -858,8 +864,6 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.updateAppTitle()
 
         self.updateActionToolTipText()
-
-        self.resize(*DEFAULT_WIN_SIZE)
 
     @property
     def penDataTemporalPlotWidget(self):
@@ -1227,6 +1231,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         updatedsettings, allsettings, savestate, ok = ProjectSettingsDialog.getProjectSettings(self)
         if ok is True:
             if len(updatedsettings)>0:
+                SETTINGS[APP_WIN_SIZE_SETTING] = (self.size().width(), self.size().height())
                 writePickle(self._appdirs.user_config_dir,u'usersettings.pkl', SETTINGS)
                 self.updateActionToolTipText()
                 if self.project:            
@@ -1371,6 +1376,7 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
     # <<<<<<
 
     def closeEvent(self, event):
+        global SETTINGS
         if event == u'FORCE_EXIT':
             QtCore.QCoreApplication.instance().quit()
             return
@@ -1380,6 +1386,8 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             QtGui.QMessageBox.No, QtGui.QMessageBox.No)
 
         if reply == QtGui.QMessageBox.Yes:
+            SETTINGS[APP_WIN_SIZE_SETTING] = (self.size().width(), self.size().height())
+            writePickle(self._appdirs.user_config_dir,u'usersettings.pkl', SETTINGS)
             if event:
                 event.accept()
             else:

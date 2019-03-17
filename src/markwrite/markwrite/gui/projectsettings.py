@@ -23,6 +23,7 @@ import pyqtgraph.parametertree.parameterTypes as pTypes
 from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, registerParameterType
 
 SETTINGS_DIALOG_SIZE_SETTING = 'gui_settings_dialog_size'
+APP_WIN_SIZE_SETTING = 'gui_app_win_size'
 
 flattenned_settings_dict = OrderedDict()
 
@@ -260,6 +261,8 @@ class ProjectSettingsDialog(QtGui.QDialog):
             w, h = savedstate.get(SETTINGS_DIALOG_SIZE_SETTING)
             self.resize(w, h)
             SETTINGS[SETTINGS_DIALOG_SIZE_SETTING]=(w, h)
+            if savedstate.get(APP_WIN_SIZE_SETTING):
+                SETTINGS[APP_WIN_SIZE_SETTING]=savedstate.get(APP_WIN_SIZE_SETTING)
         else:          
             if parent:
                 wscreen = QtGui.QDesktopWidget().screenGeometry(parent)
