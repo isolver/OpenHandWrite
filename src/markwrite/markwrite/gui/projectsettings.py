@@ -84,7 +84,7 @@ flattenned_settings_dict['kbshortcut_selected_timeperiod_backward'] = {'name': '
 #flattenned_settings_dict['kbshortcut_increase_selected_start_time'] = {'name': 'Increase Selected Start Time', 'type': 'str', 'value': QtGui.QKeySequence('Alt+PgUp').toString()}
 #flattenned_settings_dict['kbshortcut_decrease_selected_start_time'] = {'name': 'Decrease Selected Start Time', 'type': 'str', 'value': QtGui.QKeySequence('Alt+PgDown').toString()}
 
-#>>>TODO: Add default shortcut key values for below settings
+
 flattenned_settings_dict['kbshortcut_select_next_series'] = {'name': 'Select Next Sample Series', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Up').toString()}
 flattenned_settings_dict['kbshortcut_select_previous_series'] = {'name': 'Select Previous Sample Series', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Down').toString()}
 flattenned_settings_dict['kbshortcut_selection_end_to_next_series_end'] = {'name': 'Move Selection End to Next Series End', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Right').toString()}
@@ -107,6 +107,11 @@ flattenned_settings_dict['kbshortcut_selection_end_to_next_stroke_end'] = {'name
 flattenned_settings_dict['kbshortcut_selection_end_to_prev_stroke_end'] = {'name': 'Move Selection End to Previous Stroke End', 'type': 'str', 'value': QtGui.QKeySequence('Left').toString()}
 flattenned_settings_dict['kbshortcut_selection_start_to_next_stroke_start'] = {'name': 'Move Selection Start to Next Stroke Start', 'type': 'str', 'value': QtGui.QKeySequence('Shift+Right').toString()}
 flattenned_settings_dict['kbshortcut_selection_start_to_prev_stroke_start'] = {'name': 'Move Selection Start to Previous Stroke Start', 'type': 'str', 'value': QtGui.QKeySequence('Shift+Left').toString()}
+
+
+flattenned_settings_dict['save_settings_to_file'] = {'name': 'Save As', 'type': 'action'}
+flattenned_settings_dict['load_settings_from_file'] = {'name': 'Load', 'type': 'action'}
+
 #<<<
 
 
@@ -207,7 +212,12 @@ settings_params = [
             'kbshortcut_selection_start_to_next_stroke_start',
             'kbshortcut_selection_start_to_prev_stroke_start',
 
-            ]}
+            ]},
+        {'name': 'Default Settings', 'type': 'group', 'children': [
+            'save_settings_to_file',
+            'load_settings_from_file'
+            ]},
+
         ]
 
 
@@ -241,6 +251,9 @@ class ProjectSettingsDialog(QtGui.QDialog):
 
         self.initSettingsValues()
 
+        self._settings.param('Default Settings', 'Save As').sigActivated.connect(self.saveToFile)
+        self._settings.param('Default Settings', 'Load').sigActivated.connect(self.loadFromFile)
+
         self.ptree = ParameterTree()
         self.ptree.setParameters(self._settings, showTop=False)
         self.ptree.setWindowTitle('MarkWrite Application Settings')
@@ -266,12 +279,37 @@ class ProjectSettingsDialog(QtGui.QDialog):
         else:          
             if parent:
                 wscreen = QtGui.QDesktopWidget().screenGeometry(parent)
-            self.resize(min(500,int(wscreen.width()*.66)),min(700,int(wscreen.height()*.66)))
+                self.resize(min(500,int(wscreen.width()*.66)),min(700,int(wscreen.height()*.66)))
         # center dialog on same screen as is being used by markwrite app.
         qr = self.frameGeometry()
         cp = wscreen.center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
+
+    def saveToFile(self):
+        from markwrite.gui.dialogs import fileSaveDlg, ErrorDialog
+        from markwrite import writePickle
+        from markwrite import appdirs as mwappdirs
+        save_to_path=fileSaveDlg(
+                        initFilePath=mwappdirs .user_config_dir,
+                        initFileName=u"markwrite_settings.pkl",
+                        prompt=u"Save MarkWrite Settings",
+                        allowed="Python Pickle file (*.pkl)",
+                        parent=self)
+        if save_to_path:
+            import os
+            ff, fn = os.path.split(save_to_path)
+            if fn == u'usersettings.pkl':
+                ErrorDialog.info_text = u"usersettings.pkl a is reserved file name." \
+                                        u" Save again using a different name."
+                ErrorDialog().display()                
+            else:
+                writePickle(ff, fn, SETTINGS)
+        
+        
+    def loadFromFile(self):
+        from markwrite.gui.dialogs import infoDlg
+        infoDlg(title=u"Not Implemented", prompt=u"Loading setting from a file is not yet implemented. Coming next...")
 
     def initKeyParamMapping(self):
         if len(self.path2key)==0:
