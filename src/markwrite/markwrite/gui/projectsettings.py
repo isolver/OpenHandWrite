@@ -288,28 +288,42 @@ class ProjectSettingsDialog(QtGui.QDialog):
 
     def saveToFile(self):
         from markwrite.gui.dialogs import fileSaveDlg, ErrorDialog
-        from markwrite import writePickle
-        from markwrite import appdirs as mwappdirs
+        from markwrite import writePickle, current_settings_path
         save_to_path=fileSaveDlg(
-                        initFilePath=mwappdirs .user_config_dir,
+                        initFilePath=current_settings_path,
                         initFileName=u"markwrite_settings.pkl",
                         prompt=u"Save MarkWrite Settings",
                         allowed="Python Pickle file (*.pkl)",
                         parent=self)
         if save_to_path:
             import os
+            from markwrite import default_settings_file_name, current_settings_file_name
             ff, fn = os.path.split(save_to_path)
-            if fn == u'usersettings.pkl':
-                ErrorDialog.info_text = u"usersettings.pkl a is reserved file name." \
-                                        u" Save again using a different name."
+            if fn in [default_settings_file_name, current_settings_file_name]:
+                ErrorDialog.info_text = u"%s a is reserved file name." \
+                                        u" Save again using a different name."%(fn)
                 ErrorDialog().display()                
             else:
                 writePickle(ff, fn, SETTINGS)
         
         
     def loadFromFile(self):
-        from markwrite.gui.dialogs import infoDlg
-        infoDlg(title=u"Not Implemented", prompt=u"Loading setting from a file is not yet implemented. Coming next...")
+        global settings
+        from markwrite.gui.dialogs import fileOpenDlg
+        from markwrite import appdirs as mwappdirs
+        from markwrite import readPickle, writePickle
+        from markwrite import current_settings_file_name, current_settings_path
+        if self.parent:
+            mws_file = fileOpenDlg(current_settings_path,
+                                   None, "Select MarkWrite Settings File",
+                                   "Python Pickle file (*.pkl)", False)
+            if mws_file:
+                import os
+                ff, fn = os.path.split(mws_file[0])
+                mw_setting = readPickle(ff, fn)
+                _ = ProjectSettingsDialog(savedstate=mw_setting)
+                self.parent().updateApplicationFromSettings(mw_setting, mw_setting)
+                writePickle(current_settings_path,current_settings_file_name, SETTINGS)
 
     def initKeyParamMapping(self):
         if len(self.path2key)==0:
@@ -369,8 +383,6 @@ class ProjectSettingsDialog(QtGui.QDialog):
         self._updated_settings[SETTINGS_DIALOG_SIZE_SETTING] = (w, h)
         return super(QtGui.QDialog, self).resizeEvent(event)
 
-
-    # static method to create the dialog and return (date, time, accepted)
     @staticmethod
     def getProjectSettings(parent = None, usersettings = None):
         if usersettings is None:

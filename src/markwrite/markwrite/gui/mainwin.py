@@ -1229,24 +1229,28 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
 
     def handleDisplayAppSettingsDialogEvent(self):
         updatedsettings, allsettings, savestate, ok = ProjectSettingsDialog.getProjectSettings(self)
-        if ok is True:
-            if len(updatedsettings)>0:
-                SETTINGS[APP_WIN_SIZE_SETTING] = (self.size().width(), self.size().height())
-                writePickle(self._appdirs.user_config_dir,u'usersettings.pkl', SETTINGS)
-                self.updateActionToolTipText()
-                if self.project:            
-                    stroke_settings_changed = [s for s in updatedsettings.keys() if s.find('stroke_detect_')==0]
-                    if stroke_settings_changed:
-                        reply = QtGui.QMessageBox.question(self, 'Stroke Detection Settings', "Stroke detection setting have changed.\nReparse Stroke Boundaries?", QtGui.QMessageBox.Yes | 
-                                                            QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-                        if reply == QtGui.QMessageBox.Yes:
-                            self.project._parseStrokeBoundaries()
-                            
-                            # trick timeplot view etc. into updating stroke graphics
-                            if 'pen_stroke_boundary_size' not in updatedsettings:
-                                updatedsettings['pen_stroke_boundary_size'] = SETTINGS['pen_stroke_boundary_size']
-                
-                    self.sigAppSettingsUpdated.emit(updatedsettings, allsettings)
+        #print("updatedsettings:",updatedsettings)
+        if ok is True and len(updatedsettings)>0:
+            from markwrite import current_settings_file_name, current_settings_path
+            SETTINGS[APP_WIN_SIZE_SETTING] = (self.size().width(), self.size().height())
+            self.updateApplicationFromSettings(updatedsettings, allsettings)
+            writePickle(current_settings_path,current_settings_file_name, SETTINGS)
+            self.updateActionToolTipText()
+
+    def updateApplicationFromSettings(self, updatedsettings, allsettings):
+        if self.project and len(updatedsettings)>0:            
+            stroke_settings_changed = [s for s in updatedsettings.keys() if s.find('stroke_detect_')==0]
+            if stroke_settings_changed:
+                reply = QtGui.QMessageBox.question(self, 'Stroke Detection Settings', "Stroke detection setting have changed.\nReparse Stroke Boundaries?", QtGui.QMessageBox.Yes | 
+                                                    QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+                if reply == QtGui.QMessageBox.Yes:
+                    self.project._parseStrokeBoundaries()
+                    
+                    # trick timeplot view etc. into updating stroke graphics
+                    if 'pen_stroke_boundary_size' not in updatedsettings:
+                        updatedsettings['pen_stroke_boundary_size'] = SETTINGS['pen_stroke_boundary_size']
+        
+            self.sigAppSettingsUpdated.emit(updatedsettings, allsettings)
 
     # >>>>>>
     # Generic Unit based selection region actions
@@ -1386,8 +1390,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
             QtGui.QMessageBox.No, QtGui.QMessageBox.No)
 
         if reply == QtGui.QMessageBox.Yes:
+            from markwrite import current_settings_file_name, current_settings_path
             SETTINGS[APP_WIN_SIZE_SETTING] = (self.size().width(), self.size().height())
-            writePickle(self._appdirs.user_config_dir,u'usersettings.pkl', SETTINGS)
+            writePickle(current_settings_path,current_settings_file_name, SETTINGS)
             if event:
                 event.accept()
             else:

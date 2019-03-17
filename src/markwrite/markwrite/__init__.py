@@ -21,15 +21,23 @@ __version__ = "0.4.0"
 # openning an iohub datastore file.
 import tables
 import pyqtgraph
-import sys
+import sys, os
 from appdirs import AppDirs
 from file_io import readPickle, writePickle
 appdirs = AppDirs("MarkWrite")
-usersettings = readPickle(appdirs.user_config_dir,u'usersettings.pkl')
+default_settings_file_name = u'default_settings.pkl'
+current_settings_file_name = u'current_settings.pkl'
+current_settings_path = appdirs.user_config_dir
+
+usersettings = readPickle(current_settings_path, current_settings_file_name)
 from pyqtgraph.Qt import QtGui
 app = QtGui.QApplication(sys.argv)
 
 from gui.projectsettings import ProjectSettingsDialog
 _ = ProjectSettingsDialog(savedstate=usersettings)
 from gui.projectsettings import SETTINGS
-writePickle(appdirs.user_config_dir,u'usersettings.pkl', SETTINGS)
+writePickle(current_settings_path, current_settings_file_name, SETTINGS)
+
+default_file_path = os.path.join(current_settings_path,default_settings_file_name)
+if not os.path.exists(default_file_path):
+    writePickle(current_settings_path, default_settings_file_name, SETTINGS)
