@@ -578,12 +578,8 @@ class MarkWriteProject(object):
         stroke = self.stroke_boundaries[(sample_index >= starts) & (sample_index <= ends)]
         if len(stroke) > 1:
             if _warning_count<10:
-                print 'starts:', starts
-                print 'ends:', ends
-                print 'stroke:',stroke
                 print "Warning, %d strokes found for sample ix %d. Using first detected stroke for report." % (
                 len(stroke), sample_index)
-                print ""
                 _warning_count+=1
                 if _warning_count == 10:
                     print "Will stop warning you!!!!!"
@@ -886,8 +882,6 @@ class MarkWriteProject(object):
         updateDataFileLoadingProgressDialog(self._mwapp, 5)
 
     def _parseStrokeBoundaries(self):
-
-
         # 1) Filter each sample Series
         # 2) Calculate pen sample velocity and acceleration data.
         # 3) Detect Sample Runs within each Series.
@@ -897,23 +891,20 @@ class MarkWriteProject(object):
         self._stroke_boundary_ixs = []
         self.stroke_boundary_samples = None
         self.stroke_boundaries = []
-        for series_bounds in self.series_boundaries:
-            # get sample array for current series
-            pseries = self.pendata[
-                      series_bounds['start_ix']:series_bounds['end_ix'] + 1]
-            psb_start_ix = series_bounds['start_ix']
+        if SETTINGS['stroke_detect_pressed_runs_only'] is False:
+            # 4a) Detect pen stroke boundaries within current Series
+            for series_bounds in self.series_boundaries:
+                # get sample array for current series
+                pseries = self.pendata[
+                          series_bounds['start_ix']:series_bounds['end_ix'] + 1]
+                psb_start_ix = series_bounds['start_ix']
 
-            if SETTINGS['stroke_detect_pressed_runs_only'] is False:
-                # 4a) Detect pen stroke boundaries within current Series
                 self._findstrokes(pseries, psb_start_ix, series_bounds['id'])
-            else:
-                # detect strokes in pressed runs only
-                for curr_press_series_id, rbp_id, si, rb_start_time, ei, rb_end_time in self.run_boundaries:
-                    # Issue #200 seems to occur when this branch is run.
-                    # Is a stroke being entered for every pressed run causing
-                    # the multiple duplicate entries?
-                    self._findstrokes(self.pendata[si:ei + 1], si, 
-                                      curr_press_series_id)                    
+        else:
+            # 4b) Detect strokes in pressed runs only
+            for curr_press_series_id, rbp_id, si, rb_start_time, ei, rb_end_time in self.run_boundaries:
+                self._findstrokes(self.pendata[si:ei + 1], si, 
+                                  curr_press_series_id)                    
 
         # Convert run_boundaries list of lists into an ndarray
         stroke_dtype = np.dtype({
