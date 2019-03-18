@@ -127,7 +127,14 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         self.sigAppSettingsUpdated.connect(self._selectedPenDataViewWidget.handleUpdatedSettingsEvent)
         self.sigAppSettingsUpdated.connect(self.handleUpdatedSettingsEvent)
         if SETTINGS.get(APP_WIN_SIZE_SETTING):
-            self.resize(*SETTINGS.get(APP_WIN_SIZE_SETTING))
+            ww, wh = SETTINGS.get(APP_WIN_SIZE_SETTING)
+            wscreen = QtGui.QDesktopWidget().screenGeometry(self)
+            if ww == wscreen.width() and wscreen.height()-wh < 100:
+                # Set to fullscreen mode when window width == screen width
+                # and window height (minus mindow title bar) is ~ screen height
+                self.showMaximized()
+            else:
+                self.resize(ww, wh)
         else:
             self.resize(*self.DEFAULT_WIN_SIZE)
 
