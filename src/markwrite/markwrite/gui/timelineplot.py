@@ -388,7 +388,7 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
         for k in updates.keys():
             if k.startswith('timeplot_xtrace'):
                 penarray, brusharray = self.updateTrace('xy_plot', 'x', 'timeplot_xtrace_color', 'timeplot_xtrace_size', penpoints, penarray, brusharray)
-            break
+                break
 
         for k in updates.keys():
             if k.startswith('timeplot_ytrace'):
@@ -409,7 +409,7 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                 for k in updates.keys():
                     if k.startswith('timeplot_atrace'):
                         penarray, brusharray = self.updateTrace('acceleration_plot', 'xy_acceleration', 'timeplot_atrace_color', 'timeplot_atrace_size', penpoints, penarray, brusharray)
-                    break
+                        break
 
         if 'display_timeplot_xtrace' in updates.keys():
             self.plotitems['xy_plot']['x'].setVisible(SETTINGS['display_timeplot_xtrace'])
@@ -428,7 +428,7 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                 for k in updates.keys():
                     if k.startswith('timeplot_vtrace'):
                         penarray, brusharray = self.updateTrace('velocity_plot', 'xy_velocity', 'timeplot_vtrace_color', 'timeplot_vtrace_size', penpoints, penarray, brusharray)
-                    break
+                        break
 
         if self.bottom_plot != prev_bottom_plot:
             prev_bottom_plot.hideAxis('bottom')
