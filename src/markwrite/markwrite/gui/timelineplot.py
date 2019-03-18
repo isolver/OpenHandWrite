@@ -75,14 +75,16 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                     data_pos = self.dataplots['xy_plot'].vb.mapSceneToView(event.pos())        
                     x = data_pos.x()
                     if x < xmin or x > xmax:
-                        #print('data_pos.x():',data_pos.x())
                         ptime_ix = len(pdat['time'][pdat['time']<=x])
                         if ptime_ix > 0:
-                            #print('ptime_ix:',ptime_ix)
                             seg_id = pdat[ptime_ix]['segment_id']
-                            if seg_id:
+                            if seg_id > 0:
                                 seg = PenDataSegment.id2obj[seg_id]    
-                                MarkWriteMainWindow.instance().setActiveObject(seg)
+                                if seg.l1seg==seg:
+                                    # Do not select segment if it is an L1
+                                    pass
+                                else:
+                                    MarkWriteMainWindow.instance().setActiveObject(seg)
                                 
                         streg._ignore_events=True
                         super(PenDataTemporalPlotWidget,self).mouseDoubleClickEvent(event)
