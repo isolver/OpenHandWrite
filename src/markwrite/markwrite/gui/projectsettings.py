@@ -93,7 +93,7 @@ flattenned_settings_dict['kbshortcut_selection_start_to_next_series_start'] = {'
 flattenned_settings_dict['kbshortcut_selection_start_to_prev_series_start'] = {'name': 'Move Selection Start to Previous Series Start', 'type': 'str', 'value': QtGui.QKeySequence('Alt+Shift+Left').toString()}
 
 flattenned_settings_dict['kbshortcut_select_next_run'] = {'name': 'Select Next Sample Run', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Up').toString()}
-flattenned_settings_dict['kbshortcut_select_next_unmarked_run'] =  {'name': 'Select Next Unmarked Run', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Shift+Up').toString()}
+#flattenned_settings_dict['kbshortcut_select_next_unmarked_run'] =  {'name': 'Select Next Unmarked Run', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Shift+Up').toString()}
 flattenned_settings_dict['kbshortcut_select_previous_run'] = {'name': 'Select Previous Sample Run', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Down').toString()}
 flattenned_settings_dict['kbshortcut_selection_end_to_next_run_end'] = {'name': 'Move Selection End to Next Run End', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Right').toString()}
 flattenned_settings_dict['kbshortcut_selection_end_to_prev_run_end'] = {'name': 'Move Selection End to Previous Run End', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Left').toString()}
@@ -101,7 +101,7 @@ flattenned_settings_dict['kbshortcut_selection_start_to_next_run_start'] = {'nam
 flattenned_settings_dict['kbshortcut_selection_start_to_prev_run_start'] = {'name': 'Move Selection Start to Previous Run Start', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+Shift+Left').toString()}
 
 flattenned_settings_dict['kbshortcut_select_next_stroke'] = {'name': 'Select Next Stroke', 'type': 'str', 'value': QtGui.QKeySequence('Up').toString()}
-flattenned_settings_dict['kbshortcut_select_next_unmarked_stroke'] = {'name': 'Select Next Unmarked Stroke', 'type': 'str', 'value': QtGui.QKeySequence('Shift+Up').toString()}
+#flattenned_settings_dict['kbshortcut_select_next_unmarked_stroke'] = {'name': 'Select Next Unmarked Stroke', 'type': 'str', 'value': QtGui.QKeySequence('Shift+Up').toString()}
 flattenned_settings_dict['kbshortcut_select_previous_stroke'] = {'name': 'Select Previous Stroke', 'type': 'str', 'value': QtGui.QKeySequence('Down').toString()}
 flattenned_settings_dict['kbshortcut_selection_end_to_next_stroke_end'] = {'name': 'Move Selection End to Next Stroke End', 'type': 'str', 'value': QtGui.QKeySequence('Right').toString()}
 flattenned_settings_dict['kbshortcut_selection_end_to_prev_stroke_end'] = {'name': 'Move Selection End to Previous Stroke End', 'type': 'str', 'value': QtGui.QKeySequence('Left').toString()}
@@ -196,7 +196,7 @@ settings_params = [
             'kbshortcut_selection_start_to_next_series_start',
             'kbshortcut_selection_start_to_prev_series_start',
 
-            'kbshortcut_select_next_unmarked_run',
+            #'kbshortcut_select_next_unmarked_run',
             'kbshortcut_select_next_run',
             'kbshortcut_select_previous_run',
             'kbshortcut_selection_end_to_next_run_end',
@@ -204,7 +204,7 @@ settings_params = [
             'kbshortcut_selection_start_to_next_run_start',
             'kbshortcut_selection_start_to_prev_run_start',
 
-            'kbshortcut_select_next_unmarked_stroke',
+            #'kbshortcut_select_next_unmarked_stroke',
             'kbshortcut_select_next_stroke',
             'kbshortcut_select_previous_stroke',
             'kbshortcut_selection_end_to_next_stroke_end',
