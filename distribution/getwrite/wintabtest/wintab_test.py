@@ -92,7 +92,8 @@ def createPsychopyGraphics():
                                               PEN_POS_ANGLE_COLOR,
                                               PEN_POS_ANGLE_WIDTH,
                                               PEN_POS_GFX_MIN_SIZE,
-                                              PEN_POS_GFX_SIZE_RANGE)
+                                              PEN_POS_GFX_SIZE_RANGE,
+                                              PEN_POS_TILTLINE_SCALAR)
     return myWin, (evt_text, instruct_text, pen_trace, pen_pos)
 
 

@@ -21,7 +21,7 @@ class PenPositionStim(MinimalStim):
     def __init__(self, win, min_opacity=0.0, hover_color=(255,0,0), 
                  touching_color=(0,255,0), tiltline_color=(255,255, 0),
                  tiltline_width=2,
-                 min_size=0.033, size_range=0.1666, 
+                 min_size=0.033, size_range=0.1666, tiltline_scalar=1.0,
                  name=None, autoLog=None, depth=-10000):
         self.win = win
         self.depth = depth
@@ -57,6 +57,7 @@ class PenPositionStim(MinimalStim):
         # the digitizer surface.
         self.tiltline_color = tiltline_color
         self.tiltline_width = tiltline_width
+        self.tiltline_scalar = tiltline_scalar
         # Create a Gausian blob stim to use for pen position graphic
         self.pen_guass = visual.PatchStim(win, units='norm', tex='none',
                                           mask='gauss', pos=(0, 0), colorSpace='rgb255',
@@ -121,7 +122,8 @@ class PenPositionStim(MinimalStim):
             pen_tilt_xy = t1 * math.sin(t2), t1 * math.cos(t2)
 
         pen_pos = self.pen_guass.pos
-        tiltend = (pen_pos[0] + pen_tilt_xy[0], pen_pos[1] + pen_tilt_xy[1])
+        tiltend = (pen_pos[0] + pen_tilt_xy[0]*self.tiltline_scalar, 
+                   pen_pos[1] + pen_tilt_xy[1]*self.tiltline_scalar)
         self.pen_tilt_line.end = tiltend
 
     def draw(self):
