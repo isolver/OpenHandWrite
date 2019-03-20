@@ -60,7 +60,7 @@ def createPsychopyGraphics():
     #
     # Initialize Graphics
     #
-    myWin = visual.Window(units='pix', color=[128, 128, 128],
+    myWin = visual.Window(units='pix', color=DEFAULT_SCREEN_COLOR,
                            colorSpace='rgb255', fullscr=True, allowGUI=False)
 
     # hide the OS system mouse when on experiment window
@@ -68,14 +68,14 @@ def createPsychopyGraphics():
     mouse.setSystemCursorVisibility(False)
 
     #INITIALISE SOME STIMULI
-    evt_text = visual.TextStim(myWin, units='norm', height = 0.05,
+    evt_text = visual.TextStim(myWin, units='norm', height = DEFAULT_TEXT_STIM_HEIGHT,
                                pos=(0, .9), text="")
     evt_text._txt_proto='Tablet: pos:\t{x},{y},{z}\t' \
                         'pressure: {pressure}\t' \
                        # 'orientation: {orient_azimuth},{orient_altitude}'
 
     instruct_text = visual.TextStim(myWin, units='norm', pos=(0, -.9),
-                              height = 0.05, text="instruct_text")
+                              height = DEFAULT_TEXT_STIM_HEIGHT, text="instruct_text")
     instruct_text._start_rec_txt ="Press 's' to start wintab reporting. " \
                                   "Press 'q' to exit."
     instruct_text._stop_rec_txt ="Press 's' to stop wintab reporting. " \
@@ -100,7 +100,7 @@ def createPsychopyGraphics():
 if __name__ == '__main__':
     # Start iohub process and create shortcut variables to the iohub devices
     # used during the experiment.
-    io = start_iohub()
+    io = start_iohub(DEFAULT_SESSION_CODE)
 
     keyboard = io.devices.keyboard
     mouse = io.devices.mouse
