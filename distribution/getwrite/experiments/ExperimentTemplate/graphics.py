@@ -60,8 +60,18 @@ def createPsychopyGraphics(display):
     all_stim = dict()
 
     all_stim['pen'] = {
-                    'pos': wintabgraphics.PenPositionStim(myWin),
-                    'traces': wintabgraphics.PenTracesStim(myWin)
+                    'pos': wintabgraphics.PenPositionStim(myWin,
+                                              PEN_POS_GFX_MIN_OPACITY,
+                                              PEN_POS_HOVER_COLOR,
+                                              PEN_POS_TOUCHING_COLOR,
+                                              PEN_POS_ANGLE_COLOR,
+                                              PEN_POS_ANGLE_WIDTH,
+                                              PEN_POS_GFX_MIN_SIZE,
+                                              PEN_POS_GFX_SIZE_RANGE),
+                    'traces': wintabgraphics.PenTracesStim(myWin,
+                                             PEN_TRACE_LINE_WIDTH,
+                                             PEN_TRACE_LINE_COLOR,
+                                             PEN_TRACE_LINE_OPACITY)
                     }
 
     all_stim['triggers']=dict()
