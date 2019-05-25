@@ -588,6 +588,26 @@ class MarkWriteProject(object):
             return stroke['id'][-1] + 1
         return 0
 
+    def getStrokeTypeForSample(self, sample_index):
+        '''
+        '''
+        global _warning_count
+        starts = self.stroke_boundaries['start_ix']
+        ends = self.stroke_boundaries['end_ix'] - 1
+        stroke = self.stroke_boundaries[(sample_index >= starts) & (sample_index <= ends)]
+        if len(stroke) > 1:
+            if _warning_count<10:
+                print "Warning, %d strokes found for sample ix %d. Using first detected stroke for report." % (
+                len(stroke), sample_index)
+                _warning_count+=1
+                if _warning_count == 10:
+                    print "Will stop warning you!!!!!"
+            return stroke['stroke_type'][0]
+        if len(stroke) == 1:
+            return stroke['stroke_type'][-1]
+        return -1
+
+
     def getPenDataForTimePeriod(self, tstart, tend, pendata=None):
         '''
         Given the pen samples ndarray 'pendata', return the sub-array that only

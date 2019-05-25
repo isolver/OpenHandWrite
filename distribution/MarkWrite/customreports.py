@@ -24,7 +24,7 @@ class RawSampleDataReportExporter(ReportExporter):
         # generating the report
         r = ['index',]
         r.extend(cls.project.pendata.dtype.names)
-        r.extend(('status','series_id','run_id','stroke_id'
+        r.extend(('status','series_id','run_id','stroke_id','stroke_type',
                 ))
         return r
 
@@ -42,6 +42,7 @@ class RawSampleDataReportExporter(ReportExporter):
         getSeriesForSample = cls.project.getSeriesForSample
         getPressedRunForSample = cls.project.getPressedRunForSample
         getStrokeForSample = cls.project.getStrokeForSample
+        getStrokeTypeForSample = cls.project.getStrokeTypeForSample
 
         for i, pensample in enumerate(cls.project.pendata):
             r = [i,]
@@ -49,7 +50,8 @@ class RawSampleDataReportExporter(ReportExporter):
             r.extend((convertSampleStateValue(pensample['state']), 
                         getSeriesForSample(i),
                         getPressedRunForSample(i),
-                        getStrokeForSample(i)
+                        getStrokeForSample(i),
+                        getStrokeTypeForSample(i)
                         ))
             yield r
 
@@ -322,7 +324,7 @@ class RawSampleDataReportPlusSegsExporter(ReportExporter):
         # generating the report
         r = ['index',]
         r.extend(cls.project.pendata.dtype.names)
-        r.extend(('status','series_id','run_id','stroke_id',
+        r.extend(('status','series_id','run_id','stroke_id','stroke_type',
                   'seg_level','seg_path','seg_name'
                 ))
         return r
@@ -347,7 +349,8 @@ class RawSampleDataReportPlusSegsExporter(ReportExporter):
         getSeriesForSample = cls.project.getSeriesForSample
         getPressedRunForSample = cls.project.getPressedRunForSample
         getStrokeForSample = cls.project.getStrokeForSample
-
+        getStrokeTypeForSample = cls.project.getStrokeTypeForSample
+        
         for i, pensample in enumerate(cls.project.pendata):
             r = [i,]
             r.extend(pensample.tolist())
@@ -355,6 +358,7 @@ class RawSampleDataReportPlusSegsExporter(ReportExporter):
                         getSeriesForSample(i),
                         getPressedRunForSample(i),
                         getStrokeForSample(i),
+                        getStrokeTypeForSample(i),
                         segs.get(pensample['segment_id'],('','',''))[0],
                         segs.get(pensample['segment_id'],('','',''))[1],
                         segs.get(pensample['segment_id'],('','',''))[2]
