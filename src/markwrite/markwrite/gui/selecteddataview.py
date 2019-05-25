@@ -86,7 +86,10 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
         if SETTINGS['pen_stroke_boundary_size'] > 0:
             self.qtpenbrushs['stroke_boundary_pen']=pg.mkPen(SETTINGS['pen_stroke_boundary_color'],
                                width=SETTINGS['pen_stroke_boundary_size'])
+            self.qtpenbrushs['pause_boundary_pen']=pg.mkPen(SETTINGS['pen_stroke_pause_boundary_color'],
+                               width=SETTINGS['pen_stroke_boundary_size'])
             self.qtpenbrushs['stroke_boundary_brush'] = pg.mkBrush(SETTINGS['pen_stroke_boundary_color'])
+            self.qtpenbrushs['pause_boundary_brush'] = pg.mkBrush(SETTINGS['pen_stroke_pause_boundary_color'])
 
     def handlePenDataSelectionChanged(self, timeperiod, pendata):
         self._lastSelectedData = pendata
@@ -118,15 +121,29 @@ class SelectedPointsPlotWidget(pg.PlotWidget):
                 if ssize > 0:
                     self.strokeBoundaryPoints = pg.ScatterPlotItem(size=ssize, pen=self.qtpenbrushs['stroke_boundary_pen'], brush=self.qtpenbrushs['stroke_boundary_brush'])
                     self.getPlotItem().addItem(self.strokeBoundaryPoints)
-            else:
-                if ssize == 0:
-                    self.strokeBoundaryPoints.clear()
-                else:
-                    proj = MarkWriteMainWindow.instance().project
-                    pstart, pend = pendata['time'][[0,-1]]
-                    vms_times = proj.stroke_boundary_samples['time']
-                    vmpoints = proj.stroke_boundary_samples[(vms_times >= pstart) & (vms_times <= pend)]
-                    self.strokeBoundaryPoints.setData(x=vmpoints[X_FIELD], y=vmpoints[Y_FIELD], size=ssize, pen=self.qtpenbrushs['stroke_boundary_pen'], brush=self.qtpenbrushs['stroke_boundary_brush'])
+
+            self.strokeBoundaryPoints.clear()
+            if ssize>0:                
+                proj = MarkWriteMainWindow.instance().project
+                pstart, pend = pendata['time'][[0,-1]]
+                vms_times = proj.stroke_boundary_samples['time']
+                time_filter = (vms_times >= pstart) & (vms_times <= pend)
+                stroke_type = proj.stroke_boundaries['stroke_type'][time_filter]
+                mstrokes = stroke_type==0
+                vmpoints = proj.stroke_boundary_samples[time_filter]
+                if len(vmpoints) > 0:                
+                    
+                    self.strokeBoundaryPoints.addPoints(x=vmpoints[X_FIELD][mstrokes],
+                                                         y=vmpoints[Y_FIELD][mstrokes],
+                                                         size=ssize, pen=self.qtpenbrushs['stroke_boundary_pen'],
+                                                         brush=self.qtpenbrushs['stroke_boundary_brush'])
+    
+                    pstrokes = stroke_type==4
+                    
+                    self.strokeBoundaryPoints.addPoints(x=vmpoints[X_FIELD][pstrokes],
+                                                     y=vmpoints[Y_FIELD][pstrokes],
+                                                     size=ssize, pen=self.qtpenbrushs['pause_boundary_pen'],
+                                                     brush=self.qtpenbrushs['pause_boundary_brush'])
 
         else:
             self.plotDataItem.clear()#setData(x=[],y=[],pen='black', brush='')

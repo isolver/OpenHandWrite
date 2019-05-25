@@ -104,11 +104,14 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         return brusharray, penarray
 
     def addStrokeBoundaryPoints(self, strokeboundries):
+        proj = MarkWriteMainWindow.instance().project
+        stroke_type = proj.stroke_boundaries['stroke_type']
         ssize = SETTINGS['pen_stroke_boundary_size']
         if ssize == 0:
             if self.strokeBoundaryPoints:
                 self.strokeBoundaryPoints.clear()
             return
+        pcolor = SETTINGS['pen_stroke_pause_boundary_color']
         scolor = SETTINGS['pen_stroke_boundary_color']
         pen = pg.mkPen(scolor,width=ssize)
         brush = pg.mkBrush(scolor)
@@ -117,8 +120,17 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
             self.getPlotItem().addItem(self.strokeBoundaryPoints)
         else:
             self.strokeBoundaryPoints.clear()
-        self.strokeBoundaryPoints.addPoints(x=strokeboundries[X_FIELD],
-                                             y=strokeboundries[Y_FIELD],
+
+        mstrokes = stroke_type==0
+        self.strokeBoundaryPoints.addPoints(x=strokeboundries[X_FIELD][mstrokes],
+                                             y=strokeboundries[Y_FIELD][mstrokes],
+                                             size=ssize, pen=pen, brush=brush)
+        pen = pg.mkPen(pcolor,width=ssize)
+        brush = pg.mkBrush(pcolor)
+        pstrokes = stroke_type==4
+        
+        self.strokeBoundaryPoints.addPoints(x=strokeboundries[X_FIELD][pstrokes],
+                                             y=strokeboundries[Y_FIELD][pstrokes],
                                              size=ssize, pen=pen, brush=brush)
 
 

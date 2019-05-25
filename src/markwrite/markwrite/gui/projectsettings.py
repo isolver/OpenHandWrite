@@ -25,11 +25,16 @@ from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, reg
 SETTINGS_DIALOG_SIZE_SETTING = 'gui_settings_dialog_size'
 APP_WIN_SIZE_SETTING = 'gui_app_win_size'
 
+#TODO: min_pressed_count = 3   # Minimum number of > 0 pressure samples in a series must be <= min_series_length
+
 flattenned_settings_dict = OrderedDict()
 
 flattenned_settings_dict['auto_generate_l1segments'] = {'name': 'Enable Level 1 Auto Segmentation', 'type': 'bool', 'value': True}
 
 flattenned_settings_dict['filter_imported_pen_data'] = {'name': 'Filter Imported Pen Data', 'type': 'bool', 'value': False}
+
+flattenned_settings_dict['device_spatial_resolution'] = {'name': 'Spatial (lines/cm)', 'type': 'float', 'value': 100.0, 'limits': (0.0, 1000.0)}
+flattenned_settings_dict['device_temporal_resolution'] = {'name': 'Sampling Rate (Hz)', 'type': 'float', 'value': 0.0, 'limits': (0.0, 1000.0)}
 
 flattenned_settings_dict['hdf5_trial_start_var_select_filter'] = {'name': 'Start Time Options Filter', 'type': 'str', 'value': "DV_*_START"}
 flattenned_settings_dict['hdf5_trial_end_var_select_filter'] = {'name': 'End Time Options Filter', 'type': 'str', 'value':  "DV_*_END"}
@@ -39,7 +44,8 @@ flattenned_settings_dict['new_segment_trim_0_pressure_points'] = {'name': 'Trim 
 flattenned_settings_dict['plotviews_background_color'] = {'name': 'Background Color', 'type': 'color', 'value': (32,32,32), 'tip': "Application Plot's background color. Change will not take effect until the application is restarted."}
 flattenned_settings_dict['plotviews_foreground_color'] =  {'name': 'Foreground Color', 'type': 'color', 'value': (224,224,224), 'tip': "Application Plot's foreground color (axis lines / labels)."}
 flattenned_settings_dict['pen_stroke_boundary_size'] ={'name': 'Stroke Boundary Point Size', 'type': 'int', 'value': 2, 'limits': (0, 5)}
-flattenned_settings_dict['pen_stroke_boundary_color'] =  {'name': 'Stroke Boundary Sample Color', 'type': 'color', 'value': (224,0,224)}
+flattenned_settings_dict['pen_stroke_boundary_color'] =  {'name': 'Motion Stroke Boundary Sample Color', 'type': 'color', 'value': (224,0,224)}
+flattenned_settings_dict['pen_stroke_pause_boundary_color'] =  {'name': 'Pause Stroke Boundary Sample Color', 'type': 'color', 'value': (112,0,112)}
 
 flattenned_settings_dict['timeplot_enable_ymouse'] = {'name': 'Enable Y Axis Pan / Scale with Mouse', 'type': 'bool', 'value': False}
 flattenned_settings_dict['display_timeplot_xtrace'] = {'name': 'Display', 'type': 'bool', 'value': True}
@@ -63,14 +69,16 @@ flattenned_settings_dict['spatialplot_selectedinvalid_color'] ={'name': 'Invalid
 flattenned_settings_dict['spatialplot_selectedpoint_size'] = {'name': 'Size', 'type': 'int', 'value': 2, 'limits': (1, 5)}
 
 flattenned_settings_dict['stroke_detect_pressed_runs_only'] = {'name': 'Use Pressed Sample Runs Only', 'type': 'bool', 'value': True}
-#flattenned_settings_dict['stroke_detect_min_value_threshold'] = {'name': 'Minimum Velocity Threshold', 'type': 'float', 'value': 0.0, 'step': 0.1, 'limits':(0.0, 500.0)}
 flattenned_settings_dict['stroke_detect_min_p2p_sample_count'] = {'name': 'Minimum Stroke Sample Count', 'type': 'int', 'value': 7, 'limits': (1, 50)}
 flattenned_settings_dict['stroke_detect_edge_type'] =  {'name': 'Detect Edge Type', 'type': 'list', 'values': ['none', 'rising', 'falling', 'both'], 'value': 'rising'}
-flattenned_settings_dict['stroke_detect_use_field'] =  {'name': 'Use Sample Field', 'type': 'list', 'values': ['xy_velocity', 'y_filtered'], 'value': 'xy_velocity'}
+flattenned_settings_dict['stroke_detect_algorithm'] =  {'name': 'Parsing Algorithm', 'type': 'list', 'values': ['xy_velocity&curvature', 'xy_velocity', 'y_filtered'], 'value': 'S/N Velocity Peak Diff'}
 flattenned_settings_dict['stroke_detect_peak_or_valley'] =  {'name': 'Detect Peaks / Valleys', 'type': 'list', 'values': ['Minima', 'Maxima', 'Minima & Maxima'], 'value': 'Minima'}
+flattenned_settings_dict['stroke_detect_inter_sample_distance'] = {'name': 'Curvature ISD (cm)', 'type': 'float', 'value': 0.1, 'limits': (0.001, 100.0)}
+flattenned_settings_dict['stroke_detect_abs_dalpha_thresh'] = {'name': 'DAlpha Angle Threshold', 'type': 'float', 'value': 40.0, 'limits': (0.0, 180.0)}
+flattenned_settings_dict['stroke_detect_min_stroke_length'] = {'name': 'Minimum Stroke Length (cm)', 'type': 'float', 'value': 0.05, 'limits': (0.001, 100.0)}
+flattenned_settings_dict['stroke_detect_min_stroke_velocity'] = {'name': 'Minimum Stroke Velocity (cm/sec)', 'type': 'float', 'value': 0.5, 'limits': (0.01, 100.0)}
 
 flattenned_settings_dict['series_detect_max_isi_msec'] = {'name': 'Maximum Series ISI (msec)', 'type': 'int', 'value': 0, 'limits': (0, 100)}
-
 
 flattenned_settings_dict['kbshortcut_create_segment'] = {'name': 'Create Segment', 'type': 'str', 'value': QtGui.QKeySequence('Return').toString()}
 flattenned_settings_dict['kbshortcut_delete_segment'] = {'name': 'Delete Segment', 'type': 'str', 'value': QtGui.QKeySequence('Ctrl+D').toString()}
@@ -116,6 +124,10 @@ flattenned_settings_dict['load_settings_from_file'] = {'name': 'Load', 'type': '
 
 
 settings_params = [
+        {'name': 'Device Resolution', 'type': 'group', 'children': [
+            'device_spatial_resolution',
+            'device_temporal_resolution',
+        ]},
         {'name': 'Loading Source Data', 'type': 'group', 'children': [
             'series_detect_max_isi_msec',
             'filter_imported_pen_data',
@@ -127,10 +139,13 @@ settings_params = [
                  ]},
                {'name': 'Stoke Detection', 'type': 'group', 'children': [
                     'stroke_detect_pressed_runs_only',
-                    'stroke_detect_peak_or_valley',
-#                    'stroke_detect_min_value_threshold',
-                    'stroke_detect_use_field',
+                    'stroke_detect_algorithm',
+                    'stroke_detect_inter_sample_distance',
+                    'stroke_detect_abs_dalpha_thresh',
+                    'stroke_detect_min_stroke_length',
+                    'stroke_detect_min_stroke_velocity',               
                     'stroke_detect_min_p2p_sample_count',
+                    'stroke_detect_peak_or_valley',
                     'stroke_detect_edge_type',
                  ]},
         ]},
@@ -142,6 +157,7 @@ settings_params = [
             'plotviews_foreground_color',
             'pen_stroke_boundary_size',
             'pen_stroke_boundary_color',
+            'pen_stroke_pause_boundary_color',
             {'name': 'TimeLine View', 'type': 'group', 'children': [
                 'timeplot_enable_ymouse',
                 {'name': 'Horizontal Pen Position Trace', 'type': 'group', 'children': [

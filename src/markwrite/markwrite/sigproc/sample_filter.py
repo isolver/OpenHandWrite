@@ -17,7 +17,6 @@
 from __future__ import division
 from markwrite import SETTINGS
 
-import scipy
 from scipy.signal import savgol_filter
 
 # The length of the filter window (i.e. the number of coefficients).
@@ -60,6 +59,4 @@ def filter_pen_sample_series(series):
         series['x_filtered'] = series['x']
         series['y_filtered'] = series['y']
         series['pressure_filtered'] =  series['pressure']
-
-
 

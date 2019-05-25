@@ -31,7 +31,7 @@ from file_io import SAMPLE_STATES
 from segment import PenDataSegment, PenDataSegmentCategory
 from util import contiguous_regions, getFilteredStringList
 from gui.projectsettings import SETTINGS
-from .sigproc import filter_pen_sample_series, calculate_velocity, detect_peaks
+from .sigproc import filter_pen_sample_series, calculate_velocity
 
 _warning_count = 0
 
@@ -774,11 +774,7 @@ class MarkWriteProject(object):
             filter_pen_sample_series(pseries)
             # 2) Calculate pen sample velocity and acceleration data.
             calculate_velocity(pseries)
-
-            #SS: if SETTINGS['stroke_detect_pressed_runs_only'] is False:
-            #SS:     # 4a) Detect pen stroke boundaries within current Series
-            #SS:    self._findstrokes(pseries, psb_start_ix, series_bounds['id'])
-
+            
             updateDataFileLoadingProgressDialog(self._mwapp)
 
             # 3) Detect Sample Runs within the Series.
@@ -806,13 +802,6 @@ class MarkWriteProject(object):
                         curr_press_series_id, series_bounds['id'],
                         psb_start_ix + si, st, psb_start_ix + ei, et))
 
-                        #SS: if len(pressed_run_ixs) > 1 and SETTINGS[
-                        #SS:     'stroke_detect_pressed_runs_only'] is True:
-                        #SS:     # 4b) Detect pen stroke boundaries within each
-                        #SS:     # sample Run
-                        #SS:     self._findstrokes(pseries[si:ei + 1],
-                        #SS:                      psb_start_ix + si,
-                        #SS:                      curr_press_series_id)
                     updateDataFileLoadingProgressDialog(self._mwapp)
             else:
                 # If no FIRST_PRESS pen sample states are found,
@@ -834,11 +823,7 @@ class MarkWriteProject(object):
                     self.run_boundaries.append((
                     curr_press_series_id, series_bounds['id'],
                     psb_start_ix + si, st, psb_start_ix + ei, et))
-                    #SS: if SETTINGS['stroke_detect_pressed_runs_only'] is True:
-                    #SS:     # 4b) Detect pen stroke boundaries within each sample
-                    #SS:     #  Run
-                    #SS:     self._findstrokes(pseries[si:ei + 1], psb_start_ix + si,
-                    #SS:                      curr_press_series_id)
+
                     updateDataFileLoadingProgressDialog(self._mwapp)
 
         # Convert run_boundaries list of lists into an ndarray
@@ -849,16 +834,9 @@ class MarkWriteProject(object):
                     np.float64]})
         self.run_boundaries = np.asarray(self.run_boundaries, dtype=run_dtype)
         
-
         self._parseStrokeBoundaries()
+        
         updateDataFileLoadingProgressDialog(self._mwapp)
-        #SS: # Convert stroke_boundaries list of lists into an ndarray
-        #SS: self.stroke_boundaries = np.asarray(self.stroke_boundaries,
-        #SS:                                     dtype=run_dtype)
-        #SS: 
-        #SS: # Create ndarray of pen samples that are the detected stroke
-        #SS: # boundary points.
-        #SS: self.stroke_boundary_samples = self.pendata[self._stroke_boundary_ixs]
 
         if self._mwapp:
             # If project is being created via MarkWrite GUI, create
@@ -891,6 +869,7 @@ class MarkWriteProject(object):
         self._stroke_boundary_ixs = []
         self.stroke_boundary_samples = None
         self.stroke_boundaries = []
+        
         if SETTINGS['stroke_detect_pressed_runs_only'] is False:
             # 4a) Detect pen stroke boundaries within current Series
             for series_bounds in self.series_boundaries:
@@ -909,9 +888,9 @@ class MarkWriteProject(object):
         # Convert run_boundaries list of lists into an ndarray
         stroke_dtype = np.dtype({
         'names': ['id', 'parent_id', 'start_ix', 'start_time', 'end_ix',
-                  'end_time'],
+                  'end_time', 'stroke_type'],
         'formats': [np.uint16, np.uint16, np.uint32, np.float64, np.uint32,
-                    np.float64]})
+                    np.float64, np.uint8]})
         # Convert stroke_boundaries list of lists into an ndarray
         self.stroke_boundaries = np.asarray(self.stroke_boundaries,
                                             dtype=stroke_dtype)
@@ -1173,72 +1152,65 @@ class MarkWriteProject(object):
                          np.float64]})
         return np.asarray(slist, dtype=series_dtype)
 
-    def _findstrokes(self, searchsamplearray, obsolute_offset, parent_id):
-        edge_type = SETTINGS['stroke_detect_edge_type']
-        if edge_type == 'none':
-            edge_type = None
-        vtype = SETTINGS['stroke_detect_peak_or_valley']
-        # vtype 'Minima' == True        
-        valley_types = [True,]
-        if vtype == 'Maxima':
-            valley_types = [False,]
-        elif vtype == 'Minima & Maxima':
-            valley_types = [True, False]
-            
-        ppp_minima = None
+    def _findstrokes(self, searchsamplearray, obsolute_offset, parent_id):            
+        edge_points = None
         
-        for vt in valley_types:
-            if ppp_minima is None:
-                ppp_minima = detect_peaks(searchsamplearray[SETTINGS['stroke_detect_use_field']],
-                                  mph=None,
-                                  mpd=SETTINGS[
-                                      'stroke_detect_min_p2p_sample_count'],
-                                  edge=edge_type,
-                                  valley=vt)
-            else:
-                ppp_minima2 = detect_peaks(searchsamplearray[SETTINGS['stroke_detect_use_field']],
-                                  mph=None,
-                                  mpd=SETTINGS[
-                                      'stroke_detect_min_p2p_sample_count'],
-                                  edge=edge_type,
-                                  valley=vt)
-                                  
-                ppp_minima = np.append(ppp_minima, ppp_minima2)
-                ppp_minima.sort()
-                
-        if len(ppp_minima) > 1:
-            for s, vmin_ix in enumerate(ppp_minima[:-1]):
-                if s == 0:
-                    vmin_ix = ppp_minima[0] = 0
-                abs_vmin_ix = obsolute_offset + vmin_ix
-
-                if ppp_minima[s + 1] == ppp_minima[-1]:
-                    next_abs_vmin_ix = obsolute_offset + len(
-                        searchsamplearray) - 1
-                else:
-                    next_abs_vmin_ix = obsolute_offset + ppp_minima[s + 1]
+        # Find stroke boundary points
+        
+        if SETTINGS['stroke_detect_algorithm'] == "xy_velocity&curvature":
+            from .sigproc import parse_velocity_and_curvature
+            stroke_bounds_with_pauses = parse_velocity_and_curvature(searchsamplearray)
+            if stroke_bounds_with_pauses is not None:
+                #['id', 'type', 'start_ix', 'end_ix'],            
+                for stroke in stroke_bounds_with_pauses:
+                    start_ix = obsolute_offset + stroke['start_ix']
+                    start_time = self.pendata['time'][start_ix]
+                    end_ix = obsolute_offset + stroke['end_ix']
+                    end_time = self.pendata['time'][end_ix]
+                    self._stroke_boundary_ixs.append(start_ix)
+                    self.stroke_boundaries.append((len(self.stroke_boundaries),
+                                                   parent_id, 
+                                                   start_ix, start_time,
+                                                   end_ix, end_time,
+                                                   stroke['type']))
+        else:
+            from .sigproc import parse_using_sample_field
+            edge_points = parse_using_sample_field(searchsamplearray)
+            
+            # Create stroke boundary lookup tables                   
+            if len(edge_points) > 1:
+                for s, vmin_ix in enumerate(edge_points[:-1]):
+                    if s == 0:
+                        vmin_ix = edge_points[0] = 0
+                    abs_vmin_ix = obsolute_offset + vmin_ix
+    
+                    if edge_points[s + 1] == edge_points[-1]:
+                        next_abs_vmin_ix = obsolute_offset + len(
+                            searchsamplearray) - 1
+                    else:
+                        next_abs_vmin_ix = obsolute_offset + edge_points[s + 1]
+                    if next_abs_vmin_ix >= len(self.pendata):
+                        next_abs_vmin_ix = len(self.pendata) - 1
+                    st, et = self.pendata['time'][[abs_vmin_ix, next_abs_vmin_ix]]
+                    self.stroke_boundaries.append((
+                    len(self.stroke_boundaries), parent_id, abs_vmin_ix, st,
+                    next_abs_vmin_ix, et, 0))
+                    self._stroke_boundary_ixs.append(abs_vmin_ix)
+                next_abs_vmin_ix = obsolute_offset + len(searchsamplearray) - 1
                 if next_abs_vmin_ix >= len(self.pendata):
                     next_abs_vmin_ix = len(self.pendata) - 1
-                st, et = self.pendata['time'][[abs_vmin_ix, next_abs_vmin_ix]]
-                self.stroke_boundaries.append((
-                len(self.stroke_boundaries), parent_id, abs_vmin_ix, st,
-                next_abs_vmin_ix, et))
-                self._stroke_boundary_ixs.append(abs_vmin_ix)
-            next_abs_vmin_ix = obsolute_offset + len(searchsamplearray) - 1
-            if next_abs_vmin_ix >= len(self.pendata):
-                next_abs_vmin_ix = len(self.pendata) - 1
-            self._stroke_boundary_ixs.append(next_abs_vmin_ix)
-        else:
-            # add full run as one stroke
-            self._stroke_boundary_ixs.append(obsolute_offset)
-            self._stroke_boundary_ixs.append(
-                obsolute_offset + len(searchsamplearray) - 1)
-            self.stroke_boundaries.append(
-                (len(self.stroke_boundaries), parent_id,
-                 obsolute_offset,
-                 searchsamplearray['time'][0],
-                 obsolute_offset + len(searchsamplearray) - 1,
-                 searchsamplearray['time'][-1]))
+                self._stroke_boundary_ixs.append(next_abs_vmin_ix)
+            else:
+                # add full run as one stroke
+                self._stroke_boundary_ixs.append(obsolute_offset)
+                self._stroke_boundary_ixs.append(
+                    obsolute_offset + len(searchsamplearray) - 1)
+                self.stroke_boundaries.append(
+                    (len(self.stroke_boundaries), parent_id,
+                     obsolute_offset,
+                     searchsamplearray['time'][0],
+                     obsolute_offset + len(searchsamplearray) - 1,
+                     searchsamplearray['time'][-1], 0))
 
     def _getNextUnitTimeRange(self, unit_lookup_table, adjust_end_time=False):
         '''

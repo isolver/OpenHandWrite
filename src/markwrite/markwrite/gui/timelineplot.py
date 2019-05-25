@@ -242,12 +242,18 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
 
     def addStrokeBoundaryPoints(self, strokeboundries):
         ssize = SETTINGS['pen_stroke_boundary_size']
-        scolor = SETTINGS['pen_stroke_boundary_color']
-        pen = pg.mkPen(scolor, width=ssize)
-        brush = pg.mkBrush(scolor)
+        scolor = SETTINGS['pen_stroke_boundary_color']        
+        mpen = pg.mkPen(scolor, width=ssize)
+        mbrush = pg.mkBrush(scolor)
+        pcolor = SETTINGS['pen_stroke_pause_boundary_color']
+        ppen = pg.mkPen(pcolor, width=ssize)
+        pbrush = pg.mkBrush(pcolor)
         display_x = SETTINGS['display_timeplot_xtrace']
         display_y = SETTINGS['display_timeplot_ytrace']
-            
+        proj = MarkWriteMainWindow.instance().project
+        stroke_type = proj.stroke_boundaries['stroke_type']
+        mstroke_mask =  stroke_type==0
+        pstroke_mask =  stroke_type==4           
         def addBoundaryPointsToSubPlot(plot_name, point_fields):
             bpoints = self.plotitems[plot_name].get('boundary_points')
             if ssize == 0:
@@ -256,17 +262,20 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                 return
             if bpoints is None:
                 bpoints = self.plotitems[plot_name]['boundary_points'] = pg.ScatterPlotItem(size=ssize, 
-                                                                                            pen=pen, 
-                                                                                            brush=brush) 
+                                                                                            pen=mpen, 
+                                                                                            brush=mbrush) 
                 if hasattr(self, plot_name):
                     getattr(self, plot_name).addItem(bpoints)
             else:
                 bpoints.clear()
             
             for fname in point_fields:                
-                bpoints.addPoints(x=strokeboundries['time'],
-                                                     y=strokeboundries[fname],
-                                                     size=ssize, pen=pen, brush=brush)
+                bpoints.addPoints(x=strokeboundries['time'][mstroke_mask],
+                                                     y=strokeboundries[fname][mstroke_mask],
+                                                     size=ssize, pen=mpen, brush=mbrush)
+                bpoints.addPoints(x=strokeboundries['time'][pstroke_mask],
+                                                     y=strokeboundries[fname][pstroke_mask],
+                                                     size=ssize, pen=ppen, brush=pbrush)
         
         
         xy_fields=[]
