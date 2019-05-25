@@ -1161,18 +1161,29 @@ class MarkWriteProject(object):
             from .sigproc import parse_velocity_and_curvature
             stroke_bounds_with_pauses = parse_velocity_and_curvature(searchsamplearray)
             if stroke_bounds_with_pauses is not None:
-                #['id', 'type', 'start_ix', 'end_ix'],            
-                for stroke in stroke_bounds_with_pauses:
-                    start_ix = obsolute_offset + stroke['start_ix']
-                    start_time = self.pendata['time'][start_ix]
-                    end_ix = obsolute_offset + stroke['end_ix']
-                    end_time = self.pendata['time'][end_ix]
-                    self._stroke_boundary_ixs.append(start_ix)
-                    self.stroke_boundaries.append((len(self.stroke_boundaries),
-                                                   parent_id, 
-                                                   start_ix, start_time,
-                                                   end_ix, end_time,
-                                                   stroke['type']))
+                if len(stroke_bounds_with_pauses) >= 1:
+                    #['id', 'type', 'start_ix', 'end_ix'],            
+                    for stroke in stroke_bounds_with_pauses:
+                        start_ix = obsolute_offset + stroke['start_ix']
+                        start_time = self.pendata['time'][start_ix]
+                        end_ix = obsolute_offset + stroke['end_ix']-1
+                        end_time = self.pendata['time'][end_ix]
+                        self._stroke_boundary_ixs.append(start_ix)
+                        self.stroke_boundaries.append((len(self.stroke_boundaries),
+                                                       parent_id, 
+                                                       start_ix, start_time,
+                                                       end_ix, end_time,
+                                                       stroke['type']))
+                else:
+                    self._stroke_boundary_ixs.append(obsolute_offset)
+                    self._stroke_boundary_ixs.append(
+                        obsolute_offset + len(searchsamplearray) - 1)
+                    self.stroke_boundaries.append(
+                        (len(self.stroke_boundaries), parent_id,
+                         obsolute_offset,
+                         searchsamplearray['time'][0],
+                         obsolute_offset + len(searchsamplearray) - 1,
+                         searchsamplearray['time'][-1], 0))                        
         else:
             from .sigproc import parse_using_sample_field
             edge_points = parse_using_sample_field(searchsamplearray)

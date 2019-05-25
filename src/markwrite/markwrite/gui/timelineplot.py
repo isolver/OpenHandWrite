@@ -240,7 +240,7 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                                     symbolSize=SETTINGS[sizekey])
         return penarray, brusharray
 
-    def addStrokeBoundaryPoints(self, strokeboundries):
+    def addStrokeBoundaryPoints(self, strokeboundries, time_mask):
         ssize = SETTINGS['pen_stroke_boundary_size']
         scolor = SETTINGS['pen_stroke_boundary_color']        
         mpen = pg.mkPen(scolor, width=ssize)
@@ -251,9 +251,10 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
         display_x = SETTINGS['display_timeplot_xtrace']
         display_y = SETTINGS['display_timeplot_ytrace']
         proj = MarkWriteMainWindow.instance().project
-        stroke_type = proj.stroke_boundaries['stroke_type']
+        stroke_type = proj.stroke_boundaries['stroke_type'][time_mask]
         mstroke_mask =  stroke_type==0
-        pstroke_mask =  stroke_type==4           
+        pstroke_mask =  stroke_type==4
+           
         def addBoundaryPointsToSubPlot(plot_name, point_fields):
             bpoints = self.plotitems[plot_name].get('boundary_points')
             if ssize == 0:
@@ -269,7 +270,7 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
             else:
                 bpoints.clear()
             
-            for fname in point_fields:                
+            for fname in point_fields:             
                 bpoints.addPoints(x=strokeboundries['time'][mstroke_mask],
                                                      y=strokeboundries[fname][mstroke_mask],
                                                      size=ssize, pen=mpen, brush=mbrush)
@@ -385,7 +386,7 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
         pstart, pend = penpoints['time'][[0,-1]]
         vms_times = proj.stroke_boundary_samples['time']
         vms_mask = (vms_times >= pstart) & (vms_times <= pend)
-        self.addStrokeBoundaryPoints(proj.stroke_boundary_samples[vms_mask])
+        self.addStrokeBoundaryPoints(proj.stroke_boundary_samples[vms_mask], vms_mask)
 
         self.xy_plot.setRange(xRange=(penpoints['time'][0], penpoints['time'][-1]),
                       yRange=self.fullPenValRange,
@@ -451,7 +452,7 @@ class PenDataTemporalPlotWidget(pg.GraphicsLayoutWidget):
                 pstart, pend = penpoints['time'][[0,-1]]
                 vms_times = proj.stroke_boundary_samples['time']
                 vms_mask = (vms_times >= pstart) & (vms_times <= pend)
-                self.addStrokeBoundaryPoints(proj.stroke_boundary_samples[vms_mask])
+                self.addStrokeBoundaryPoints(proj.stroke_boundary_samples[vms_mask], vms_mask)
                 break
             
         self.xy_plot.getViewBox().setMouseEnabled(y=SETTINGS['timeplot_enable_ymouse'])

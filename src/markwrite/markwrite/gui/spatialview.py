@@ -103,14 +103,14 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         brusharray[pdat['pressure'] == 0] = brush2
         return brusharray, penarray
 
-    def addStrokeBoundaryPoints(self, strokeboundries):
-        proj = MarkWriteMainWindow.instance().project
-        stroke_type = proj.stroke_boundaries['stroke_type']
+    def addStrokeBoundaryPoints(self, strokeboundries, time_filter):
         ssize = SETTINGS['pen_stroke_boundary_size']
         if ssize == 0:
             if self.strokeBoundaryPoints:
                 self.strokeBoundaryPoints.clear()
             return
+        proj = MarkWriteMainWindow.instance().project
+        stroke_type = proj.stroke_boundaries['stroke_type'][time_filter]
         pcolor = SETTINGS['pen_stroke_pause_boundary_color']
         scolor = SETTINGS['pen_stroke_boundary_color']
         pen = pg.mkPen(scolor,width=ssize)
@@ -201,7 +201,7 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
         pstart, pend = pdat['time'][[0,-1]]
         vms_times = proj.stroke_boundary_samples['time']
         vms_mask = (vms_times >= pstart) & (vms_times <= pend)
-        self.addStrokeBoundaryPoints(proj.stroke_boundary_samples[vms_mask])
+        self.addStrokeBoundaryPoints(proj.stroke_boundary_samples[vms_mask], vms_mask)
         #print "<< ### PenDataSpatialPlotWidget.handleResetPenData"
 
 
@@ -264,7 +264,7 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
                 pstart, pend = pdat['time'][[0,-1]]
                 vms_times = proj.stroke_boundary_samples['time']
                 vms_mask = (vms_times >= pstart) & (vms_times <= pend)
-                self.addStrokeBoundaryPoints(proj.stroke_boundary_samples[vms_mask])
+                self.addStrokeBoundaryPoints(proj.stroke_boundary_samples[vms_mask], vms_mask)
 
         if 'spatialplot_invert_y_axis' in updates.keys():
             self.getPlotItem().invertY(SETTINGS['spatialplot_invert_y_axis'])
