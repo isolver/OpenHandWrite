@@ -176,10 +176,13 @@ def butter_it(samples, frequency, sampling_rate):
     padded_data = append(padded_data, padding)
     
     w = 2.0 * (frequency/sampling_rate)#frequency / (sampling_rate / 2.0) # Normalize the frequency
-    #print 'w:',w
-    b, a  = signal.butter(4, w, 'low') 
-    return signal.filtfilt(b, a, padded_data)[pad_len:-pad_len]
-
+    #print 'w:',w    
+    try:
+        b, a  = signal.butter(4, w, 'low') 
+        return signal.filtfilt(b, a, padded_data, padtype=None)[pad_len:-pad_len]
+    except:
+        print 'Warning: Exception filtering samples. Sample length:', samples.shape
+        return samples
 
 # Calculate velocity of given series
 def get_velocity(t, x, y):

@@ -574,12 +574,11 @@ class MarkWriteProject(object):
         '''
         global _warning_count
         starts = self.stroke_boundaries['start_ix']
-        ends = self.stroke_boundaries['end_ix'] - 1
+        ends = self.stroke_boundaries['end_ix']
         stroke = self.stroke_boundaries[(sample_index >= starts) & (sample_index <= ends)]
         if len(stroke) > 1:
             if _warning_count<10:
-                print "Warning, %d strokes found for sample ix %d. Using first detected stroke for report." % (
-                len(stroke), sample_index)
+                print "Warning, %d strokes found for sample ix %d. Using first detected stroke for report." % (len(stroke), sample_index)
                 _warning_count+=1
                 if _warning_count == 10:
                     print "Will stop warning you!!!!!"
