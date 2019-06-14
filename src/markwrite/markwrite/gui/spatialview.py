@@ -188,13 +188,13 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
                                          symbolBrush=brusharray,
                                          symbolPen=penarray)
 
-            self.getPlotItem().setLimits(xMin=pdat[X_FIELD].min(),
-                                         yMin=pdat[Y_FIELD].min(),
-                                         xMax=pdat[X_FIELD].max(),
-                                         yMax=pdat[Y_FIELD].max())
+            self.getPlotItem().setLimits(xMin=pdat[X_FIELD].min()-10,
+                                         yMin=pdat[Y_FIELD].min()-10,
+                                         xMax=pdat[X_FIELD].max()+10,
+                                         yMax=pdat[Y_FIELD].max()+10)
 
-            self.setRange(xRange=(pdat[X_FIELD].min(), pdat[X_FIELD].max()),
-                          yRange=(pdat[Y_FIELD].min(), pdat[Y_FIELD].max()),
+            self.setRange(xRange=(pdat[X_FIELD].min()-10, pdat[X_FIELD].max()+10),
+                          yRange=(pdat[Y_FIELD].min()-10, pdat[Y_FIELD].max()+10),
                           padding=None)
 
         proj = MarkWriteMainWindow.instance().project
@@ -300,10 +300,10 @@ class PenDataSpatialPlotWidget(pg.PlotWidget):
     def ensureSelectionIsVisible(self, timespan, selectedpendata):
         if len(selectedpendata) > 0:
             (vxmin, vxmax), (vymin, vymax) = self.viewRange()
-            dxmin, dxmax, dymin, dymax = selectedpendata[X_FIELD].min(), \
-                                         selectedpendata[X_FIELD].max(), \
-                                         selectedpendata[Y_FIELD].min(), \
-                                         selectedpendata[Y_FIELD].max()
+            dxmin, dxmax, dymin, dymax = selectedpendata[X_FIELD].min()-10, \
+                                         selectedpendata[X_FIELD].max()+10, \
+                                         selectedpendata[Y_FIELD].min()-10, \
+                                         selectedpendata[Y_FIELD].max()+10
 
             vxlength = vxmax - vxmin
             vylength = vymax - vymin
