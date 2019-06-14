@@ -287,9 +287,9 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         aicon = 'settings&32.png'
         self.showProjectSettingsDialogAction = ContextualStateAction(
             QtGui.QIcon(getIconFilePath(aicon)),
-            self.getToolTipTextForAction('&Settings','Alt+S'),
+            self.getToolTipTextForAction('&Settings','Ctrl+Alt+S'),
             self)
-        self.showProjectSettingsDialogAction.setShortcut('Alt+S')
+        self.showProjectSettingsDialogAction.setShortcut('Ctrl+Alt+S')
         self.showProjectSettingsDialogAction.setEnabled(True)
         self.showProjectSettingsDialogAction.setStatusTip(atext)
         self.showProjectSettingsDialogAction.triggered.connect(
