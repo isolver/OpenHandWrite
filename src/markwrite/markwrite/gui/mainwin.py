@@ -1364,20 +1364,20 @@ class MarkWriteMainWindow(QtGui.QMainWindow):
         #    self.project.selectedtimeregion.setRegion(stroketimerange)
 
     def selectNextStroke(self):
-        stroketimerange = self.project._getNextUnitTimeRange(self.project.stroke_boundaries, adjust_end_time = True)
+        stroketimerange = self.project._getNextUnitTimeRange(self.project.stroke_boundaries, adjust_end_time = False)
         if stroketimerange:
             self.project.selectedtimeregion.setRegion(stroketimerange)
 
     def selectPrevStroke(self):
-        stroketimerange = self.project._getPreviousUnitTimeRange(self.project.stroke_boundaries, adjust_end_time = True)
+        stroketimerange = self.project._getPreviousUnitTimeRange(self.project.stroke_boundaries, adjust_end_time = False)
         if stroketimerange:
             self.project.selectedtimeregion.setRegion(stroketimerange)
 
     def advanceSelectionEndToNextStrokeEnd(self):
-        self.advanceSelectionEndToNextUnitEnd(self.project.stroke_boundaries, adjust_end_time=True)
+        self.advanceSelectionEndToNextUnitEnd(self.project.stroke_boundaries, adjust_end_time=False)
 
     def returnSelectionEndToPrevStrokeEnd(self):
-        self.returnSelectionEndToPrevUnitEnd(self.project.stroke_boundaries, adjust_end_time=True)
+        self.returnSelectionEndToPrevUnitEnd(self.project.stroke_boundaries, adjust_end_time=False)
 
     def advanceSelectionStartToNextStrokeStart(self):
         self.advanceSelectionStartToNextUnitStart(self.project.stroke_boundaries)
