@@ -1178,6 +1178,8 @@ class MarkWriteProject(object):
         
         if SETTINGS['stroke_detect_algorithm'] == "xy_velocity&curvature":
             from .sigproc import parse_velocity_and_curvature
+            if len(searchsamplearray['time']) < SETTINGS['stroke_detect_min_p2p_sample_count']:
+                return
             stroke_bounds_with_pauses = parse_velocity_and_curvature(searchsamplearray)
             if stroke_bounds_with_pauses is not None:
                 if len(stroke_bounds_with_pauses) >= 1:

@@ -75,8 +75,10 @@ def parse_velocity_and_curvature(series):
     if temporal_resolution == 0.0:
         misi = diff(series['time']).mean()
         temporal_resolution = 1.0 / misi
-        #print "Setting temporal_resolution to:", temporal_resolution, misi
-
+        if np.isnan(temporal_resolution) or np.isnan(misi):
+            print "Warning: Setting resolution to default:", 1.0 / 0.01, len(series)
+            misi = 0.01
+            temporal_resolution = 1.0 / misi
     _dat['x.fc5'] = butter_it(series['x'], 5, temporal_resolution)
     _dat['x.fc10'] = butter_it(series['x'], 10, temporal_resolution)
     _dat['y.fc5'] = butter_it(series['y'], 5, temporal_resolution)
