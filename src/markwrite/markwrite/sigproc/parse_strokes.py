@@ -59,7 +59,7 @@ _dat = dict()
 temporal_resolution = 0.0
 spatial_resolution = 0.0
 
-def parse_velocity_and_curvature(series):
+def parse_velocity_and_curvature(series, all_series_dat=None, series_id=None):
     """
     Find stroke boundary positions within series pen samples array. 
     
@@ -68,7 +68,8 @@ def parse_velocity_and_curvature(series):
     """
     global _dat, temporal_resolution, spatial_resolution
     _dat = dict()
-
+    if all_series_dat is not None and series_id is not None:
+        all_series_dat[series_id]=_dat
     spatial_resolution = SETTINGS['device_spatial_resolution']
     temporal_resolution = SETTINGS['device_temporal_resolution']
 
@@ -151,17 +152,19 @@ def parse_velocity_and_curvature(series):
     _dat['stroke_state'] = np.zeros(len(series['time']), dtype=np.int8)
     _dat['stroke_state'][:] = -1
    
-    stroke_bounds = assign_stroke_boundaries(series, filtered_series_minima)
-    #if stroke_bounds is not None:
-        #stroke_bounds['id'] += last_stroke_id
-        #last_stroke_id = stroke_bounds['id'].max()
-        #for stroke in stroke_bounds:
-        #    _dat['stroke_id'][stroke['start_ix']:stroke['end_ix']] = stroke['id']
-        #    _dat['stroke_state'][stroke['start_ix']:stroke['end_ix']] = stroke['type']
-        #    _dat['stroke_state'][stroke['start_ix']] += 1
-        #    _dat['stroke_state'][stroke['end_ix']-1] += 2               
-        #    _dat['stroke_id'][stroke['start_ix']:stroke['end_ix']] = stroke['id']        
+    stroke_bounds = assign_stroke_boundaries(series, filtered_series_minima)       
 
+
+    keep_dat_cols = ['x.fc10', 'y.fc10', 'x.fc5', 'y.fc5', 'vxy.fc10', 'vxy.fc5',
+                     'vxy.fc10.extrema', 'vxy.fc5.extrema', 'vxy.fc10.minima.dalpha',
+                     'series_sample_index', 'vxy.fc10.minima.pre',
+                     'vxy.fc10.minima.post']
+
+    for dk in _dat.keys():
+        if dk not in keep_dat_cols:
+            _dat[dk] = None
+            del _dat[dk]
+            
     return stroke_bounds
 
 # Butterworth filter
@@ -323,7 +326,7 @@ def assign_stroke_boundaries(series_data, stroke_minima):
     elif len(stroke_minima) == 1:
         print("TODO: How to handle series with single minima.")
     else:
-        # Add start and remove end boundaries at series start / end
+        # Add start and end boundaries at series start / end
         if stroke_minima[0] != 0:
             stroke_minima = append([0,],stroke_minima)
             #print "Adding start Minima"

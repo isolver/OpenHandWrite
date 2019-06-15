@@ -365,6 +365,136 @@ class RawSampleDataReportPlusSegsExporter(ReportExporter):
                         ))
             yield r
 
+#%%       
+class SampleVelocityAndCurvatureStrokeParserReportExporter(ReportExporter):
+    progress_dialog_title = "Saving the Sample Velocity and Curvature Stroke Parser Report .."
+    formating=dict(time=u'{:.3f}')
+    segpathsep=u'->'
+    
+    def __init__(self):
+        ReportExporter.__init__(self)
+
+    @classmethod
+    def columnnames(cls):
+        # Return the name of each 'column' of the project.pendata
+        # numpy array.
+        # Note that the report cls has a 'project' attribute
+        # that can be used to access the project in use when
+        # generating the report
+        r = ['index',]
+        r.extend(cls.project.pendata.dtype.names)
+        r.extend(('status','series_id','run_id',
+
+                  'x.fc10',
+                  'y.fc10',
+                  'x.fc5',
+                  'y.fc5',
+                  'vxy.fc10',
+                  'vxy.fc5',
+                  'vxy.fc10.extrema',
+                  'vxy.fc5.extrema',
+                  'vxy.fc10.minima.dalpha',
+                  'series_sample_index',
+                  'vxy.fc10.minima.pre',
+                  'vxy.fc10.minima.post',               
+                  
+                  'stroke_id','stroke_type','seg_level','seg_path','seg_name'
+                ))
+        return r
+
+    @classmethod
+    def datarowcount(cls):
+        # Return the number of pen samples that will be saved
+        # in the report. Each sample will be a report data row.
+        return cls.project.pendata.shape[0]
+
+    @classmethod
+    def datarows(cls):
+        # make segment dictionary
+        segs = {}
+        for level_num, segment_list in cls.project.segmenttree.getLeveledSegments().items():
+            for segment in segment_list:
+                segpath = cls.segpathsep.join([u'{}'.format(sp) for sp in segment.path])
+                segs[segment.id] = (level_num,segpath,segment.name)
+         
+        # Iterate through the pen data array, yielding each pen sample
+        # as a list.
+        getSeriesForSample = cls.project.getSeriesForSample
+        getPressedRunForSample = cls.project.getPressedRunForSample
+        getStrokeForSample = cls.project.getStrokeForSample
+        getStrokeTypeForSample = cls.project.getStrokeTypeForSample
+        
+        vcparser_dat = cls.project.vc_parser_dat
+        prev_series_id = 0
+        series_sample_index = -1
+        for i, pensample in enumerate(cls.project.pendata):
+            r = [i,]
+            r.extend(pensample.tolist())
+            
+            series_id = getSeriesForSample(i)
+            series_parser_dat = None
+            
+            if series_id > 0 and vcparser_dat:
+                series_parser_dat = vcparser_dat.get(series_id-1)
+ 
+            if series_id == 0:
+                prev_series_id = 0
+                series_sample_index = -1
+
+            if series_id != prev_series_id:
+                series_sample_index = 0
+                prev_series_id = series_id
+            else:
+                series_sample_index += 1
+                    
+            x_fc10 = cls.missingval
+            y_fc10 = cls.missingval
+            x_fc5 = cls.missingval
+            y_fc5 = cls.missingval
+            vxy_fc10 = cls.missingval
+            vxy_fc5 = cls.missingval
+            vxy_fc10_extrema = cls.missingval
+            vxy_fc5_extrema = cls.missingval
+            vxy_fc10_minima_dalpha = cls.missingval
+            vxy_fc10_minima_pre = cls.missingval
+            vxy_fc10_minima_post = cls.missingval               
+
+            if series_parser_dat:
+                x_fc10 = series_parser_dat['x.fc10'][series_sample_index]
+                y_fc10 = series_parser_dat['y.fc10'][series_sample_index]
+                x_fc5 = series_parser_dat['x.fc5'][series_sample_index]
+                y_fc5 = series_parser_dat['y.fc5'][series_sample_index]
+                vxy_fc10 = series_parser_dat['vxy.fc10'][series_sample_index]
+                vxy_fc5 = series_parser_dat['vxy.fc5'][series_sample_index]
+                vxy_fc10_extrema = series_parser_dat['vxy.fc10.extrema'][series_sample_index]
+                vxy_fc5_extrema = series_parser_dat['vxy.fc5.extrema'][series_sample_index]
+                vxy_fc10_minima_dalpha = series_parser_dat['vxy.fc10.minima.dalpha'][series_sample_index]
+                vxy_fc10_minima_pre = series_parser_dat['vxy.fc10.minima.pre'][series_sample_index]
+                vxy_fc10_minima_post = series_parser_dat['vxy.fc10.minima.post'][series_sample_index]                              
+
+            r.extend((convertSampleStateValue(pensample['state']), 
+                        series_id,
+                        getPressedRunForSample(i),
+                        x_fc10,
+                        y_fc10,
+                        x_fc5,
+                        y_fc5,
+                        vxy_fc10,
+                        vxy_fc5,
+                        vxy_fc10_extrema,
+                        vxy_fc5_extrema,
+                        vxy_fc10_minima_dalpha,
+                        series_sample_index,
+                        vxy_fc10_minima_pre,
+                        vxy_fc10_minima_post,               
+                        getStrokeForSample(i),
+                        getStrokeTypeForSample(i),
+                        segs.get(pensample['segment_id'],('','',''))[0],
+                        segs.get(pensample['segment_id'],('','',''))[1],
+                        segs.get(pensample['segment_id'],('','',''))[2]
+                        ))
+            yield r
+
 #%%
 class PenSampleReportExporter(ReportExporter):
     progress_dialog_title = "Saving Pen Point Sample Level Report .."

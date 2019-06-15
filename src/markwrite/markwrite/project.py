@@ -888,7 +888,7 @@ class MarkWriteProject(object):
         self._stroke_boundary_ixs = []
         self.stroke_boundary_samples = None
         self.stroke_boundaries = []
-        
+        self.vc_parser_dat = dict()
         if SETTINGS['stroke_detect_pressed_runs_only'] is False:
             # 4a) Detect pen stroke boundaries within current Series
             for series_bounds in self.series_boundaries:
@@ -915,8 +915,7 @@ class MarkWriteProject(object):
                                             dtype=stroke_dtype)
         # Create ndarray of pen samples that are the detected stroke
         # boundary points.
-        self.stroke_boundary_samples = self.pendata[self._stroke_boundary_ixs]
-        
+        self.stroke_boundary_samples = self.pendata[self._stroke_boundary_ixs]        
         
     def _detectAssociatedSegmentTagsFile(self, dir_path, fname, fext):
         tag_list = []
@@ -1180,7 +1179,7 @@ class MarkWriteProject(object):
             from .sigproc import parse_velocity_and_curvature
             if len(searchsamplearray['time']) < SETTINGS['stroke_detect_min_p2p_sample_count']:
                 return
-            stroke_bounds_with_pauses = parse_velocity_and_curvature(searchsamplearray)
+            stroke_bounds_with_pauses = parse_velocity_and_curvature(searchsamplearray, self.vc_parser_dat, parent_id)
             if stroke_bounds_with_pauses is not None:
                 if len(stroke_bounds_with_pauses) >= 1:
                     #['id', 'type', 'start_ix', 'end_ix'],            
