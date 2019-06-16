@@ -582,9 +582,8 @@ class MarkWriteProject(object):
                 _warning_count+=1
                 if _warning_count == 10:
                     print "Will stop warning you!!!!!"
+        if len(stroke) > 0:
             return stroke['id'][0] + 1
-        if len(stroke) > 0 and len(stroke) <= 2:
-            return stroke['id'][-1] + 1
         return 0
 
     def getStrokeTypeForSample(self, sample_index):
@@ -592,7 +591,7 @@ class MarkWriteProject(object):
         '''
         global _warning_count
         starts = self.stroke_boundaries['start_ix']
-        ends = self.stroke_boundaries['end_ix'] - 1
+        ends = self.stroke_boundaries['end_ix']
         stroke = self.stroke_boundaries[(sample_index >= starts) & (sample_index <= ends)]
         if len(stroke) > 1:
             if _warning_count<10:
@@ -601,9 +600,8 @@ class MarkWriteProject(object):
                 _warning_count+=1
                 if _warning_count == 10:
                     print "Will stop warning you!!!!!"
+        if len(stroke)>0:
             return stroke['stroke_type'][0]
-        if len(stroke) == 1:
-            return stroke['stroke_type'][-1]
         return -1
 
 

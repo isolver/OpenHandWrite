@@ -323,8 +323,6 @@ def assign_stroke_boundaries(series_data, stroke_minima):
     
     if len(stroke_minima) == 0:
         print("Warning: No minima detected for series.")  
-    elif len(stroke_minima) == 1:
-        print("Series with single minima detected.")
     if len(stroke_minima) > 0:
         # Add start and end boundaries at series start / end
         if stroke_minima[0] != 0:
