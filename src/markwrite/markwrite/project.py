@@ -1478,6 +1478,12 @@ class MarkWriteProject(object):
                     project=self)
             else:
                 MarkWriteProject._selectedtimeregion.project = self
+
+        updateDataFileLoadingProgressDialog(self._mwapp, 5)
+
+        # Reparse boundaries so that V&C alg will regen data needed for reports        
+        self._parseStrokeBoundaries()
+        
         self.modified = False
         updateDataFileLoadingProgressDialog(self._mwapp)
 
