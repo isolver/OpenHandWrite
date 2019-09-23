@@ -24,7 +24,7 @@ support the Wintab API. Supported input devices include Wacom Intuos4 and
 Thinkpad X61 laptops / tablets.
 
 The experiment is written using PsychoPy, with Pen events being collected
-by using the psychopy.iohub WintabTablet device. Only Windows 7 / 8 is
+by using the psychopy.iohub WintabTablet device. Only Windows 7 / 10 is
 supported at this time.
 
 Running
@@ -286,6 +286,7 @@ import os, pyglet
 pyglet.options['debug_gl'] = False
 
 import time
+from re import findall, sub
 from util import showSessionInfoDialog, start_iohub, \
                  saveWintabDeviceHardwareInfo, getAudioFilePath,\
                  getImageFilePath, isImageFileCandidate
@@ -435,12 +436,28 @@ class StateTrigger(object):
         trig = StateTrigger(state_code, trial_vars)
         v = trig.trig_val
 
-        if isinstance(v, basestring) and v.lower().endswith('.bmp'):
-            # It is a PenButtonPressTrigger
-            v = v.lower()[:-4]
-            trig = PenButtonPressTrigger(state_code, trial_vars)
-            trig.trig_val=trigger_stim[v]
-            return trig
+        if isinstance(v, basestring):
+            if v.lower().endswith('.bmp'):
+                # It is a PenButtonPressTrigger
+                v = v.lower()[:-4]
+                trig = PenButtonPressTrigger(state_code, trial_vars)
+                trig.trig_val=trigger_stim[v]
+                return trig
+            else:               
+                trig = KeyPressTrigger(state_code, trial_vars)
+                # trig_val needs to hold list of acceptable keys                
+                if 'any' in v: 
+                    trig.trig_val = []                  
+                else:
+                    v = sub("\s+",'',v)
+                    trig.trig_val = [w[1:-1] for w in findall("\\'[a-z]+\\'",v)]
+                    trig.trig_val.extend([c for c in sub("\\'[a-z]+\\'",'',v)])
+                    trig.trig_val = [' ' if c == 'space' else c for c in trig.trig_val]
+                    # print('keypress_trigger - targets: ',trig.trig_val)          
+                return trig
+                        
+        
+
         try:
             # test for TimerStateTrigger
             if isinstance(v, basestring) and v.strip()[0].lower() == 'd':
@@ -486,6 +503,21 @@ class PenButtonPressTrigger(StateTrigger):
         self.trig_val.draw()
         return False
 
+
+class KeyPressTrigger(StateTrigger):
+    def __init__(self, state_code, trial_vars):
+        StateTrigger.__init__(self, state_code, trial_vars)
+
+    def fired(self, **kwargs):
+        keys = kwargs['keys']
+        if self.trig_val == [] and len(keys) > 0:
+            return True
+        elif [c for c in self.trig_val if c in keys]:
+            return True
+        else:
+            return False
+            
+            
 def terminateExperimentKeyPressed(keyboard):
     global TERMINATE_EXP_REQ
     TERMINATE_EXP_REQ =  keyboard.getPresses(keys=TERMINATE_EXP_KEYS, clear=False)
@@ -601,8 +633,9 @@ def runTrialState(state_code, trial, myWin, io, all_stim):
     # Maintain current state for [state_code]_DUR seconds, or until
     # audio_stim has completed playing, whichever comes last.
     sample_evts=[]
+    key_evts_keys=[]
     while (state_audio and possible_state_stim['sound'].status == PLAYING) or \
-            state_end_trig.fired(sample_evts) is False:
+            state_end_trig.fired(samples = sample_evts, keys = key_evts_keys) is False:
 
         # Redraw display and flip
         for stim in actual_state_stim:
@@ -621,12 +654,14 @@ def runTrialState(state_code, trial, myWin, io, all_stim):
                 all_stim['pen']['pos'].updateFromEvent(last_evt)
                 all_stim['pen']['pos'].draw()
 
-        flip_time=myWin.flip()
-
+        flip_time=myWin.flip()        
+        
         if terminateExperimentKeyPressed(keyboard):
             if state_audio:
                 possible_state_stim['sound'].closeFile()
             return False
+
+        key_evts_keys = [k.key for k in keyboard.getPresses()]
 
     if state_audio:
         possible_state_stim['sound'].closeFile()
