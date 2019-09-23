@@ -198,6 +198,12 @@ INST_TRIG: The trigger information used to determine when to end the first
            - Use a *.bmp name from the resources\image folder to indicate that
              the trial state should continue until the user presses the image
              on the screen with the tablet sylus / digitizing pen.
+           - Give keys for keyboard trigger. 'any' for any key, otherwise
+             keywords in single quotes ('left' for left arrow etc). Use 'space' 
+             for spacebar.  Anything not in quotes is treated as single keys.
+             Whitespace is ignored. So 'space'z mv will trigger on 
+             spacebar, z, m, v. 
+             Escape and q cannot be used.
            - NOTE: If an audio file is specified for the current trial state,
                    then the state will be maintained until the audio file
                    finishes playing, regardless of any trigger that has been
