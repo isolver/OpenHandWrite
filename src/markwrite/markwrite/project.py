@@ -1006,17 +1006,21 @@ class MarkWriteProject(object):
                         trialend = float(t[self._etimevar])
                         if trialend-trialstart <= 0.0:
                             to_remove.append(tix)
+                            print("Will remove trial {}. start <= end: {} {}".format(tix, trialstart, trialend))
                             continue
     
                         trial_time_mask = (pen_data['time'] >= trialstart) & (pen_data['time'] < trialend)
                         trial_samples = pen_data[trial_time_mask]  
                         if len(trial_samples)==0:
+                            print("Will remove trial {}. No pen samples detected in trial: {} {}".format(tix, trialstart, trialend))
                             to_remove.append(tix)
                 
                 if len(to_remove):            
                     print("Removing Trials with no data: {}".format(to_remove))
+                    removed_count = 0;
                     for tix in to_remove:
-                        self.trial_cond_vars = np.delete(self.trial_cond_vars, tix)
+                        self.trial_cond_vars = np.delete(self.trial_cond_vars, tix-removed_count)
+                        removed_count += 1
 
     def _parsePenDataByTrials(self, pen_data):
         trials = []  # list of tuples; each being (cvrow_index,
