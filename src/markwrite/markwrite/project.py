@@ -621,7 +621,7 @@ class MarkWriteProject(object):
 
     def getTrialConditionsForSample(self, sample):
         '''
-        Returns the trial condition variable data for the given sample.
+        Returns a list of trial condition variable data for the given sample.
         None is returned if no trial condition variables were found for the
         given sample.
 
@@ -632,7 +632,7 @@ class MarkWriteProject(object):
         - ndarray: a row from the project.pendata ndarray.
 
         :param sample: in, float, or ndarray
-        :return: ndarray or None
+        :return: list or None
         '''
         tbounds = self.trial_boundaries
         tvars = self.trial_cond_vars
@@ -657,8 +657,13 @@ class MarkWriteProject(object):
                 except:
                     pass
         if tvar_ix >= 0:
-            return tvars[tvar_ix]
-
+                r = []
+                for c in list(tvars[tvar_ix]):
+                    if isinstance(c, str):
+                        c = c.decode('utf-8')
+                    r.append(c)
+                return r
+            
     def toDict(self):
         '''
         Return a dict representation of the project, suitable for

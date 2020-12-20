@@ -561,7 +561,7 @@ class PenSampleReportExporter(ReportExporter):
             if cvcolcount:
                 tcv=cls.project.getTrialConditionsForSample(i)
                 if tcv is not None:
-                    rowdata.extend(list(tcv))
+                    rowdata.extend(tcv)
                 else:
                     rowdata.extend([cls.missingval for i in range(cvcolcount)])
             yield rowdata
