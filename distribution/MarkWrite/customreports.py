@@ -511,7 +511,7 @@ class PenSampleReportExporter(ReportExporter):
         column_names.extend([u'cat1.L%d'%l for l in lvls])
         
         if len(cls.project.trial_cond_vars):
-            column_names.extend(cls.project.trial_cond_vars.dtype.names)
+            column_names = list(cls.project.trial_cond_vars.dtype.names) + column_names
             
         return column_names
 
@@ -560,8 +560,9 @@ class PenSampleReportExporter(ReportExporter):
 
             if cvcolcount:
                 tcv=cls.project.getTrialConditionsForSample(i)
+
                 if tcv is not None:
-                    rowdata.extend(tcv)
+                    rowdata = tcv + rowdata
                 else:
-                    rowdata.extend([cls.missingval for i in range(cvcolcount)])
+                    rowdata = [cls.missingval for i in range(cvcolcount)] + rowdata
             yield rowdata
